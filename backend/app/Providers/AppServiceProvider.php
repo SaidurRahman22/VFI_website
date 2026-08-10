@@ -89,6 +89,25 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Phase 6 — partner registration + sign-in (mirror the student throttles).
+        RateLimiter::for('partner-register', function (Request $request) {
+            $email = mb_strtolower((string) $request->input('email'));
+
+            return [
+                Limit::perMinute(5)->by('ip:'.$request->ip()),
+                Limit::perMinutes(60, 5)->by('email:'.$email),
+            ];
+        });
+
+        RateLimiter::for('partner-login', function (Request $request) {
+            $email = mb_strtolower((string) $request->input('email'));
+
+            return [
+                Limit::perMinute(5)->by('ip:'.$request->ip()),
+                Limit::perMinute(5)->by('email:'.$email),
+            ];
+        });
+
         // Phase 3E — content policy on all 10 collection models (Filament enforces it).
         foreach ([
             \App\Models\Content\Event::class, \App\Models\Content\Blog::class,
