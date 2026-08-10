@@ -1,0 +1,175 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Enums\Role;
+use App\Enums\UserStatus;
+use App\Http\Controllers\Controller;
+use App\Mail\AccountExistsMail;
+use App\Mail\OtpMail;
+use App\Models\AuthEvent;
+use App\Models\EmailVerificationCode;
+use App\Models\TermsAcceptance;
+use App\Models\User;
+use App\Models\UserRole;
+use App\Services\OtpService;
+use App\Support\EmailMask;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rules\Password;
+
+/**
+ * Phase 4B — student registration + email OTP (docs §1–2). The API surface is
+ * deliberately identical for existing vs new emails (enumeration safety), and
+ * the email never rides in a URL: register returns an opaque `flow_id`.
+ */
+class StudentAuthController extends Controller
+{
+    /** Version of the terms recorded against each acceptance. */
+    private const TERMS_VERSION = '2026-08';
+
+    public function __construct(private readonly OtpService $otp)
+    {
+    }
+
+    /**
+     * POST /api/register — create a pending student, record consent, start an
+     * OTP flow. Response is uniform whether or not the email already exists.
+     */
+    public function register(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'string', 'email:rfc', 'max:255'],
+            // Advisory strength meter never gates server-side; we require length only
+            // (+ breach-list check added in P4-E). No composition rules.
+            'password' => ['required', 'string', Password::min(8), 'max:1024'],
+            'cc' => ['required', 'string', 'max:8'],
+            'phone' => ['required', 'string', 'max:20'],
+            'agree' => ['accepted'],
+        ]);
+
+        $email = mb_strtolower(trim($data['email']));
+        $phone = $this->composePhone($data['cc'], $data['phone']);
+        $existing = User::where('email', $email)->first();
+
+        if (! $existing) {
+            $user = new User;
+            $user->forceFill([
+                'name' => $data['name'],
+                'email' => $email,
+                'phone' => $phone,
+                'password' => $data['password'],       // 'hashed' cast → argon2id
+                'status' => UserStatus::PendingVerification,
+            ])->save();
+
+            UserRole::create([
+                'user_id' => $user->id, 'role' => Role::Student,
+                'agency_id' => null, 'granted_at' => now(),
+            ]);
+            TermsAcceptance::create([
+                'user_id' => $user->id, 'document' => 'terms', 'version' => self::TERMS_VERSION,
+                'accepted_at' => now(), 'ip' => $request->ip(), 'user_agent' => $request->userAgent(),
+            ]);
+
+            $issued = $this->otp->issue($email, $user->id, 'signup_student', $request->ip());
+            Mail::to($email)->send(new OtpMail($issued['code'], OtpService::TTL_MINUTES));
+            AuthEvent::record('student_registered', ['user_id' => $user->id, 'email' => $email, 'ip' => $request->ip()]);
+            $flow = $issued['record'];
+        } elseif ($existing->status === UserStatus::PendingVerification) {
+            // Same person, not yet verified → resume: re-issue the signup code.
+            $issued = $this->otp->issue($email, $existing->id, 'signup_student', $request->ip());
+            Mail::to($email)->send(new OtpMail($issued['code'], OtpService::TTL_MINUTES));
+            $flow = $issued['record'];
+        } else {
+            // Already a real account → decoy: identical response, but the owner
+            // gets a "you already have an account" note, not a usable code.
+            $issued = $this->otp->issue($email, $existing->id, 'signup_student', $request->ip());
+            Mail::to($email)->send(new AccountExistsMail);
+            AuthEvent::record('register_existing_email', ['user_id' => $existing->id, 'email' => $email, 'ip' => $request->ip()]);
+            $flow = $issued['record'];
+        }
+
+        return response()->json([
+            'flow_id' => $flow->flow_id,
+            'email_masked' => EmailMask::mask($email),
+        ], 201)->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /api/verify — check {flow_id, code}. Returns {ok:bool}. */
+    public function verify(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'flow_id' => ['required', 'uuid'],
+            'code' => ['required', 'string', 'max:6'],
+        ]);
+
+        $result = $this->otp->verify($data['flow_id'], $data['code']);
+        $rec = $result['record'];
+
+        AuthEvent::record('otp_'.$result['status'], [
+            'user_id' => $rec?->user_id, 'email' => $rec?->email, 'ip' => $request->ip(),
+        ]);
+
+        if ($result['status'] === 'ok') {
+            return response()->json(['ok' => true])->header('Cache-Control', 'no-store');
+        }
+
+        $message = match ($result['status']) {
+            'expired' => 'This code has expired. Request a new one.',
+            'locked' => 'Too many attempts. Request a new code.',
+            'not_found' => 'This verification session is no longer valid.',
+            default => 'That code is not correct.',
+        };
+
+        return response()->json(['ok' => false, 'message' => $message])->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /api/verify/resend — rotate the code on an existing flow. */
+    public function resend(Request $request): JsonResponse
+    {
+        $data = $request->validate(['flow_id' => ['required', 'uuid']]);
+        $rec = EmailVerificationCode::where('flow_id', $data['flow_id'])->first();
+
+        if (! $rec) {
+            return response()->json(['ok' => false, 'message' => 'This verification session is no longer valid. Please register again.'], 422)
+                ->header('Cache-Control', 'no-store');
+        }
+
+        try {
+            $issued = $this->otp->rotate($rec, $request->ip());
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => 'Please wait a few seconds before requesting another code.'], 429)
+                ->header('Cache-Control', 'no-store');
+        }
+
+        Mail::to($rec->email)->send(new OtpMail($issued['code'], OtpService::TTL_MINUTES));
+
+        return response()->json(['ok' => true, 'email_masked' => EmailMask::mask($rec->email)])
+            ->header('Cache-Control', 'no-store');
+    }
+
+    /** GET /api/verify/context?flow_id= — masked email for display (no PII in URL). */
+    public function verifyContext(Request $request): JsonResponse
+    {
+        $rec = EmailVerificationCode::where('flow_id', (string) $request->query('flow_id'))->first();
+        if (! $rec) {
+            return response()->json(['message' => 'Not found.'], 404)->header('Cache-Control', 'no-store');
+        }
+
+        return response()->json([
+            'email_masked' => EmailMask::mask($rec->email),
+            'purpose' => $rec->purpose,
+        ])->header('Cache-Control', 'no-store');
+    }
+
+    /** Compose a display/storage phone from country code + national number. */
+    private function composePhone(string $cc, string $national): string
+    {
+        $cc = '+'.preg_replace('/\D/', '', $cc);
+        $national = preg_replace('/\D/', '', $national);
+
+        return $cc.$national;
+    }
+}

@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\EmailVerificationCode;
+use App\Models\User;
+use App\Enums\UserStatus;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
+/**
+ * Phase 4B — email OTP state machine (docs §2, Security §OTP). Owns issue /
+ * rotate / verify; the controller owns HTTP + email delivery. Guarantees:
+ *   - code is CSPRNG (random_int), stored ONLY as an argon2id hash;
+ *   - 10-minute TTL; single-use (consumed_at); max 5 attempts then destroyed;
+ *   - a new issue supersedes any prior live code for the same email+purpose;
+ *   - resend rotates the code on the SAME flow_id (URL stays valid) and the old
+ *     code stops working — with a 30s minimum interval.
+ */
+class OtpService
+{
+    public const TTL_MINUTES = 10;
+
+    public const MAX_ATTEMPTS = 5;
+
+    public const RESEND_MIN_INTERVAL = 30;   // seconds
+
+    /**
+     * Issue a fresh OTP for an email+purpose, superseding any prior live code.
+     *
+     * @return array{record: EmailVerificationCode, code: string}
+     */
+    public function issue(string $email, ?int $userId, string $purpose, ?string $ip): array
+    {
+        $email = mb_strtolower(trim($email));
+
+        // Supersede any still-live code for this address+purpose.
+        EmailVerificationCode::query()
+            ->where('email', $email)->where('purpose', $purpose)
+            ->whereNull('consumed_at')
+            ->update(['consumed_at' => Date::now()]);
+
+        $code = $this->newCode();
+        $record = EmailVerificationCode::create([
+            'flow_id' => (string) Str::uuid(),
+            'user_id' => $userId,
+            'email' => $email,
+            'code_hash' => Hash::make($code),
+            'purpose' => $purpose,
+            'attempts_used' => 0,
+            'max_attempts' => self::MAX_ATTEMPTS,
+            'expires_at' => Date::now()->addMinutes(self::TTL_MINUTES),
+            'last_sent_at' => Date::now(),
+            'request_ip' => $ip,
+        ]);
+
+        return ['record' => $record, 'code' => $code];
+    }
+
+    /**
+     * Resend: rotate the code on an existing flow (invalidates the previous one)
+     * and reset the attempt counter + TTL. Throws 'too_soon' inside the 30s window.
+     *
+     * @return array{record: EmailVerificationCode, code: string}
+     */
+    public function rotate(EmailVerificationCode $record, ?string $ip): array
+    {
+        if ($record->last_sent_at && $record->last_sent_at->diffInSeconds(Date::now()) < self::RESEND_MIN_INTERVAL) {
+            throw new \RuntimeException('too_soon');
+        }
+
+        $code = $this->newCode();
+        $record->forceFill([
+            'code_hash' => Hash::make($code),
+            'attempts_used' => 0,
+            'consumed_at' => null,
+            'expires_at' => Date::now()->addMinutes(self::TTL_MINUTES),
+            'last_sent_at' => Date::now(),
+            'request_ip' => $ip,
+        ])->save();
+
+        return ['record' => $record, 'code' => $code];
+    }
+
+    /**
+     * Verify a submitted code against a flow. On success consumes the code and
+     * promotes the user to a verified/active account.
+     *
+     * @return array{status: string, record: ?EmailVerificationCode}
+     *         status ∈ ok | invalid | expired | locked | not_found
+     */
+    public function verify(string $flowId, string $code): array
+    {
+        $record = EmailVerificationCode::where('flow_id', $flowId)->first();
+
+        if (! $record || $record->isConsumed()) {
+            return ['status' => 'not_found', 'record' => $record];
+        }
+        if ($record->isExpired()) {
+            return ['status' => 'expired', 'record' => $record];
+        }
+        if ($record->attemptsExhausted()) {
+            $record->markConsumed();   // destroy an exhausted code
+            return ['status' => 'locked', 'record' => $record];
+        }
+
+        // Constant-time compare against the stored hash.
+        if (! Hash::check($code, $record->code_hash)) {
+            $record->increment('attempts_used');
+            if ($record->fresh()->attemptsExhausted()) {
+                $record->markConsumed();
+                return ['status' => 'locked', 'record' => $record];
+            }
+
+            return ['status' => 'invalid', 'record' => $record];
+        }
+
+        $record->markConsumed();
+
+        // Promote the account: signup OTP verified → active + email_verified_at.
+        if ($record->user_id && $record->purpose === 'signup_student') {
+            $user = User::find($record->user_id);
+            if ($user && $user->email_verified_at === null) {
+                $user->forceFill([
+                    'email_verified_at' => Date::now(),
+                    'status' => UserStatus::Active,
+                ])->save();
+            }
+        }
+
+        return ['status' => 'ok', 'record' => $record];
+    }
+
+    /** Cryptographically-random zero-padded 6-digit code. */
+    private function newCode(): string
+    {
+        return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+}

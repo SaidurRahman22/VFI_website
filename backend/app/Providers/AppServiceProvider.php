@@ -44,6 +44,51 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Phase 4 — student auth throttles (docs §5). Server-side, per-email AND
+        // per-IP, independent of the client cooldowns (which reset on reload).
+        RateLimiter::for('student-register', function (Request $request) {
+            $email = mb_strtolower((string) $request->input('email'));
+
+            return [
+                Limit::perMinute(5)->by('ip:'.$request->ip()),
+                Limit::perMinutes(60, 5)->by('email:'.$email),
+            ];
+        });
+
+        // OTP resend: hard cap of 3 sends/hour/email (+ per-IP); the service also
+        // enforces a 30s minimum interval on the same flow.
+        RateLimiter::for('otp-send', function (Request $request) {
+            $flow = (string) $request->input('flow_id');
+
+            return [
+                Limit::perHour(20)->by('ip:'.$request->ip()),
+                Limit::perHour(3)->by('flow:'.$flow),
+            ];
+        });
+
+        // OTP verify: per-IP ceiling on top of the per-flow 5-attempt cap.
+        RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(20)->by('ip:'.$request->ip()));
+
+        // Student sign-in (docs §1.4): mirror of admin-login.
+        RateLimiter::for('student-login', function (Request $request) {
+            $email = mb_strtolower((string) $request->input('email'));
+
+            return [
+                Limit::perMinute(5)->by('ip:'.$request->ip()),
+                Limit::perMinute(5)->by('email:'.$email),
+            ];
+        });
+
+        // Forgot-password: per-email AND per-IP; low hourly cap ends email amplification.
+        RateLimiter::for('password-forgot', function (Request $request) {
+            $email = mb_strtolower((string) $request->input('email'));
+
+            return [
+                Limit::perMinute(5)->by('ip:'.$request->ip()),
+                Limit::perHour(5)->by('email:'.$email),
+            ];
+        });
+
         // Phase 3E — content policy on all 10 collection models (Filament enforces it).
         foreach ([
             \App\Models\Content\Event::class, \App\Models\Content\Blog::class,
