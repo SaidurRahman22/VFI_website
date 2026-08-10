@@ -87,7 +87,18 @@ Route::prefix('api')->group(function () {
         Route::put('me/test_scores', [$profile, 'testScores']);
         Route::put('me/preferences', [$profile, 'preferences']);
 
-        // Phase 5C — document checklist (read). Upload/download/delete: P5-D.
-        Route::get('me/documents', [\App\Http\Controllers\Me\DocumentController::class, 'index']);
+        // Phase 5C/5D — document checklist + scan-gated upload pipeline.
+        $docs = \App\Http\Controllers\Me\DocumentController::class;
+        Route::get('me/documents', [$docs, 'index']);
+        Route::get('me/documents/{type}/download', [$docs, 'download']);   // mint single-use URL
+        Route::delete('me/documents/{type}', [$docs, 'destroy']);
+        // Upload is gated on email verification (must_verify, docs §5.5).
+        Route::post('me/documents/{type}', [$docs, 'store'])
+            ->middleware(\App\Http\Middleware\EnsureVerifiedStudent::class);
     });
+
+    // PUBLIC single-use blob stream — the opaque token IS the capability (no
+    // session needed), so it lives outside the student-scoped group. Throttled.
+    Route::get('documents/dl/{token}', [\App\Http\Controllers\Me\DocumentController::class, 'stream'])
+        ->middleware('throttle:otp-verify');
 });
