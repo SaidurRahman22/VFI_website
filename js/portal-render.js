@@ -35,12 +35,19 @@
 
     var pp = VFI.partnerPortal ? (VFI.partnerPortal() || {}) : {};
 
-    /* -------------------------------- global: top-bar partner name -------- */
-    if (pp.partnerName) {
-      var nameEl = $(".pp-user__name");
-      var avEl = $(".pp-user__av");
-      if (nameEl) nameEl.textContent = "Hello, " + pp.partnerName + "!";
-      if (avEl) avEl.textContent = String(pp.partnerName).charAt(0).toUpperCase();
+    /* -------------------------------- global: top-bar partner name --------
+       Phase 6: resolve the greeting from the AUTHENTICATED member, per agency —
+       never a shared global string (one agency must not see another's name).
+       Falls back to the markup default if not signed in. */
+    if (window.VFIApi) {
+      window.VFIApi.get("/api/partner/me", { noRedirect: true }).then(function (me) {
+        var name = me && me.member ? me.member.name : "";
+        if (!name) return;
+        var nameEl = $(".pp-user__name");
+        var avEl = $(".pp-user__av");
+        if (nameEl) nameEl.textContent = "Hello, " + name + "!";
+        if (avEl) avEl.textContent = String((me.member.initial || name.charAt(0))).toUpperCase();
+      })["catch"](function () { /* not signed in — leave the markup default */ });
     }
 
     /* --------------------------------------------- per-container renderers -

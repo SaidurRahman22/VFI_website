@@ -305,8 +305,13 @@
   /* ------------------------------------------------------------- logout */
   function logout() {
     try { localStorage.removeItem("pp_collapsed"); } catch (e) {}
-    /* front-end demo: there is no session to clear — just return to sign-in */
-    window.location.href = "vfi-partner-login.html";
+    /* Phase 6: revoke the server session, then return to sign-in. */
+    var leave = function () { window.location.href = "vfi-partner-login.html"; };
+    if (window.VFIApi) {
+      window.VFIApi.post("/api/partner/logout", {}, { noRedirect: true }).then(leave)["catch"](leave);
+    } else {
+      leave();
+    }
   }
   var menuLogout = $("#ppMenuLogout");
   if (menuLogout) menuLogout.addEventListener("click", logout);

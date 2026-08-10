@@ -10,12 +10,14 @@
    validation, character rules, messages, the focus glow, ripples and the
    resend cooldown — are written once.
 
-   FRONT-END ONLY. There is no partner server behind any of these pages.
-   Nothing is transmitted, nothing is persisted, no email is sent, any code
-   is accepted, and no session is ever created.
+     vfi-partner-reset.html    set a new password from an emailed token link
 
-   Looking for the place to wire a real backend? Search this file for
-   "REAL REQUEST GOES HERE" — there is one per submitting action.
+   LIVE (Phase 6): every flow posts to the Laravel backend through window.VFIApi
+   (same-origin cookie session + CSRF). Registration returns an opaque flow_id —
+   the email address never rides in the URL; the OTP is verified server-side (a
+   wrong code is rejected); the email-change is authorised by the flow_id, not a
+   ?email= param. See docs/phases/phase-6-*.md and
+   backend/app/Http/Controllers/Partner.
    ========================================================================== */
 (function () {
   "use strict";
@@ -748,6 +750,30 @@
   /* =================================================================
      SUBMIT — local only
      ================================================================= */
+  /* the real payloads (the old `collect()` never existed — assemble from the
+     markup: register spans all three [data-pa-step] subtrees) */
+  function collectSignin(form) {
+    return {
+      email: (form.elements.email.value || "").trim(),
+      password: form.elements.password.value,
+      remember: form.elements.remember ? !!form.elements.remember.checked : true
+    };
+  }
+  function collectRegister() {
+    return {
+      agency: ($("#paRgAgency").value || "").trim(),
+      country: $("#paRgCountry").value,
+      city: ($("#paRgCity").value || "").trim(),
+      person: ($("#paRgPerson").value || "").trim(),
+      email: ($("#paRgEmail").value || "").trim(),
+      dial: dialSel ? dialSel.value : "+880",
+      phone: ($("#paRgPhone").value || "").trim(),
+      password: $("#paRgPass").value,
+      password_confirmation: $("#paRgPass2").value,
+      agree: $("#paRgAgree") ? !!$("#paRgAgree").checked : false
+    };
+  }
+
   function submitDemo(form, kind) {
     hideMsg();
     var scope = (kind === "register") ? currentStepEl() : form;
@@ -756,45 +782,39 @@
       btn.classList.add("pa-busy");
       btn.setAttribute("aria-busy", "true");
     }
-
-    /* ================================================================
-       >>> REAL REQUEST GOES HERE <<<
-
-       Everything below the timeout is theatre. To make this page real,
-       delete the setTimeout and put the network call in its place:
-
-         fetch("/api/partner/" + kind, {
-           method: "POST",
-           headers: { "Content-Type": "application/json" },
-           body: JSON.stringify(collect(form))
-         })
-           .then(function (res) { return res.json(); })
-           .then(function (data) {
-             if (data.ok) { location.href = "partner-dashboard.html"; return; }
-             showMsg(data.message || "We could not complete that.", "bad");
-           })
-           .catch(function () {
-             showMsg("Network problem. Please try again.", "bad");
-           });
-
-       Remember to clear the busy state in both branches, and to drop the
-       demo disclaimer from vfi-partner-login.html once a server exists.
-       ================================================================ */
-    window.setTimeout(function () {
-      if (btn) {
-        btn.classList.remove("pa-busy");
-        btn.removeAttribute("aria-busy");
-      }
-      /* nothing is kept: wipe the password fields from the DOM */
+    var release = function () {
+      if (btn) { btn.classList.remove("pa-busy"); btn.removeAttribute("aria-busy"); }
       resetPasswords(form);
       resetMeter();
-      /* Sign-in enters the (front-end demo) partner console directly — that is
-         what "after login" means to a partner. Registration still shows the
-         verify-your-email done panel first. No real session is created; the
-         console itself is a demo with empty data. */
-      if (kind === "signin") { window.location.href = "partner-dashboard.html"; return; }
-      showDone(kind);
-    }, calm() ? 250 : 950);
+    };
+
+    var body = (kind === "register") ? collectRegister() : collectSignin(form);
+
+    window.VFIApi.post("/api/partner/" + (kind === "register" ? "register" : "signin"), body, { noRedirect: true })
+      .then(function (data) {
+        release();
+        if (kind === "signin") { window.location.href = "partner-dashboard.html"; return; }
+        /* registration → verify page, carrying only an opaque flow_id (the email
+           address never rides in the URL); stash the masked address for display */
+        try {
+          if (data && data.email_masked && window.sessionStorage) {
+            sessionStorage.setItem("vfi_pflow_" + data.flow_id, data.email_masked);
+          }
+        } catch (e) { /* storage blocked — verify page falls back to the API */ }
+        window.location.href = "vfi-partner-verify.html?flow=" + encodeURIComponent(data.flow_id);
+      })
+      .catch(function (err) {
+        release();
+        var msg;
+        if (err && err.status === 422 && err.body && err.body.errors) {
+          msg = "Some details need another look — please check them and try again.";
+        } else {
+          msg = (err && err.body && err.body.message) ||
+                (err && err.status ? "We couldn't complete that. Please check your details and try again."
+                                   : "We couldn't reach the server. Please try again in a moment.");
+        }
+        showMsg(msg, "bad");
+      });
   }
 
   if (forms.signin) {
@@ -872,7 +892,7 @@
           " and call " + num + ".";
       }
       if (doneVerify) {
-        doneVerify.href = "vfi-partner-verify.html" + (addr ? "?email=" + encodeURIComponent(addr) : "");
+        doneVerify.href = "vfi-partner-verify.html";   /* flow_id is carried by the live path, not this */
         doneVerify.hidden = false;
       }
     } else if (doneVerify) {
@@ -941,7 +961,9 @@
     function toSent(address) {
       sentTo = address;
       if (addrOut) addrOut.textContent = address;
-      if (codeLink) codeLink.href = "vfi-partner-verify.html?email=" + encodeURIComponent(address);
+      /* reset now arrives as an emailed token link (vfi-partner-reset.html); no
+         address ever rides in a URL */
+      if (codeLink) codeLink.href = "vfi-partner-login.html";
       ask.classList.remove("pa-on");
       sentView.classList.add("pa-on");
       if (fgTitle) fgTitle.textContent = SENT_T;
@@ -976,28 +998,11 @@
       }
       var address = (email.value || "").replace(/^\s+|\s+$/g, "");
 
-      /* ================================================================
-         >>> REAL REQUEST GOES HERE <<<
+      /* Fire-and-forget + identical UI whether or not the address exists (the
+         server answers the same, so this can't become an enumeration oracle). */
+      window.VFIApi.post("/api/partner/password/forgot", { email: address }, { noRedirect: true })
+        .catch(function () { /* never reveal success/failure */ });
 
-         Everything below the timeout is theatre. To make this page real,
-         delete the setTimeout and put the network call in its place:
-
-           fetch("/api/partner/password/forgot", {
-             method: "POST",
-             headers: { "Content-Type": "application/json" },
-             body: JSON.stringify({ email: address })
-           })
-             .then(function (res) { return res.json(); })
-             .then(function () { toSent(address); })
-             .catch(function () {
-               showMsg("Network problem. Please try again.", "bad");
-             });
-
-         Answer identically whether or not the address exists — a reset
-         endpoint that says "no such account" is an account enumerator.
-         Remember to clear the busy state in both branches, and to drop the
-         demo disclaimer from vfi-partner-forgot.html once a server exists.
-         ================================================================ */
       window.setTimeout(function () {
         if (btn) {
           btn.classList.remove("pa-busy");
@@ -1013,9 +1018,10 @@
           showMsg("Hold on " + DASH + " you can ask for another email in " + cool.left() + " seconds.", "bad");
           return;
         }
-        /* >>> REAL REQUEST GOES HERE <<< — same endpoint as above. */
-        showMsg("Another reset email would be on its way now. Nothing was sent " + DASH +
-          " this page is a front-end demo.", "ok");
+        window.VFIApi.post("/api/partner/password/forgot",
+          { email: (email.value || "").replace(/^\s+|\s+$/g, "") }, { noRedirect: true })
+          .catch(function () {});
+        showMsg("We've sent it again — give it a minute to arrive.", "ok");
         cool.start();
       });
     }
@@ -1066,21 +1072,17 @@
     var busy = false;
 
     /* ---------------------------------------------------- the address */
-    function queryEmail() {
-      var q = location.search || "";
-      if (!q) return "";
-      var out = "";
-      q.replace(/^\?/, "").split("&").forEach(function (p) {
-        var i = p.indexOf("=");
-        var k = (i < 0 ? p : p.slice(0, i)).toLowerCase();
-        if (k !== "email") return;
-        var v = (i < 0 ? "" : p.slice(i + 1)).replace(/\+/g, " ");
-        try { out = decodeURIComponent(v); } catch (e) { out = v; }
-      });
-      return out.replace(/^\s+|\s+$/g, "");
+    /* State travels as an opaque flow id — NEVER the email — so nothing
+       sensitive lands in the URL, history or referrers. */
+    function queryFlow() {
+      var m = /[?&]flow=([^&#]*)/.exec(location.search || "");
+      if (!m) return "";
+      try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
     }
+    var flowId = queryFlow();
 
-    /* ab•••@domain.com — never print the whole local part back */
+    /* ab•••@domain.com — the server sends it already masked; kept for masking a
+       newly-typed address in the change-confirmation toast */
     function maskEmail(a) {
       var at = String(a || "").indexOf("@");
       if (at < 1 || at === String(a).length - 1) return "";
@@ -1089,15 +1091,24 @@
       return local.slice(0, keep) + "•••" + a.slice(at);
     }
 
-    function setAddress(a) {
-      var m = maskEmail(a);
-      address = m ? a : "";
-      if (addrOut) addrOut.textContent = m || GENERIC;
-      if (m) {
-        /* keep the URL shareable/refreshable without adding history */
-        try { history.replaceState(null, "", "?email=" + encodeURIComponent(address)); } catch (e) {}
-      }
+    function paintMasked(masked) {
+      if (addrOut) addrOut.textContent = masked || GENERIC;
     }
+
+    /* resolve the masked address for display without any email in the URL:
+       prefer the value stashed at registration, else ask the server by flow_id */
+    (function resolveAddress() {
+      var stashed = "";
+      try { if (window.sessionStorage) stashed = sessionStorage.getItem("vfi_pflow_" + flowId) || ""; } catch (e) { /* blocked */ }
+      if (stashed) { paintMasked(stashed); return; }
+      if (flowId && window.VFIApi) {
+        window.VFIApi.get("/api/partner/verify/context?flow_id=" + encodeURIComponent(flowId), { noRedirect: true })
+          .then(function (data) { paintMasked(data && data.email_masked); })
+          .catch(function () { paintMasked(""); });
+      } else {
+        paintMasked("");
+      }
+    })();
 
     /* ------------------------------------------------------ the boxes */
     function code() {
@@ -1239,39 +1250,31 @@
         goBtn.setAttribute("aria-busy", "true");
       }
 
-      /* ================================================================
-         >>> REAL REQUEST GOES HERE <<<
-
-         Everything below the timeout is theatre. To make this page real,
-         delete the setTimeout and put the network call in its place:
-
-           fetch("/api/partner/email/verify", {
-             method: "POST",
-             headers: { "Content-Type": "application/json" },
-             body: JSON.stringify({ email: address, code: code() })
-           })
-             .then(function (res) { return res.json(); })
-             .then(function (data) {
-               if (data.ok) { showVerified(); return; }
-               badCode("That code is not right, or it has expired.");
-               showMsg(data.message || "We could not verify that code.", "bad");
-               clearCode(true);
-             })
-             .catch(function () {
-               showMsg("Network problem. Please try again.", "bad");
-             });
-
-         Remember to clear the busy state in both branches, and to drop the
-         demo disclaimer from vfi-partner-verify.html once a server exists.
-         ================================================================ */
-      window.setTimeout(function () {
+      var release = function () {
         busy = false;
-        if (goBtn) {
-          goBtn.classList.remove("pa-busy");
-          goBtn.removeAttribute("aria-busy");
-        }
-        showVerified();
-      }, calm() ? 250 : 950);
+        if (goBtn) { goBtn.classList.remove("pa-busy"); goBtn.removeAttribute("aria-busy"); }
+      };
+
+      /* Real check. A wrong code comes back {ok:false} with a 200, so it
+         resolves (not throws); transport failures land in .catch. */
+      window.VFIApi.post("/api/partner/email/verify", { flow_id: flowId, code: code() }, { noRedirect: true })
+        .then(function (data) {
+          release();
+          if (data && data.ok) {
+            try { if (flowId && window.sessionStorage) sessionStorage.removeItem("vfi_pflow_" + flowId); } catch (e) {}
+            showVerified();
+            return;
+          }
+          badCode("That code is not right, or it has expired.");
+          showMsg((data && data.message) || "We couldn't verify that code.", "bad");
+          clearCode(true);
+        })
+        .catch(function (err) {
+          release();
+          badCode("We couldn't check that code.");
+          showMsg((err && err.body && err.body.message) || "We couldn't reach the server. Please try again in a moment.", "bad");
+          clearCode(true);
+        });
     }
 
     function showVerified() {
@@ -1280,13 +1283,11 @@
       if (vws) vws.hidden = true;
       if (vfTitle) vfTitle.textContent = "Email verified";
       if (vfSub) {
-        vfSub.textContent = "Any six digits are accepted here " + DASH +
-          " this is simply the screen a real partner console would show next.";
+        vfSub.textContent = "Your email address is confirmed. Our partner team reviews every " +
+          "application before your account goes live — we'll email you when it's approved.";
       }
       if (doneTx) {
-        doneTx.textContent = address
-          ? "The code you entered for " + maskEmail(address) + " was complete and well formed."
-          : "All six digits are in and correctly formatted.";
+        doneTx.textContent = "Thanks for confirming your email. You'll be able to sign in once your agency is approved.";
       }
       doneBox.hidden = false;
       if (doneTtl) { try { doneTtl.focus(); } catch (e) {} }
@@ -1315,12 +1316,17 @@
           showMsg("Hold on " + DASH + " you can ask for another code in " + cool.left() + " seconds.", "bad");
           return;
         }
-        /* >>> REAL REQUEST GOES HERE <<< — POST /api/partner/email/code */
-        goodCode();
-        clearCode(true);
-        showMsg("A fresh six-digit code would be on its way now. Nothing was sent " + DASH +
-          " this page is a front-end demo.", "ok");
-        cool.start();
+        window.VFIApi.post("/api/partner/email/code", { flow_id: flowId }, { noRedirect: true })
+          .then(function () {
+            goodCode();
+            clearCode(true);
+            showMsg("A fresh six-digit code is on its way — the last one no longer works.", "ok");
+            cool.start();
+          })
+          .catch(function (err) {
+            showMsg((err && err.body && err.body.message) ||
+              "We couldn't send a new code just now. Please wait a moment and try again.", "bad");
+          });
       });
     }
 
@@ -1330,7 +1336,7 @@
       mail.hidden = !on;
       form.classList.toggle("pa-on", !on);
       if (on && mailIn) {
-        mailIn.value = address;
+        mailIn.value = "";   /* type the NEW address; the old one is never echoed */
         try { mailIn.focus(); } catch (e) {}
       }
     }
@@ -1360,29 +1366,100 @@
           btn.setAttribute("aria-busy", "true");
         }
         var next = (mailIn.value || "").replace(/^\s+|\s+$/g, "");
+        var release = function () {
+          if (btn) { btn.classList.remove("pa-busy"); btn.removeAttribute("aria-busy"); }
+        };
 
-        /* >>> REAL REQUEST GOES HERE <<< — POST /api/partner/email/code
-           with the new address, then fall through to the same UI. */
-        window.setTimeout(function () {
-          if (btn) {
-            btn.classList.remove("pa-busy");
-            btn.removeAttribute("aria-busy");
-          }
-          setAddress(next);
-          showMail(false);
-          goodCode();
-          clearCode(true);
-          showMsg("A code would now go to " + maskEmail(next) + ". Nothing was sent " + DASH +
-            " this page is a front-end demo.", "ok");
-          cool.start();
-        }, calm() ? 250 : 800);
+        /* Hardened: the change is authorised by possession of the server-side
+           flow_id (NOT a URL ?email=), restarts the flow + invalidates prior
+           codes, and is rate-limited server-side. */
+        window.VFIApi.post("/api/partner/email/change", { flow_id: flowId, email: next }, { noRedirect: true })
+          .then(function (data) {
+            release();
+            paintMasked((data && data.email_masked) || maskEmail(next));
+            showMail(false);
+            goodCode();
+            clearCode(true);
+            showMsg("A fresh code is on its way to " + ((data && data.email_masked) || maskEmail(next)) + ".", "ok");
+            cool.start();
+          })
+          .catch(function (err) {
+            release();
+            showMsg((err && err.body && err.body.message) ||
+              "We couldn't change that address just now. Please try again in a moment.", "bad");
+          });
       });
     }
 
     /* --------------------------------------------------------- start */
-    setAddress(queryEmail());
+    /* the masked address is resolved by flow_id in resolveAddress() above */
     paintBoxes();
-    cool.start();     /* a code was just "sent", so resending waits its turn */
+    cool.start();     /* a code was just sent, so resending waits its turn */
+  })();
+
+  /* =================================================================
+     PAGE — vfi-partner-reset.html : set a new password from a token
+     Reached from the emailed reset link (?token=). Three states: the form,
+     a success panel, and a dead-end for a missing/invalid/expired token.
+     ================================================================= */
+  (function () {
+    var rsForm = $("#paRsForm");
+    if (!rsForm) return;
+    var rsPass = $("#paRsPass");
+    var rsPass2 = $("#paRsPass2");
+    var rsDone = $("#paRsDone");
+    var rsBad = $("#paRsBad");
+    var rsBadTxt = $("#paRsBadTxt");
+
+    function queryToken() {
+      var m = /[?&]token=([^&#]*)/.exec(location.search || "");
+      if (!m) return "";
+      try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+    }
+    var rsToken = queryToken();
+
+    function show(which) {
+      rsForm.classList.toggle("pa-on", which === "form");
+      if (rsDone) rsDone.classList.toggle("pa-on", which === "done");
+      if (rsBad) rsBad.classList.toggle("pa-on", which === "bad");
+    }
+    function fail(msg) {
+      if (rsBadTxt && msg) rsBadTxt.textContent = msg;
+      show("bad");
+    }
+
+    if (!rsToken) { fail("This reset link is missing or malformed. Request a new one below."); }
+
+    rsForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      hideMsg();
+      var pw = rsPass ? (rsPass.value || "") : "";
+      var pw2 = rsPass2 ? (rsPass2.value || "") : "";
+      if (pw.length < 8) { showMsg("Your new password needs at least 8 characters.", "bad"); if (rsPass) rsPass.focus(); return; }
+      if (pw !== pw2) { showMsg("Those two passwords don't match.", "bad"); if (rsPass2) rsPass2.focus(); return; }
+
+      var btn = $('button[type="submit"]', rsForm);
+      if (btn) { btn.classList.add("pa-busy"); btn.setAttribute("aria-busy", "true"); }
+      var release = function () { if (btn) { btn.classList.remove("pa-busy"); btn.removeAttribute("aria-busy"); } };
+
+      window.VFIApi.post("/api/partner/password/reset/submit",
+        { token: rsToken, password: pw, password_confirmation: pw2 }, { noRedirect: true })
+        .then(function () {
+          release();
+          if (rsPass) rsPass.value = ""; if (rsPass2) rsPass2.value = "";
+          show("done");
+        })
+        .catch(function (err) {
+          release();
+          if (rsPass) rsPass.value = ""; if (rsPass2) rsPass2.value = "";
+          var body = err && err.body;
+          if (err && err.status === 422 && body && body.errors && body.errors.password) {
+            showMsg(body.errors.password[0], "bad");
+            return;
+          }
+          fail((body && body.message) || "This reset link is invalid or has expired.");
+        });
+    });
   })();
 
   /* =================================================================
