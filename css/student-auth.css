@@ -1061,6 +1061,8 @@ label.sa-check { cursor: pointer; }
 }
 .sa-submit:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -12px rgba(37, 99, 235, .85); filter: saturate(1.12); }
 .sa-submit:active { transform: translateY(0); }
+/* an anchor styled as the primary button (reset success / dead-end CTAs) */
+.sa-submit--link { text-decoration: none; margin-top: 4px; }
 
 /* Travelling shimmer. The highlight passes UNDER the label, so its alpha is a
    contrast budget, not a taste call: at .42 it lifted the button ground to

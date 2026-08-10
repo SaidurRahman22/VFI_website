@@ -5,21 +5,19 @@
      student-forgot.html   password reset request
      student-verify.html   email verification (6-digit code)
 
-   One script for all three: they share a card, a status strip, a live region,
+     student-reset.html    choose a new password (from the emailed link)
+
+   One script for all four: they share a card, a status strip, a live region,
    the field validators, the character rules and the success overlay, so they
    share the code that drives them. Each page tells this file who it is with
    `data-sa-page="<filename>"` on <body>; every module below then wires itself
    only if the markup it needs is actually on the page.
 
-   FRONT-END ONLY. There is no account server behind any of these pages.
-   Nothing typed here is transmitted, persisted or checked against anything —
-   no email is sent, no code is verified, any six digits are accepted. Every
-   routine below is interface behaviour only.
-
-   >> WHERE A REAL BACKEND WOULD GO: search this file for "REAL REQUEST".
-      There are four of them (sign in / create account, send reset link,
-      resend reset link, check code). Everything around each one already
-      handles the busy state, the error surface and the success panel.
+   LIVE (Phase 4): every flow posts to the Laravel backend through
+   window.VFIApi (same-origin cookie session + CSRF). Registration returns an
+   opaque flow_id — the email address never rides in the URL; OTP codes and
+   reset tokens are verified server-side (a wrong code is rejected). See
+   docs/phases/phase-4-*.md and backend/app/Http/Controllers/Auth.
 
    Style note: this file matches the rest of the codebase — var, function
    expressions, string concatenation. No const/let, arrow functions or
@@ -729,72 +727,55 @@
 
       var emailEl = form.elements.email;
       var email = emailEl ? (emailEl.value || "").trim() : "";
-      /* the number exactly as a real endpoint would receive it */
-      var tel = (kind === "register" && ccSel && phone)
-        ? ccSel.value + " " + (phone.value || "").trim()
-        : "";
 
-      /* ------------------------------------------------------------------
-         REAL REQUEST GOES HERE.
-
-         Delete the setTimeout below and post the form instead. The rest of
-         this function already does the right thing on either outcome:
-
-           fetch("/api/" + kind, {
-             method: "POST",
-             headers: { "Content-Type": "application/json" },
-             body: JSON.stringify({
-               email: email,
-               password: form.elements.password.value,
-               phone: kind === "register"
-                 ? form.elements.cc.value + form.elements.phone.value
-                 : undefined
-             })
-           })
-             .then(function (res) { return res.json(); })
-             .then(function (data) {
-               resetFill(btn);
-               if (data.ok) { location.href = "dashboard.html"; return; }
-               showNote(data.message || "We couldn't sign you in. Check your details and try again.", "err");
-             })
-             .catch(function () {
-               resetFill(btn);
-               showNote("We couldn't reach the server. Please try again in a moment.", "err");
-             });
-
-         Until that exists, the page must not pretend anyone is signed in —
-         hence the honest wording in COPY[kind].doneMsg and the standing
-         disclaimer in the card.
-         ------------------------------------------------------------------ */
-      setTimeout(function () {
-        resetFill(btn);
-
-        /* after a signup, offer the (equally demo-only) email confirmation step */
-        if (doneNext) {
-          if (kind === "register") {
-            doneNext.hidden = false;
-            doneNext.href = "student-verify.html" + (email ? "?email=" + encodeURIComponent(email) : "");
-          } else {
-            doneNext.hidden = true;
-          }
-        }
-        /* both paths land in the portal — sign-in goes straight there, a new
-           signup can confirm email first or head in now. This is the only way
-           in, so it must show on success. */
-        var donePortal = $("#saDonePortal");
-        if (donePortal) donePortal.hidden = false;
-        showDone(
-          COPY[kind].done,
-          COPY[kind].doneMsg + (tel ? " The number this form would have sent is " + tel + "." : "")
-        );
-
-        /* never leave a typed password sitting in the DOM */
+      /* wipe the typed password out of the DOM once we've captured it */
+      var clearPw = function () {
         var pw = $('input[name="password"]', form);
-        if (pw) {
-          pw.value = "";
-          if (pw === newPw) paintMeter("");
-        }
-      }, 1100);
+        if (pw) { pw.value = ""; if (pw === newPw) paintMeter(""); }
+      };
+
+      var body = { email: email, password: form.elements.password.value };
+      if (kind === "register") {
+        body.name = (form.elements.name.value || "").trim();
+        body.cc = form.elements.cc.value;
+        body.phone = (form.elements.phone.value || "").trim();
+        body.agree = form.elements.agree ? !!form.elements.agree.checked : false;
+      } else if (form.elements.remember) {
+        body.remember = !!form.elements.remember.checked;
+      }
+
+      /* Real request. Success paths navigate away; every failure resurfaces
+         the busy button and shows the server's message (generic by design). */
+      window.VFIApi.post("/api/" + (kind === "register" ? "register" : "login"), body, { noRedirect: true })
+        .then(function (data) {
+          resetFill(btn);
+          clearPw();
+          if (kind === "register") {
+            /* stash the masked address so the verify page can show it without
+               ever putting the real email in the URL */
+            try {
+              if (data && data.email_masked && window.sessionStorage) {
+                sessionStorage.setItem("vfi_flow_" + data.flow_id, data.email_masked);
+              }
+            } catch (e) { /* storage blocked — verify page falls back to the API */ }
+            location.href = "student-verify.html?flow=" + encodeURIComponent(data.flow_id);
+            return;
+          }
+          location.href = "student-profile.html";   /* signed in → the portal */
+        })
+        .catch(function (err) {
+          resetFill(btn);
+          clearPw();
+          var msg;
+          if (err && err.status === 422 && err.body && err.body.errors) {
+            msg = "A couple of fields need another look — please check them and try again.";
+          } else {
+            msg = (err && err.body && err.body.message) ||
+                  (err && err.status ? "We couldn't complete that. Please check your details and try again."
+                                     : "We couldn't reach the server. Please try again in a moment.");
+          }
+          showNote(msg, "err");
+        });
     };
 
     Object.keys(forms).forEach(function (k) {
@@ -855,19 +836,11 @@
     /* one place that "sends" the link, so step 1 and the resend button agree */
     var fpSend = function (addr, isResend) {
       if (fpAddr) fpAddr.textContent = addr;
-      /* ------------------------------------------------------------------
-         REAL REQUEST GOES HERE.
-
-           fetch("/api/password/reset", {
-             method: "POST",
-             headers: { "Content-Type": "application/json" },
-             body: JSON.stringify({ email: addr })
-           });
-
-         Deliberately fire-and-forget: the confirmation must read the same
-         whether or not the address is on file, or this page becomes a way to
-         enumerate accounts. Nothing is sent today — there is no mail server.
-         ------------------------------------------------------------------ */
+      /* Deliberately fire-and-forget: the server responds identically whether
+         or not the address is on file (enumeration safety), so we ignore the
+         outcome entirely and always show the same confirmation. */
+      window.VFIApi.post("/api/password/reset", { email: addr }, { noRedirect: true })
+        .catch(function () { /* never surface success/failure */ });
       fpCool.start(COOLDOWN_SECONDS);
       if (isResend) {
         showNote("We've sent it again — give it a minute to arrive.", "ok");
@@ -931,22 +904,37 @@
     var vfSending = false;
 
     /* ------------------------------------------- whose address is this? */
-    var vfEmail = query("email");
-    var vfMasked = maskEmail(vfEmail);
-    if (vfTo) {
-      if (vfMasked) {
+    /* State travels as an opaque flow id — never the email — so nothing
+       sensitive lands in the URL, history or referrers. */
+    var vfFlow = query("flow");
+
+    var paintTo = function (masked) {
+      if (!vfTo) return;
+      if (masked) {
         vfTo.textContent = "";
         vfTo.appendChild(document.createTextNode("We sent a six-digit code to "));
         var b = document.createElement("b");
-        b.textContent = vfMasked;          /* textContent, never innerHTML — this came off the URL */
+        b.textContent = masked;            /* textContent, never innerHTML */
         vfTo.appendChild(b);
         vfTo.appendChild(document.createTextNode("."));
       } else {
         vfTo.textContent = "Enter the six-digit code from the confirmation email we sent you.";
       }
+    };
+
+    /* prefer the address stashed at registration; otherwise ask the server by
+       flow id (still no raw email anywhere in the URL) */
+    var vfStashed = "";
+    try { if (window.sessionStorage) vfStashed = sessionStorage.getItem("vfi_flow_" + vfFlow) || ""; } catch (e) { /* blocked */ }
+    if (vfStashed) {
+      paintTo(vfStashed);
+    } else if (vfFlow && window.VFIApi) {
+      window.VFIApi.get("/api/verify/context?flow_id=" + encodeURIComponent(vfFlow), { noRedirect: true })
+        .then(function (data) { paintTo(data && data.email_masked); })
+        .catch(function () { paintTo(""); });
+    } else {
+      paintTo("");
     }
-    /* the sub-heading stays generic: saVerifyTo below it already names the
-       address, and saying it twice in two lines just reads as a stutter */
 
     /* ------------------------------------------------------- cooldown */
     var vfCool = Cooldown(vfResend, vfResendTxt, vfResendHint, {
@@ -961,22 +949,18 @@
     if (vfResend) {
       vfResend.addEventListener("click", function () {
         if (vfResend.getAttribute("aria-disabled") === "true") return;
-        /* ----------------------------------------------------------------
-           REAL REQUEST GOES HERE.
-
-             fetch("/api/verify/resend", {
-               method: "POST",
-               headers: { "Content-Type": "application/json" },
-               body: JSON.stringify({ email: emailFromTheQueryString })
-             });
-
-           No code is generated or sent today — there is no mail server, and
-           the check below accepts any six digits.
-           ---------------------------------------------------------------- */
-        vfCool.start(COOLDOWN_SECONDS);
-        clearBoxes(false);
-        showNote("A fresh code is on its way — the last one no longer works.", "ok");
-        if (otpBoxes[0]) otpBoxes[0].focus();
+        window.VFIApi.post("/api/verify/resend", { flow_id: vfFlow }, { noRedirect: true })
+          .then(function () {
+            vfCool.start(COOLDOWN_SECONDS);
+            clearBoxes(false);
+            showNote("A fresh code is on its way — the last one no longer works.", "ok");
+            if (otpBoxes[0]) otpBoxes[0].focus();
+          })
+          .catch(function (err) {
+            var msg = (err && err.body && err.body.message) ||
+                      "We couldn't send a new code just now. Please wait a moment and try again.";
+            showNote(msg, "err");
+          });
       });
     }
 
@@ -1111,37 +1095,31 @@
       setBusy(vfSubmit);
       announce("Checking your code.");
 
-      /* ------------------------------------------------------------------
-         REAL REQUEST GOES HERE.
-
-           fetch("/api/verify", {
-             method: "POST",
-             headers: { "Content-Type": "application/json" },
-             body: JSON.stringify({ email: emailFromTheQueryString, code: v })
-           })
-             .then(function (res) { return res.json(); })
-             .then(function (data) {
-               vfSending = false;
-               resetFill(vfSubmit);
-               if (data.ok) { showDone("Email confirmed", "…"); return; }
-               otp.classList.add("sa-err");
-               showNote(data.message || "That code didn't match. Check it and try again.", "err");
-               clearBoxes(true);
-             })
-             .catch(function () { … });
-
-         Nothing is checked today: there is no server and no code was ever
-         generated, so ANY six digits are accepted. The success wording says
-         so, and so does the standing disclaimer in the card.
-         ------------------------------------------------------------------ */
-      setTimeout(function () {
-        vfSending = false;
-        resetFill(vfSubmit);
-        showDone(
-          "Code accepted",
-          "Any six digits get through here — there is no server to check them against, so no address has actually been confirmed."
-        );
-      }, 1000);
+      /* Real check against the server. Wrong codes come back {ok:false} with a
+         200, so they resolve (not throw); transport failures land in .catch. */
+      window.VFIApi.post("/api/verify", { flow_id: vfFlow, code: v }, { noRedirect: true })
+        .then(function (data) {
+          vfSending = false;
+          resetFill(vfSubmit);
+          if (data && data.ok) {
+            try { if (vfFlow && window.sessionStorage) sessionStorage.removeItem("vfi_flow_" + vfFlow); } catch (e) { /* fine */ }
+            var dn = $("#saDoneNext");
+            if (dn) dn.hidden = false;
+            showDone("Email confirmed", "Your email address is verified. You can sign in now.");
+            return;
+          }
+          otp.classList.add("sa-err");
+          showNote((data && data.message) || "That code didn't match. Check it and try again.", "err");
+          clearBoxes(true);
+        })
+        .catch(function (err) {
+          vfSending = false;
+          resetFill(vfSubmit);
+          otp.classList.add("sa-err");
+          showNote((err && err.body && err.body.message) ||
+                   "We couldn't check that code. Please try again in a moment.", "err");
+          clearBoxes(true);
+        });
     }
 
     vfForm.addEventListener("submit", function (e) {
@@ -1152,6 +1130,89 @@
     onHide.push(function (refocus) {
       clearBoxes(false);
       if (refocus) focusBox(0);
+    });
+  }
+
+  /* ==========================================================================
+     PAGE 4 — student-reset.html : choose a new password (from the emailed link)
+
+     Reached from the reset email's link, which carries a single-use ?token=.
+     Three states in one card: the form, a success panel, and a dead-end panel
+     for a missing / invalid / expired token (with a "request a new link" CTA).
+     ========================================================================== */
+  var rsForm = $("#saResetForm");
+
+  if (rsForm) {
+    var rsPw = $("#rs-pw");
+    var rsPw2 = $("#rs-pw2");
+    var rsSubmit = $(".sa-submit", rsForm);
+    var rsDone = $("#saResetDone");
+    var rsBad = $("#saResetBad");
+    var rsBadTxt = $("#saResetBadTxt");
+    var rsToken = query("token");
+
+    var rsShow = function (which) {
+      rsForm.classList.toggle("sa-on", which === "form");
+      if (rsDone) rsDone.classList.toggle("sa-on", which === "done");
+      if (rsBad) rsBad.classList.toggle("sa-on", which === "bad");
+    };
+    var rsFail = function (msg) {
+      if (rsBadTxt && msg) rsBadTxt.textContent = msg;
+      rsShow("bad");
+    };
+
+    /* a link with no token can never work — say so before the user types */
+    if (!rsToken) {
+      rsFail("This reset link is missing or malformed. Request a new one below.");
+    }
+
+    /* password reveal is wired globally (see .sa-field__eye handler above) */
+
+    rsForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      hideNote();
+      var pw = rsPw ? (rsPw.value || "") : "";
+      var pw2 = rsPw2 ? (rsPw2.value || "") : "";
+
+      if (pw.length < 8) {
+        setError(rsPw, "Use at least 8 characters.");
+        showNote("Your new password needs at least 8 characters.", "err");
+        return;
+      }
+      if (pw !== pw2) {
+        setError(rsPw2, "This doesn't match the password above.");
+        showNote("Those two passwords don't match.", "err");
+        return;
+      }
+
+      setBusy(rsSubmit);
+      announce("Saving your new password.");
+
+      window.VFIApi.post(
+        "/api/password/reset/submit",
+        { token: rsToken, password: pw, password_confirmation: pw2 },
+        { noRedirect: true }
+      )
+        .then(function () {
+          resetFill(rsSubmit);
+          if (rsPw) rsPw.value = "";
+          if (rsPw2) rsPw2.value = "";
+          announce("Your password has been updated.");
+          rsShow("done");
+        })
+        .catch(function (err) {
+          resetFill(rsSubmit);
+          if (rsPw) rsPw.value = "";
+          if (rsPw2) rsPw2.value = "";
+          var body = err && err.body;
+          if (err && err.status === 422 && body && body.errors && body.errors.password) {
+            setError(rsPw, "Choose a different password.");
+            showNote(body.errors.password[0], "err");
+            return;
+          }
+          /* invalid or expired token → dead-end panel with a fresh-link CTA */
+          rsFail((body && body.message) || "This reset link is invalid or has expired.");
+        });
     });
   }
 
