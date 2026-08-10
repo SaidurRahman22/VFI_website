@@ -150,6 +150,12 @@ Route::prefix('api')->group(function () {
         $ref = \App\Http\Controllers\Partner\PartnerReferralController::class;
         Route::get('partner/referral-link', [$ref, 'show']);
         Route::post('partner/referral-link/regenerate', [$ref, 'regenerate']);
+
+        $notif = \App\Http\Controllers\Partner\PartnerNotificationController::class;
+        Route::get('partner/notifications', [$notif, 'index']);
+        Route::post('partner/notifications/read', [$notif, 'read']);
+
+        Route::get('partner/resources', [\App\Http\Controllers\Partner\PartnerResourceController::class, 'index']);
     });
 
     // PUBLIC referral resolver for the QR-registration landing (rate-limited).

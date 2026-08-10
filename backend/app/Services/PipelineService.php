@@ -6,6 +6,7 @@ use App\Enums\ActorType;
 use App\Enums\ApplicationStatus;
 use App\Models\Partner\Application;
 use App\Models\Partner\ApplicationStatusEvent;
+use App\Models\Partner\PartnerNotification;
 use App\Models\Student\Student;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +37,13 @@ class PipelineService
             ]);
 
             $this->writeEvent($app, null, ApplicationStatus::Submitted, ActorType::Partner, $actorId, 'Application created');
+
+            $name = trim(($student->first_name ?? '').' '.($student->last_name ?? '')) ?: ($student->email ?? 'a student');
+            PartnerNotification::create([
+                'agency_id' => $app->agency_id, 'kind' => 'application',
+                'title' => 'Application submitted', 'body' => "A new application was created for {$name}.",
+                'link' => 'partner-applications.html',
+            ]);
 
             // Phase 9: the application-fee debit is called HERE behind a Pennant
             // flag — OFF in Phase 7 (no money surface yet).
