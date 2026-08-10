@@ -49,6 +49,12 @@ Route::get('/health', function () {
 Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'store'])
     ->middleware('throttle:contact');
 
+/*
+| Public content read path (Phase 2C) — GET-only, ETag-cacheable, no cookies.
+| GET /api/content/bundle  → the full content object for window.VFI_BOOTSTRAP.
+*/
+Route::get('/content/bundle', [\App\Http\Controllers\ContentBundleController::class, 'bundle']);
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
