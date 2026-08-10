@@ -49,4 +49,17 @@ abstract class ContentItem extends Model
 
         return $out;
     }
+
+    /** Reverse of toBundle: a frontend item → DB column attributes (for import). */
+    public function mapFromBundle(array $item): array
+    {
+        $attrs = [];
+        foreach ($this->bundleMap as $col => $key) {
+            if (array_key_exists($key, $item)) {
+                $attrs[$col] = $item[$key];
+            }
+        }
+
+        return $attrs;   // includes legacy_id (from item['id'])
+    }
 }
