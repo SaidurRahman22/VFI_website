@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\AccountExistsMail;
 use App\Mail\OtpMail;
 use App\Models\AuthEvent;
+use App\Models\EmailVerificationCode;
 use App\Models\Partner\PartnerAgency;
 use App\Models\Partner\PartnerApplication;
 use App\Models\User;
@@ -101,6 +102,110 @@ class PartnerAuthController extends Controller
             'flow_id' => $flow->flow_id,
             'email_masked' => EmailMask::mask($email),
         ], 201)->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /api/partner/email/verify — {flow_id, code}. */
+    public function verify(Request $request): JsonResponse
+    {
+        $data = $request->validate(['flow_id' => ['required', 'uuid'], 'code' => ['required', 'string', 'max:6']]);
+        $result = $this->otp->verify($data['flow_id'], $data['code']);
+        $rec = $result['record'];
+
+        AuthEvent::record('partner_otp_'.$result['status'], ['user_id' => $rec?->user_id, 'email' => $rec?->email, 'ip' => $request->ip()]);
+
+        if ($result['status'] === 'ok') {
+            return response()->json(['ok' => true])->header('Cache-Control', 'no-store');
+        }
+
+        $message = match ($result['status']) {
+            'expired' => 'This code has expired. Request a new one.',
+            'locked' => 'Too many attempts. Request a new code.',
+            'not_found' => 'This verification session is no longer valid.',
+            default => 'That code is not correct.',
+        };
+
+        return response()->json(['ok' => false, 'message' => $message])->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /api/partner/email/code — {flow_id} resend (rotate the code). */
+    public function resend(Request $request): JsonResponse
+    {
+        $data = $request->validate(['flow_id' => ['required', 'uuid']]);
+        $rec = EmailVerificationCode::where('flow_id', $data['flow_id'])->where('purpose', 'partner_register')->first();
+        if (! $rec) {
+            return response()->json(['ok' => false, 'message' => 'This verification session is no longer valid.'], 422)->header('Cache-Control', 'no-store');
+        }
+
+        try {
+            $issued = $this->otp->rotate($rec, $request->ip());
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => 'Please wait a few seconds before requesting another code.'], 429)->header('Cache-Control', 'no-store');
+        }
+
+        Mail::to($rec->email)->send(new OtpMail($issued['code'], OtpService::TTL_MINUTES));
+
+        return response()->json(['ok' => true, 'email_masked' => EmailMask::mask($rec->email)])->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * POST /api/partner/email/change — {flow_id, email}. Hardened: the change
+     * requires possession of the server-side flow_id (NOT a URL ?email=), so an
+     * attacker who merely knows the applicant's address cannot redirect the code.
+     * It restarts the flow (invalidates prior codes) and is rate-limited to
+     * `partner.max_email_changes` per registration (docs §4).
+     */
+    public function emailChange(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'flow_id' => ['required', 'uuid'],
+            'email' => ['required', 'string', 'email:rfc', 'max:255'],
+        ]);
+
+        $rec = EmailVerificationCode::where('flow_id', $data['flow_id'])->where('purpose', 'partner_register')->first();
+        $application = $rec ? PartnerApplication::where('user_id', $rec->user_id)->first() : null;
+        if (! $rec || ! $application) {
+            return response()->json(['ok' => false, 'message' => 'This verification session is no longer valid.'], 422)->header('Cache-Control', 'no-store');
+        }
+
+        if ($application->email_change_count >= (int) config('partner.max_email_changes', 2)) {
+            return response()->json(['ok' => false, 'message' => 'You have changed the address too many times. Please register again.'], 429)->header('Cache-Control', 'no-store');
+        }
+
+        $newEmail = mb_strtolower(trim($data['email']));
+        $application->increment('email_change_count');
+
+        // Enumeration-safe + anti-hijack: if the new address already belongs to a
+        // DIFFERENT account, do not re-point the code to it — notify that address
+        // instead, with the same success-shaped response.
+        $clash = User::where('email', $newEmail)->where('id', '!=', $rec->user_id)->exists();
+        if ($newEmail === $rec->email || $clash) {
+            if ($clash) {
+                Mail::to($newEmail)->send(new AccountExistsMail);
+            }
+
+            return response()->json(['ok' => true, 'email_masked' => EmailMask::mask($newEmail)])->header('Cache-Control', 'no-store');
+        }
+
+        // Move the pending registration to the new address and restart the flow.
+        User::whereKey($rec->user_id)->update(['email' => $newEmail]);
+        $application->update(['work_email' => $newEmail]);
+        $issued = $this->otp->reissue($rec, $newEmail, $request->ip());
+        Mail::to($newEmail)->send(new OtpMail($issued['code'], OtpService::TTL_MINUTES));
+        AuthEvent::record('partner_email_changed', ['user_id' => $rec->user_id, 'email' => $newEmail, 'ip' => $request->ip()]);
+
+        return response()->json(['ok' => true, 'email_masked' => EmailMask::mask($newEmail)])->header('Cache-Control', 'no-store');
+    }
+
+    /** GET /api/partner/verify/context?flow_id= — masked email for display (no PII in URL). */
+    public function verifyContext(Request $request): JsonResponse
+    {
+        $rec = EmailVerificationCode::where('flow_id', (string) $request->query('flow_id'))
+            ->where('purpose', 'partner_register')->first();
+        if (! $rec) {
+            return response()->json(['message' => 'Not found.'], 404)->header('Cache-Control', 'no-store');
+        }
+
+        return response()->json(['email_masked' => EmailMask::mask($rec->email)])->header('Cache-Control', 'no-store');
     }
 
     // ---- helpers ----

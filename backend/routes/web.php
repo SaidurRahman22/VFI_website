@@ -110,9 +110,14 @@ Route::prefix('api')->group(function () {
     | resolves the agency from the SESSION only and pushes it into both the
     | Eloquent scope and Postgres RLS. Sign-in / register land in P6-C..E.
     */
-    // Partner registration (public, throttled) — creates a reviewable application.
+    // Partner registration + OTP (public, throttled). Creates a reviewable
+    // application; the email-change is bound to the server-side flow_id (P6-D).
     $pa = \App\Http\Controllers\Partner\PartnerAuthController::class;
     Route::post('partner/register', [$pa, 'register'])->middleware('throttle:partner-register');
+    Route::post('partner/email/verify', [$pa, 'verify'])->middleware('throttle:otp-verify');
+    Route::post('partner/email/code', [$pa, 'resend'])->middleware('throttle:otp-send');
+    Route::post('partner/email/change', [$pa, 'emailChange'])->middleware('throttle:otp-send');
+    Route::get('partner/verify/context', [$pa, 'verifyContext'])->middleware('throttle:otp-verify');
 
     Route::middleware(['auth:web', \App\Http\Middleware\EnsurePartner::class])->group(function () {
         $console = \App\Http\Controllers\Partner\PartnerConsoleController::class;

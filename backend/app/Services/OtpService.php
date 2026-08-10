@@ -70,15 +70,31 @@ class OtpService
             throw new \RuntimeException('too_soon');
         }
 
+        return $this->reissue($record, null, $ip);
+    }
+
+    /**
+     * Regenerate the code on an existing flow (optionally re-pointing it to a new
+     * email). Resets attempts + TTL and invalidates the prior code. No cooldown —
+     * used by rotate() (which adds the 30s check) and by the email-change flow.
+     *
+     * @return array{record: EmailVerificationCode, code: string}
+     */
+    public function reissue(EmailVerificationCode $record, ?string $newEmail, ?string $ip): array
+    {
         $code = $this->newCode();
-        $record->forceFill([
+        $attrs = [
             'code_hash' => Hash::make($code),
             'attempts_used' => 0,
             'consumed_at' => null,
             'expires_at' => Date::now()->addMinutes(self::TTL_MINUTES),
             'last_sent_at' => Date::now(),
             'request_ip' => $ip,
-        ])->save();
+        ];
+        if ($newEmail !== null) {
+            $attrs['email'] = mb_strtolower(trim($newEmail));
+        }
+        $record->forceFill($attrs)->save();
 
         return ['record' => $record, 'code' => $code];
     }
@@ -118,8 +134,8 @@ class OtpService
 
         $record->markConsumed();
 
-        // Promote the account: signup OTP verified → active + email_verified_at.
-        if ($record->user_id && $record->purpose === 'signup_student') {
+        // Promote the account: signup/partner OTP verified → active + email_verified.
+        if ($record->user_id && in_array($record->purpose, ['signup_student', 'partner_register'], true)) {
             $user = User::find($record->user_id);
             if ($user && $user->email_verified_at === null) {
                 $user->forceFill([
