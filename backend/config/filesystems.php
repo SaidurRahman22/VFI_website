@@ -47,6 +47,20 @@ return [
             'report' => false,
         ],
 
+        // Phase 5 — private student document blobs. NEVER web-served (no `serve`,
+        // no symlink, no url): reads go only through an authed controller with a
+        // single-use signed token. R2 is deferred, so this is a private local
+        // disk today; swap `driver`/`root` for s3+env once R2 exists — the app
+        // code only ever talks to Storage::disk('documents').
+        'documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/documents'),
+            'serve' => false,
+            'visibility' => 'private',
+            'throw' => true,      // a storage failure here must never fail silent
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
