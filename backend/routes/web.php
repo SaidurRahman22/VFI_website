@@ -130,5 +130,10 @@ Route::prefix('api')->group(function () {
         $console = \App\Http\Controllers\Partner\PartnerConsoleController::class;
         Route::get('partner/me', [$console, 'me']);
         Route::get('partner/members', [$console, 'members']);
+
+        // Phase 7 — console data surfaces (all tenant-scoped).
+        $students = \App\Http\Controllers\Partner\PartnerStudentController::class;
+        Route::get('partner/students', [$students, 'index']);
+        Route::post('partner/students', [$students, 'store']);
     });
 });
