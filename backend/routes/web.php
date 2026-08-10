@@ -135,5 +135,11 @@ Route::prefix('api')->group(function () {
         $students = \App\Http\Controllers\Partner\PartnerStudentController::class;
         Route::get('partner/students', [$students, 'index']);
         Route::post('partner/students', [$students, 'store']);
+
+        $apps = \App\Http\Controllers\Partner\PartnerApplicationController::class;
+        Route::get('partner/applications', [$apps, 'index']);
+        Route::post('partner/applications', [$apps, 'store']);
+        Route::get('partner/dashboard/kpis', [$apps, 'kpis']);
+        Route::get('partner/dashboard/deadlines', [$apps, 'deadlines']);
     });
 });
