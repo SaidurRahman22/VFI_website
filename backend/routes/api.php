@@ -57,18 +57,10 @@ Route::get('/content/bundle', [\App\Http\Controllers\ContentBundleController::cl
 // Classic-script bootstrap: sets window.VFI_BOOTSTRAP before store.js.
 Route::get('/content/bootstrap.js', [\App\Http\Controllers\ContentBundleController::class, 'bootstrap']);
 
-/*
-| Student identity (Phase 4) — same-origin, session-cookie + CSRF (statefulApi).
-| Registration + email OTP. Sign-in / reset land in P4-C / P4-D.
-*/
-Route::post('/register', [\App\Http\Controllers\Auth\StudentAuthController::class, 'register'])
-    ->middleware('throttle:student-register');
-Route::post('/verify', [\App\Http\Controllers\Auth\StudentAuthController::class, 'verify'])
-    ->middleware('throttle:otp-verify');
-Route::post('/verify/resend', [\App\Http\Controllers\Auth\StudentAuthController::class, 'resend'])
-    ->middleware('throttle:otp-send');
-Route::get('/verify/context', [\App\Http\Controllers\Auth\StudentAuthController::class, 'verifyContext'])
-    ->middleware('throttle:otp-verify');
+/* Student identity (Phase 4) lives in routes/web.php — like admin auth it is
+   session-cookie based and same-origin, so it wants the web group's session +
+   cookie + CSRF middleware unconditionally (the api group only attaches a
+   session for Origin-matched stateful requests). See there. */
 
 Route::get('/user', function (Request $request) {
     return $request->user();

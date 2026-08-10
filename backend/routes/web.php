@@ -47,3 +47,28 @@ Route::prefix('api/admin')->group(function () {
         Route::post('backup/import', [\App\Http\Controllers\Admin\AdminBackupController::class, 'import']);
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Student identity  (/api/*)  — Phase 4: Registration, Sign-in, OTP, Reset
+|--------------------------------------------------------------------------
+| In the WEB group (like admin auth): session-cookie + CSRF, same-origin. The
+| static student auth pages (login/verify/forgot/reset) call these through
+| js/api.js. register/verify/resend/context are stateless (flow_id-keyed);
+| login establishes the student session; me/logout require the student scope.
+*/
+Route::prefix('api')->group(function () {
+    $sa = \App\Http\Controllers\Auth\StudentAuthController::class;
+
+    Route::post('register', [$sa, 'register'])->middleware('throttle:student-register');
+    Route::post('verify', [$sa, 'verify'])->middleware('throttle:otp-verify');
+    Route::post('verify/resend', [$sa, 'resend'])->middleware('throttle:otp-send');
+    Route::get('verify/context', [$sa, 'verifyContext'])->middleware('throttle:otp-verify');
+
+    Route::post('login', [$sa, 'login'])->middleware('throttle:student-login');
+
+    Route::middleware(['auth:web', \App\Http\Middleware\EnsureStudent::class])->group(function () use ($sa) {
+        Route::get('student/me', [$sa, 'me']);
+        Route::post('student/logout', [$sa, 'logout']);
+    });
+});

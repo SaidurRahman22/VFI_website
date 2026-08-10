@@ -13,9 +13,12 @@ use App\Models\TermsAcceptance;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\OtpService;
+use App\Support\DummyHash;
 use App\Support\EmailMask;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
 
@@ -97,6 +100,85 @@ class StudentAuthController extends Controller
         ], 201)->header('Cache-Control', 'no-store');
     }
 
+    /**
+     * POST /api/login — student sign-in. One generic failure for every cause
+     * (wrong password / unknown account / locked / wrong scope / suspended), with
+     * a constant-time password check. An unverified student is allowed a session
+     * but is flagged must_verify (uploads/submissions gated in Phase 5).
+     */
+    public function login(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:1024'],
+            'remember' => ['sometimes', 'boolean'],
+        ]);
+
+        $email = mb_strtolower(trim($data['email']));
+        $user = User::where('email', $email)->first();
+
+        $passwordOk = $user
+            ? Hash::check($data['password'], $user->password)
+            : DummyHash::verifyAbsent($data['password']);
+
+        // Every rejection path returns the SAME response (no enumeration, no
+        // "your account is locked" oracle).
+        $reject = fn (string $why) => tap(
+            response()->json(['message' => 'Invalid credentials.'], 401)->header('Cache-Control', 'no-store'),
+            fn () => AuthEvent::record('student_login_'.$why, ['user_id' => $user?->id, 'email' => $email, 'ip' => $request->ip()]),
+        );
+
+        if (! $user || ! $passwordOk) {
+            $user?->registerFailedLogin();
+
+            return $reject('failed');
+        }
+        if ($user->isLocked()) {
+            return $reject('locked');
+        }
+        if (! $user->hasRole(Role::Student)) {
+            return $reject('wrong_scope');   // valid non-student creds must not be revealed here
+        }
+        if (! $user->status->canStudentSignIn()) {
+            return $reject('suspended');
+        }
+
+        // Establish the student session (new id after auth). `remember` extends lifetime.
+        $request->session()->regenerate();
+        Auth::guard('web')->login($user, (bool) ($data['remember'] ?? false));
+        $request->session()->put('active_scope', 'student');
+        $user->markLoginSuccess();
+        AuthEvent::record('student_login_success', ['user_id' => $user->id, 'email' => $email, 'ip' => $request->ip()]);
+
+        return response()->json([
+            'user' => $this->publicUser($user),
+            'must_verify' => $user->email_verified_at === null,
+        ])->header('Cache-Control', 'no-store');
+    }
+
+    /** GET /api/student/me — the signed-in student (student scope only). */
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'user' => $this->publicUser($user),
+            'must_verify' => $user->email_verified_at === null,
+        ])->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /api/student/logout — end the student session. */
+    public function logout(Request $request): JsonResponse
+    {
+        $id = $request->user()?->id;
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        AuthEvent::record('student_logout', ['user_id' => $id, 'ip' => $request->ip()]);
+
+        return response()->json(['ok' => true])->header('Cache-Control', 'no-store');
+    }
+
     /** POST /api/verify — check {flow_id, code}. Returns {ok:bool}. */
     public function verify(Request $request): JsonResponse
     {
@@ -162,6 +244,18 @@ class StudentAuthController extends Controller
             'email_masked' => EmailMask::mask($rec->email),
             'purpose' => $rec->purpose,
         ])->header('Cache-Control', 'no-store');
+    }
+
+    /** Safe public projection of a student user (never the password/mfa fields). */
+    private function publicUser(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'email_verified' => $user->email_verified_at !== null,
+        ];
     }
 
     /** Compose a display/storage phone from country code + national number. */
