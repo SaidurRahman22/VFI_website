@@ -33,9 +33,15 @@ A Laravel 13 backend (in `backend/`, PHP 8.4 + PostgreSQL 16 + Redis) is deploye
 - `GET /api/content/bundle` (+ `/bootstrap.js`) — public content, faithful `""`/`[]` fall-through, ETag-cached.
 - `POST /api/contact` — rate-limited, validated, URL-sanitised lead intake.
 - **Admin CMS = Filament at `/manage`** (NOT the legacy `admin.html`, which is now auth-gated/superseded). Behind session auth + **mandatory TOTP** (P1). Edits the same content the bundle serves. Every write hits an append-only `content_audit_log`.
+- **Admin JSON API** (all under `/api/admin/*`, session + TOTP + role-gated):
+  - `content/singleton/{key}` GET/PUT — the JSONB override singletons (settings/countries/regions/servicesPage/partnerPage/partnerPortal), optimistic concurrency (`version` mismatch → 409), faithful `""`/`[]`. (content_editor+)
+  - `pages` + `pages/{file}` — page-visibility toggle, server-side allow-list (`config/pages.php`), sign-in/locked pages can't be disabled. (**owner-only**)
+  - `media` POST + `media/slot/{key}` PUT — image upload (magic-byte GD re-encode → content-hashed `/storage/media/*.jpg`, SVG rejected, EXIF stripped) + media-slot registry with reference-counted deletion (bundled `assets/img/*` never touched). (content_editor+)
+  - `backup/export` GET + `backup/import` POST — full content export/guarded restore; restore validates + size-caps the payload and always writes a pre-restore snapshot to `storage/app/backups/` first. (**owner-only**)
+- Role split: `content_editor` edits content/media; `owner` (=superadmin) also does page-visibility, backup, hard-delete. `ContentPolicy` on all 10 collections.
 - Superadmin: `superadmin@vfi-fc.com` (password seeded via env; enroll TOTP on first login).
 
-**Security (mandatory, enforced at the model layer so any write path is covered):** blog body = plain text (`strip_tags`); `ppQuicklinks`/`ppDocs` URLs scheme-allow-listed (`App\Support\UrlGuard`); tenancy scope + RLS (Postgres); argon2id; append-only audit/auth logs. 52+ backend tests.
+**Security (mandatory, enforced at the model layer so any write path is covered):** blog body = plain text (`strip_tags`); `ppQuicklinks`/`ppDocs` URLs scheme-allow-listed (`App\Support\UrlGuard`); tenancy scope + RLS (Postgres); argon2id; append-only audit/auth logs; uploads validated by magic-bytes not extension; backup restore is snapshotted + owner-gated. 79 backend tests passing.
 
 **Local dev seed:** `php artisan content:import backend/database/content/demo.json` (the current marketing content, captured from the `store.js` SEED). Idempotent (upsert on `legacy_id`).
 
