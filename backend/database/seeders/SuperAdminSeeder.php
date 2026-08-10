@@ -9,19 +9,25 @@ use App\Models\UserRole;
 use Illuminate\Database\Seeder;
 
 /**
- * Seeds a known superadmin so it exists on every environment the seeder runs on.
- *
- * ⚠ TEMPORARY DEV CREDENTIAL. The password here is intentionally simple for
- * development and MUST be rotated before any public deployment. Prefer setting
- * SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD in the environment over editing this
- * file. Idempotent — re-running updates the same account.
+ * Seeds a superadmin from the ENVIRONMENT only — no password is ever stored in
+ * source (safe for public repos). Set SUPERADMIN_EMAIL + SUPERADMIN_PASSWORD in
+ * the environment/.env to seed; if the password is unset the seeder skips
+ * cleanly. Idempotent — re-running updates the same account.
  */
 class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
         $email = mb_strtolower(env('SUPERADMIN_EMAIL', 'superadmin@vfi-fc.com'));
-        $password = env('SUPERADMIN_PASSWORD', 'VFI@123');
+        $password = env('SUPERADMIN_PASSWORD');
+
+        // No credential baked into code. Without an env password, do nothing
+        // (never create a superadmin with a blank/guessable password).
+        if (blank($password)) {
+            $this->command?->warn('SUPERADMIN_PASSWORD not set — skipping superadmin seed. Set it in .env to seed.');
+
+            return;
+        }
 
         $user = User::withTrashed()->updateOrCreate(
             ['email' => $email],
