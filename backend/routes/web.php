@@ -141,5 +141,14 @@ Route::prefix('api')->group(function () {
         Route::post('partner/applications', [$apps, 'store']);
         Route::get('partner/dashboard/kpis', [$apps, 'kpis']);
         Route::get('partner/dashboard/deadlines', [$apps, 'deadlines']);
+
+        $enq = \App\Http\Controllers\Partner\PartnerEnquiryController::class;
+        Route::get('partner/enquiries', [$enq, 'index']);
+        Route::post('partner/enquiries', [$enq, 'store']);
+        Route::get('partner/enquiries/documents/{doc}/download', [$enq, 'download']);
     });
+
+    // PUBLIC single-use enquiry-doc stream (opaque token = capability). Throttled.
+    Route::get('partner/documents/dl/{token}', [\App\Http\Controllers\Partner\PartnerEnquiryController::class, 'stream'])
+        ->middleware('throttle:otp-verify');
 });
