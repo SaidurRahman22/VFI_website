@@ -7,6 +7,7 @@ use App\Models\Partner\AgencyReferralLink;
 use App\Models\Partner\ReferralSignup;
 use App\Models\Student\Student;
 use App\Models\User;
+use App\Support\RlsBypass;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +28,9 @@ class ReferralAttribution
         if (! $ref) {
             return null;
         }
-        $link = AgencyReferralLink::withoutGlobalScopes()->where('slug', $ref)->first();
+        // Runs in the PUBLIC registration path — no tenant bound yet, so RLS
+        // must stand down for this read (see App\Support\RlsBypass).
+        $link = RlsBypass::run(fn () => AgencyReferralLink::withoutGlobalScopes()->where('slug', $ref)->first());
 
         return $link && $link->isActive() ? $link : null;
     }
@@ -62,12 +65,16 @@ class ReferralAttribution
             return;
         }
 
-        $signup = ReferralSignup::withoutGlobalScopes()
-            ->where('student_id', $student->id)->whereNull('converted_at')->latest('id')->first();
+        // Verification also runs with no tenant bound (public OTP path).
+        [$signup, $link] = RlsBypass::run(function () use ($student) {
+            $s = ReferralSignup::withoutGlobalScopes()
+                ->where('student_id', $student->id)->whereNull('converted_at')->latest('id')->first();
+
+            return [$s, $s ? AgencyReferralLink::withoutGlobalScopes()->find($s->referral_link_id) : null];
+        });
         if (! $signup) {
             return;
         }
-        $link = AgencyReferralLink::withoutGlobalScopes()->find($signup->referral_link_id);
         if (! $link || ! $link->isActive()) {
             return;   // link revoked before verification → attribution does not count
         }

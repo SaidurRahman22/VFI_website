@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Partner;
 use App\Http\Controllers\Controller;
 use App\Models\Partner\AgencyReferralLink;
 use App\Models\Partner\PartnerAgency;
+use App\Support\RlsBypass;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -19,7 +20,9 @@ class PublicReferralController extends Controller
     /** GET /api/referral/{slug} */
     public function resolve(string $slug): JsonResponse
     {
-        $link = AgencyReferralLink::withoutGlobalScopes()->where('slug', $slug)->first();
+        // Public path: no tenant is bound, so RLS must stand down for this one
+        // read (the slug itself is the capability; only the name is revealed).
+        $link = RlsBypass::run(fn () => AgencyReferralLink::withoutGlobalScopes()->where('slug', $slug)->first());
         if (! $link || ! $link->isActive()) {
             abort(404);
         }

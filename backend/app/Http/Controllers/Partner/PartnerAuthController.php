@@ -22,6 +22,7 @@ use App\Services\OtpService;
 use App\Services\PasswordResetService;
 use App\Support\DummyHash;
 use App\Support\EmailMask;
+use App\Support\RlsBypass;
 use App\Support\Turnstile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -346,29 +347,10 @@ class PartnerAuthController extends Controller
 
     // ---- helpers ----
 
-    /**
-     * Run one bootstrap query with the Postgres RLS tenant policy stood down.
-     *
-     * Used ONLY by sign-in, which must find a user's seat BEFORE any tenant is
-     * known. Both nets have to stand down for that one lookup: the Eloquent
-     * scope explicitly, and RLS here — otherwise the policy hides every row
-     * (app.agency_id is still unset) and every partner sign-in is refused with
-     * the review-gate. The bypass wraps a single closure and is reset in
-     * `finally`; EnsurePartner rebinds app.agency_id on every console request.
-     * No-op on SQLite/MySQL.
-     */
+    /** Sign-in resolves a seat before any tenant exists — see App\Support\RlsBypass. */
     private function withRlsBypass(callable $fn): mixed
     {
-        if (DB::connection()->getDriverName() !== 'pgsql') {
-            return $fn();
-        }
-
-        DB::statement("SET app.rls_bypass = 'on'");
-        try {
-            return $fn();
-        } finally {
-            DB::statement("SET app.rls_bypass = ''");
-        }
+        return RlsBypass::run($fn);
     }
 
     private function looksDuplicate(string $agency, string $country, int $exceptAppId): bool
