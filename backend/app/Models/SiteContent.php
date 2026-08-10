@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsContentAudit;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SiteContent extends Model
 {
+    use LogsContentAudit;
+
     protected $table = 'site_content';
 
     protected $fillable = ['key', 'value', 'version'];

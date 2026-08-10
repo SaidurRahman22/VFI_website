@@ -12,6 +12,7 @@ use App\Models\Content\PpManager;
 use App\Models\Content\PpNotif;
 use App\Models\Content\PpQuicklink;
 use App\Models\Content\PpUpdate;
+use App\Models\ContentAuditLog;
 use App\Models\SiteContent;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +67,11 @@ class ImportContent extends Command
         // accept either {content:{…}} (exportAll) or a bare content object
         $content = $raw['content'] ?? $raw;
 
-        DB::transaction(function () use ($content) {
+        // Mute per-row audit; the import writes ONE summary audit row instead.
+        ContentAuditLog::$muted = true;
+        $summary = [];
+
+        DB::transaction(function () use ($content, &$summary) {
             foreach (self::COLLECTIONS as $key => $modelClass) {
                 $rows = $content[$key] ?? [];
                 if (! is_array($rows)) {
@@ -90,6 +95,7 @@ class ImportContent extends Command
                     );
                     $count++;
                 }
+                $summary[$key] = $count;
                 $this->line(sprintf('  %-14s %d', $key, $count));
             }
 
@@ -105,6 +111,9 @@ class ImportContent extends Command
                 $this->line("  singleton: {$key}");
             }
         });
+
+        ContentAuditLog::$muted = false;
+        ContentAuditLog::record('import', 'content', null, null, $summary);
 
         $this->info('Content imported.');
 

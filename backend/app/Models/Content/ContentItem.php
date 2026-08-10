@@ -2,17 +2,18 @@
 
 namespace App\Models\Content;
 
+use App\Models\Concerns\LogsContentAudit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Base for the 10 content collections (Phase 2B). Shared: soft-delete, explicit
- * `position` ordering with "new item to front", and toBundle() which maps DB
- * columns to the exact frontend keys the render.js appliers expect.
+ * `position` ordering with "new item to front", toBundle() key-mapping, and an
+ * append-only audit row on every write (Phase 3).
  */
 abstract class ContentItem extends Model
 {
-    use SoftDeletes;
+    use LogsContentAudit, SoftDeletes;
 
     /** column => frontend key. Always includes legacy_id => id. */
     protected array $bundleMap = [];
