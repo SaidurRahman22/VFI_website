@@ -57,6 +57,10 @@ Route::get('/content/bundle', [\App\Http\Controllers\ContentBundleController::cl
 // Classic-script bootstrap: sets window.VFI_BOOTSTRAP before store.js.
 Route::get('/content/bootstrap.js', [\App\Http\Controllers\ContentBundleController::class, 'bootstrap']);
 
+// Phase 8 — the single served taxonomy (public reference data; kills the five
+// divergent hardcoded option lists across the console/search pages).
+Route::get('/taxonomy', [\App\Http\Controllers\TaxonomyController::class, 'index']);
+
 /* Student identity (Phase 4) lives in routes/web.php — like admin auth it is
    session-cookie based and same-origin, so it wants the web group's session +
    cookie + CSRF middleware unconditionally (the api group only attaches a
