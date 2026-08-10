@@ -22,8 +22,9 @@ class AdminContentController extends Controller
         'settings', 'countries', 'regions', 'servicesPage', 'partnerPage', 'partnerPortal',
     ];
 
-    public function show(string $key): JsonResponse
+    public function show(Request $request, string $key): JsonResponse
     {
+        abort_unless($request->user()?->canEditContent(), 403);
         abort_unless(in_array($key, self::EDITABLE, true), 404);
 
         $row = SiteContent::query()->where('key', $key)->first();
@@ -37,6 +38,7 @@ class AdminContentController extends Controller
 
     public function update(Request $request, string $key): JsonResponse
     {
+        abort_unless($request->user()?->canEditContent(), 403);
         abort_unless(in_array($key, self::EDITABLE, true), 404);
 
         $data = $request->validate([

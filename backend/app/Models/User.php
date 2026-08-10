@@ -87,6 +87,18 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasRole(Role::SuperAdmin);
     }
 
+    /** "Owner" privileged operations (backup, page-toggle, admin users) = superadmin. */
+    public function isOwner(): bool
+    {
+        return $this->isSuperAdmin();
+    }
+
+    /** May edit content (collections, singleton text, media): content_editor OR owner. */
+    public function canEditContent(): bool
+    {
+        return $this->isSuperAdmin() || $this->hasRole(Role::ContentEditor);
+    }
+
     public function isLocked(): bool
     {
         return $this->locked_until !== null && $this->locked_until->isFuture();

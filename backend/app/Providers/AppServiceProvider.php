@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Policies\ContentPolicy;
 use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -41,5 +43,16 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinutes(10, 3)->by('email:'.$email),
             ];
         });
+
+        // Phase 3E — content policy on all 10 collection models (Filament enforces it).
+        foreach ([
+            \App\Models\Content\Event::class, \App\Models\Content\Blog::class,
+            \App\Models\Content\NewsItem::class, \App\Models\Content\Photo::class,
+            \App\Models\Content\PpManager::class, \App\Models\Content\PpUpdate::class,
+            \App\Models\Content\PpQuicklink::class, \App\Models\Content\PpDoc::class,
+            \App\Models\Content\PpEmail::class, \App\Models\Content\PpNotif::class,
+        ] as $model) {
+            Gate::policy($model, ContentPolicy::class);
+        }
     }
 }
