@@ -41,3 +41,11 @@ node_modules/
 Thumbs.db
 *.log
 .idea/
+
+# private keys / secrets — NEVER commit
+test/id_rsa.ppk
+id_rsa
+id_rsa.*
+*.ppk
+*.pem
+*.key
