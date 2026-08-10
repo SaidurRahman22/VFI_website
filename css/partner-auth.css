@@ -1,0 +1,1605 @@
+/* =====================================================================
+   partner-auth.css — VFI Partner sign-in + agency registration
+   Loaded after css/style.css, which supplies the font stack and the
+   shared design tokens (--navy, --blue, --ease, …).
+
+   EVERY selector in this file is prefixed `pa-` so it cannot collide
+   with anything in the main stylesheet. Nothing here restyles a
+   pre-existing class.
+
+   Palette: a deep teal ground (#1a2f5c) over a teal-600 primary
+   (#2f62a8), with an emerald accent (#e0668a) carrying the highlights.
+   Deliberately its own cool family — the student sign-in page owns the
+   indigo/blue/cyan range, and these two must not read as one design.
+
+   Motion: everything animated below is switched off wholesale in the
+   prefers-reduced-motion block at the bottom of the file.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. TOKENS
+   --------------------------------------------------------------------- */
+.pa-body {
+  --pa-navy: #1a2f5c;          /* deep teal ground */
+  --pa-navy-deep: #12224a;
+  --pa-navy-ink: #0c1836;
+  --pa-blue: #2f62a8;          /* primary, teal-600 */
+  /* The text-safe interactive colour. Deepened from #0b7d73, which was
+     exactly 5.0:1 on white and left no headroom at all: link text in
+     .pa-alt sits inside the primary button's teal drop shadow, where the
+     old value measured 3.3:1. #234f88 is 7.0:1 on white and still clears
+     4.5:1 at the darkest point of that wash. */
+  --pa-blue-dark: #234f88;
+  --pa-blue-soft: #eaf1fb;
+  --pa-cyan: #e0668a;          /* accent, emerald */
+  --pa-cyan-lit: #eba7bd;
+  --pa-violet: #196fbb;        /* tertiary, deep aqua */
+
+  --pa-ink: #0f2a2e;
+  --pa-text: #35555a;
+  --pa-muted: #4f7075;         /* 4.7:1 on --pa-page, 5.4:1 on white */
+  --pa-faint: #74949a;         /* icons and rules only, 3.1:1 — never text */
+  --pa-line: #d9e4f4;
+  --pa-fill: #f5f8fe;
+  --pa-page: #eef3fb;
+  --pa-card: #ffffff;
+
+  /* the error family stays warm on purpose: it has to read as an
+     interruption against a page that is otherwise entirely cool */
+  --pa-danger: #c62f28;        /* deepened from #dc3b34: that was 4.4:1 on
+                                  white and 4.0:1 over the card's focus glow */
+  --pa-danger-bg: #fff3f2;
+  --pa-ok: #047857;
+  --pa-ok-bg: #eefaf4;
+
+  --pa-display: "Quicksand", var(--display, "Quicksand"), system-ui, sans-serif;
+  --pa-ease: cubic-bezier(.22, .68, .28, 1);
+  --pa-ease-back: cubic-bezier(.34, 1.4, .5, 1);
+
+  --pa-r: 14px;
+  --pa-r-lg: 26px;
+
+  background: var(--pa-page);
+  color: var(--pa-text);
+}
+
+/* Skip link — every other page on the site has one; this page needs it too. */
+.pa-skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 90;
+  background: #fff;
+  color: var(--pa-ink);
+  font-family: var(--pa-display);
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(6, 33, 42, .28);
+}
+.pa-skip:focus { left: 14px; top: 14px; }
+
+.pa-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.pa-i {
+  width: 20px; height: 20px; flex: none; display: block;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* screen-reader-only. Deliberately no clip-path: a 1px overflow box is
+   enough and no clip region can then eat a neighbouring box-shadow. */
+.pa-sr {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden; white-space: nowrap;
+}
+
+/* components that JS toggles with the `hidden` attribute */
+.pa-msg[hidden],
+.pa-tabs[hidden],
+.pa-views[hidden],
+.pa-field__caps[hidden] { display: none; }
+
+/* ---------------------------------------------------------------------
+   2. SHELL
+   --------------------------------------------------------------------- */
+.pa-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, .96fr);
+  min-height: 100vh;
+  min-height: 100svh;
+  background: var(--pa-page);
+}
+
+/* ---------------------------------------------------------------------
+   3. BRAND PANEL
+   --------------------------------------------------------------------- */
+.pa-brand {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: clamp(26px, 3vw, 46px) clamp(24px, 3.6vw, 58px);
+  color: #fff;
+  background: var(--pa-navy-ink);
+}
+.pa-brand > * { position: relative; z-index: 1; }
+
+/* every decorative layer is confined to this clipped box, so the panel
+   itself never clips real content (or its own shadows) */
+.pa-brand__fx {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  display: block;
+}
+/* Scrim. The aurora drifts, so the luminance behind any given label is not
+   fixed — this keeps every one of them on a dark enough ground to stay
+   legible at the mesh's brightest moment. */
+.pa-brand__fx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(104deg,
+    rgba(6, 33, 42, .62) 0%, rgba(6, 33, 42, .34) 48%, rgba(6, 33, 42, .58) 100%);
+}
+
+/* --- animated aurora mesh --- */
+.pa-mesh {
+  position: absolute;
+  inset: -22%;
+  display: block;
+  filter: blur(26px);
+  background:
+    radial-gradient(38% 42% at 22% 24%, rgba(47,98,168, .92) 0%, rgba(47,98,168, 0) 62%),
+    radial-gradient(34% 40% at 80% 16%, rgba(52, 211, 153, .58) 0%, rgba(52, 211, 153, 0) 64%),
+    radial-gradient(46% 48% at 70% 84%, rgba(8, 145, 178, .72) 0%, rgba(8, 145, 178, 0) 66%),
+    radial-gradient(40% 42% at 10% 86%, rgba(26,47,92, .95) 0%, rgba(26,47,92, 0) 64%);
+  animation: pa-mesh 26s ease-in-out infinite alternate;
+}
+@keyframes pa-mesh {
+  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  50%  { transform: translate3d(2%, -3%, 0) scale(1.09) rotate(2.2deg); }
+  100% { transform: translate3d(-3%, 2%, 0) scale(1.04) rotate(-2.2deg); }
+}
+
+/* --- drifting graph paper --- */
+.pa-grid {
+  position: absolute;
+  inset: -8%;
+  display: block;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .06) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(80% 64% at 44% 40%, #000 0%, transparent 100%);
+  mask-image: radial-gradient(80% 64% at 44% 40%, #000 0%, transparent 100%);
+  animation: pa-grid 22s linear infinite;
+}
+@keyframes pa-grid { to { background-position: 46px 46px, 46px 46px; } }
+
+/* --- slow light sweep --- */
+.pa-beam {
+  position: absolute;
+  top: -45%; bottom: -45%; left: -35%;
+  width: 30%;
+  display: block;
+  background: linear-gradient(100deg,
+    transparent 0%, rgba(255, 255, 255, .09) 40%,
+    rgba(110, 231, 183, .18) 52%, rgba(255, 255, 255, .05) 62%, transparent 100%);
+  animation: pa-beam 13s ease-in-out infinite;
+}
+@keyframes pa-beam {
+  0%        { transform: translate3d(0, 0, 0) rotate(15deg); opacity: 0; }
+  14%       { opacity: .9; }
+  62%       { opacity: .45; }
+  84%, 100% { transform: translate3d(400%, 0, 0) rotate(15deg); opacity: 0; }
+}
+
+/* --- floating colour orbs --- */
+.pa-orb {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  filter: blur(64px);
+  animation: pa-orb 19s ease-in-out infinite;
+}
+.pa-orb--a { width: 360px; height: 360px; top: -120px; right: -90px; background: var(--pa-blue); opacity: .5; }
+.pa-orb--b { width: 300px; height: 300px; bottom: -130px; left: -90px; background: var(--pa-cyan); opacity: .3; animation-delay: -7s; }
+.pa-orb--c { width: 250px; height: 250px; top: 46%; right: 8%; background: var(--pa-violet); opacity: .38; animation-delay: -13s; }
+@keyframes pa-orb {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, -32px, 0) scale(1.12); }
+}
+
+/* --- CSS-only particle field --- */
+/* Deliberately NOT lifted above the scrim, and deliberately dim. These
+   drift across the whole panel, so at full brightness a particle (or its
+   9px glow) passing behind a line of white body text dropped it to
+   1.4:1 for a moment. Under the scrim and at these alphas the brightest
+   pixel a particle can produce still leaves every label above 4.5:1. */
+.pa-dust { position: absolute; inset: 0; display: block; }
+.pa-dust__i {
+  position: absolute;
+  bottom: -10px;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: rgba(206, 248, 231, .5);
+  box-shadow: 0 0 8px rgba(110, 231, 183, .38);
+  opacity: 0;
+  animation: pa-dust 17s linear infinite;
+}
+@keyframes pa-dust {
+  0%   { transform: translate3d(0, 0, 0) scale(.5); opacity: 0; }
+  12%  { opacity: .9; }
+  68%  { opacity: .5; }
+  100% { transform: translate3d(26px, -78vh, 0) scale(1.15); opacity: 0; }
+}
+.pa-dust__i:nth-child(1)  { left: 6%;  animation-duration: 18s; animation-delay: -1s;  }
+.pa-dust__i:nth-child(2)  { left: 14%; animation-duration: 22s; animation-delay: -6s;  width: 2px; height: 2px; }
+.pa-dust__i:nth-child(3)  { left: 23%; animation-duration: 15s; animation-delay: -11s; }
+.pa-dust__i:nth-child(4)  { left: 31%; animation-duration: 25s; animation-delay: -3s;  width: 4px; height: 4px; }
+.pa-dust__i:nth-child(5)  { left: 40%; animation-duration: 19s; animation-delay: -14s; }
+.pa-dust__i:nth-child(6)  { left: 48%; animation-duration: 23s; animation-delay: -8s;  width: 2px; height: 2px; }
+.pa-dust__i:nth-child(7)  { left: 57%; animation-duration: 16s; animation-delay: -17s; }
+.pa-dust__i:nth-child(8)  { left: 65%; animation-duration: 26s; animation-delay: -4s;  }
+.pa-dust__i:nth-child(9)  { left: 73%; animation-duration: 20s; animation-delay: -12s; width: 4px; height: 4px; }
+.pa-dust__i:nth-child(10) { left: 81%; animation-duration: 24s; animation-delay: -19s; }
+.pa-dust__i:nth-child(11) { left: 89%; animation-duration: 17s; animation-delay: -9s;  width: 2px; height: 2px; }
+.pa-dust__i:nth-child(12) { left: 95%; animation-duration: 21s; animation-delay: -15s; }
+
+/* --- lockup --- */
+.pa-brand__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+.pa-lockup { display: inline-flex; align-items: center; gap: 13px; }
+.pa-lockup__mark {
+  position: relative;
+  width: 46px; height: 46px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff; padding: 4px;
+  box-shadow: 0 10px 26px -8px rgba(47,98,168, .7);
+}
+.pa-lockup__mark img { width: 100%; height: 100%; object-fit: contain; display: block; position: relative; z-index: 1; }
+.pa-lockup__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 18px;
+  background: conic-gradient(from 0deg, transparent 0deg, var(--pa-cyan) 70deg, transparent 150deg, transparent 360deg);
+  opacity: .85;
+  z-index: -1;
+  animation: pa-spin 5.5s linear infinite;
+}
+@keyframes pa-spin { to { transform: rotate(360deg); } }
+
+.pa-lockup__txt { display: flex; flex-direction: column; line-height: 1.05; font-family: var(--pa-display); }
+.pa-lockup__name { font-weight: 700; font-size: 23px; letter-spacing: .3px; }
+.pa-lockup__txt small {
+  font-size: 10px; font-weight: 600; letter-spacing: 1.7px;
+  text-transform: uppercase; color: var(--pa-cyan-lit); margin-top: 4px;
+}
+
+.pa-exit {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .88);
+  padding: 8px 15px 8px 12px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 999px;
+  background: rgba(6, 33, 42, .5);
+  transition: background .22s var(--pa-ease), color .22s var(--pa-ease), transform .22s var(--pa-ease);
+}
+.pa-exit .pa-i { width: 15px; height: 15px; transition: transform .25s var(--pa-ease); }
+.pa-exit:hover { background: rgba(255, 255, 255, .13); color: #fff; }
+.pa-exit:hover .pa-i { transform: translateX(-3px); }
+
+/* --- pitch --- */
+.pa-brand__mid { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+
+.pa-eyebrow {
+  display: inline-flex; align-items: center; gap: 9px;
+  width: max-content;
+  font-family: var(--pa-display);
+  font-size: 11.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: #a7f3d0;
+  padding: 7px 15px 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(110, 231, 183, .34);
+  background: rgba(6, 33, 42, .62);
+}
+.pa-eyebrow__dot {
+  width: 7px; height: 7px; flex: none; border-radius: 50%;
+  background: var(--pa-cyan);
+  box-shadow: 0 0 0 0 rgba(52, 211, 153, .7);
+  animation: pa-pulse 2.4s ease-out infinite;
+}
+@keyframes pa-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(52, 211, 153, .7); }
+  70%  { box-shadow: 0 0 0 9px rgba(52, 211, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+.pa-brand__title {
+  color: #fff;
+  font-size: clamp(26px, 2.5vw, 39px);
+  line-height: 1.14;
+  letter-spacing: -.6px;
+  margin: 16px 0 12px;
+  max-width: 16ch;
+}
+.pa-brand__lead {
+  max-width: 52ch;
+  font-size: 14.8px; line-height: 1.66;
+  color: rgba(255, 255, 255, .74);
+}
+
+/* --- floating glass cards --- */
+.pa-stack { position: relative; height: 172px; margin: 22px 0 24px; max-width: 440px; }
+
+.pa-glass {
+  position: absolute;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  background: rgba(255, 255, 255, .09);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 26px 50px -26px rgba(3, 20, 26, .9);
+  animation: pa-hover 9s ease-in-out infinite;
+}
+.pa-glass--main {
+  left: 0; top: 0;
+  width: min(290px, 72%);
+  padding: 0 0 13px;
+  transform: rotate(-2.4deg);
+}
+.pa-glass--stat {
+  right: 6px; top: 52px;
+  width: 168px;
+  padding: 14px 16px 15px;
+  display: flex; flex-direction: column; gap: 3px;
+  transform: rotate(2.8deg);
+  animation-delay: -3.2s;
+}
+@keyframes pa-hover {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -13px; }
+}
+
+.pa-glass__head {
+  display: flex; align-items: center; gap: 5px;
+  padding: 10px 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(47,98,168, .34);
+  border-radius: 17px 17px 0 0;
+}
+.pa-glass__dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .5); }
+.pa-glass__title {
+  font-style: normal; font-family: var(--pa-display);
+  font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: rgba(255, 255, 255, .82);
+  margin-left: 8px;
+}
+.pa-glass__body { padding: 15px 14px 0; }
+
+.pa-bars { display: flex; align-items: flex-end; gap: 7px; height: 58px; }
+.pa-bar {
+  flex: 1;
+  height: var(--pa-h, 50%);
+  border-radius: 5px 5px 3px 3px;
+  background: linear-gradient(180deg, var(--pa-cyan-lit), var(--pa-blue));
+  transform-origin: 50% 100%;
+  animation: pa-bar 3.8s ease-in-out infinite alternate;
+}
+@keyframes pa-bar {
+  from { transform: scaleY(.42); opacity: .6; }
+  to   { transform: scaleY(1);   opacity: 1; }
+}
+.pa-bar:nth-child(1) { animation-delay: -.1s; }
+.pa-bar:nth-child(2) { animation-delay: -.5s; }
+.pa-bar:nth-child(3) { animation-delay: -.9s; }
+.pa-bar:nth-child(4) { animation-delay: -1.3s; }
+.pa-bar:nth-child(5) { animation-delay: -1.7s; }
+.pa-bar:nth-child(6) { animation-delay: -2.1s; }
+.pa-bar:nth-child(7) { animation-delay: -2.5s; }
+
+.pa-glass__rows { display: grid; gap: 6px; margin-top: 13px; }
+.pa-glass__rows i { display: block; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .22); }
+.pa-glass__rows i:first-child { width: 78%; }
+.pa-glass__rows i:last-child  { width: 54%; }
+
+.pa-glass__k { font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: rgba(255, 255, 255, .72); }
+.pa-glass__v { font-family: var(--pa-display); font-size: 26px; font-weight: 700; color: #fff; line-height: 1.15; }
+.pa-glass__trend { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: var(--pa-cyan-lit); }
+.pa-glass__trend .pa-i { width: 13px; height: 13px; }
+
+.pa-toast {
+  position: absolute;
+  /* deliberately overlaps the chart card but stays clear of the stat card
+     on its right, so nothing readable is ever covered */
+  left: 4%; bottom: 0;
+  width: min(248px, 60%);
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 14px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  background: rgba(6, 33, 42, .62);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 22px 44px -22px rgba(3, 20, 26, .95);
+  animation: pa-toast 8s ease-in-out infinite;
+}
+@keyframes pa-toast {
+  0%, 7%    { opacity: 0; transform: translate3d(0, 16px, 0) scale(.95); }
+  17%, 66%  { opacity: 1; transform: none; }
+  78%, 100% { opacity: 0; transform: translate3d(0, -12px, 0) scale(.98); }
+}
+.pa-toast__ic {
+  width: 30px; height: 30px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  color: var(--pa-navy-ink);
+  background: linear-gradient(140deg, var(--pa-cyan-lit), var(--pa-cyan));
+}
+.pa-toast__ic .pa-i { width: 17px; height: 17px; stroke-width: 2.6; }
+.pa-toast__txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pa-toast__txt b { font-size: 12.5px; font-weight: 600; color: #fff; }
+.pa-toast__txt small { font-size: 11px; color: rgba(255, 255, 255, .62); }
+
+/* --- perks --- */
+.pa-perks { display: grid; gap: 13px; }
+.pa-perk { display: flex; align-items: flex-start; gap: 13px; }
+.pa-perk__ic {
+  width: 38px; height: 38px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  color: var(--pa-cyan-lit);
+  border: 1px solid rgba(255, 255, 255, .17);
+  background: rgba(255, 255, 255, .08);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: transform .3s var(--pa-ease-back), border-color .3s var(--pa-ease);
+}
+.pa-perk__ic .pa-i { width: 18px; height: 18px; }
+.pa-perk:hover .pa-perk__ic { transform: translateY(-3px) scale(1.06); border-color: rgba(110, 231, 183, .5); }
+.pa-perk__txt { display: flex; flex-direction: column; gap: 2px; }
+.pa-perk__txt b { font-size: 14.5px; font-weight: 600; color: #fff; }
+/* .62 left this line dependent on a near-perfect background: it has no
+   pill behind it, so it meets the aurora directly */
+.pa-perk__txt small { font-size: 12.8px; line-height: 1.5; color: rgba(255, 255, 255, .74); }
+
+/* --- footer + ticker --- */
+.pa-brand__foot { display: flex; flex-direction: column; gap: 12px; }
+
+.pa-tick {
+  display: inline-flex; align-items: center; gap: 10px;
+  width: max-content; max-width: 100%;
+  padding: 8px 16px 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(6, 33, 42, .5);
+  font-size: 12.5px;
+}
+.pa-tick__lbl { color: rgba(255, 255, 255, .76); letter-spacing: .04em; white-space: nowrap; }
+.pa-tick__win { display: block; height: 19px; overflow: hidden; min-width: 0; }
+.pa-tick__roll { display: block; animation: pa-tick 12s cubic-bezier(.7, 0, .3, 1) infinite; }
+.pa-tick__roll span {
+  display: block; height: 19px; line-height: 19px;
+  font-weight: 600; color: var(--pa-cyan-lit); white-space: nowrap;
+}
+@keyframes pa-tick {
+  0%, 26%   { transform: translate3d(0, 0, 0); }
+  33%, 59%  { transform: translate3d(0, -19px, 0); }
+  66%, 92%  { transform: translate3d(0, -38px, 0); }
+  100%      { transform: translate3d(0, -57px, 0); }
+}
+
+.pa-brand__help { font-size: 13px; color: rgba(255, 255, 255, .85); }
+.pa-brand__help a { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(110, 231, 183, .6); }
+.pa-brand__help a:hover { color: var(--pa-cyan-lit); }
+
+/* ---------------------------------------------------------------------
+   4. FORM PANEL
+   --------------------------------------------------------------------- */
+.pa-panel {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 74px clamp(20px, 3vw, 46px) 40px;
+  background: var(--pa-page);
+}
+.pa-panel > * { position: relative; z-index: 1; }
+
+.pa-panel__fx { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; display: block; }
+.pa-panel__blob {
+  position: absolute;
+  display: block;
+  width: 520px; height: 520px;
+  top: -180px; right: -180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(47,98,168, .14), rgba(52, 211, 153, .07) 46%, transparent 70%);
+  animation: pa-orb 24s ease-in-out infinite;
+}
+
+.pa-back {
+  position: absolute;
+  top: 24px; left: clamp(18px, 3vw, 44px);
+  z-index: 2;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--pa-muted);
+  padding: 9px 15px 9px 11px;
+  border-radius: 999px;
+  transition: background .2s var(--pa-ease), color .2s var(--pa-ease);
+}
+.pa-back .pa-i { width: 15px; height: 15px; transition: transform .25s var(--pa-ease); }
+.pa-back:hover { background: rgba(26,47,92, .07); color: var(--pa-navy); }
+.pa-back:hover .pa-i { transform: translateX(-3px); }
+
+/* --- the card --- */
+.pa-card {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 468px;
+  padding: 34px clamp(20px, 3vw, 34px) 26px;
+  border-radius: var(--pa-r-lg);
+  border: 1px solid rgba(26,47,92, .08);
+  background: var(--pa-card);
+  box-shadow:
+    0 1px 2px rgba(15, 42, 46, .04),
+    0 24px 60px -26px rgba(15, 42, 46, .3);
+  animation: pa-card-in .7s var(--pa-ease) both;
+}
+@keyframes pa-card-in {
+  from { opacity: 0; transform: translate3d(0, 22px, 0) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+.pa-card > *:not(.pa-card__glow):not(.pa-card__edge) { position: relative; z-index: 1; }
+
+/* the glow that chases whatever has focus */
+.pa-card__glow {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 0;
+  width: 360px; height: 360px;
+  margin: -180px 0 0 -180px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(47,98,168, .2) 0%, rgba(52, 211, 153, .1) 44%, rgba(52, 211, 153, 0) 70%);
+  filter: blur(8px);
+  transition: transform .5s var(--pa-ease), opacity .4s ease;
+}
+.pa-card.pa-glow .pa-card__glow { opacity: 1; }
+
+/* animated hairline along the top edge */
+.pa-card__edge {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 2;
+  height: 3px;
+  display: block;
+  background: linear-gradient(90deg,
+    var(--pa-navy) 0%, var(--pa-blue) 26%, var(--pa-cyan) 50%, var(--pa-violet) 74%, var(--pa-navy) 100%);
+  background-size: 300% 100%;
+  animation: pa-edge 9s linear infinite;
+}
+@keyframes pa-edge { to { background-position: 300% 0; } }
+
+.pa-card__head { margin-bottom: 22px; }
+.pa-card__title {
+  color: var(--pa-navy);
+  font-family: var(--pa-display);
+  font-size: clamp(23px, 2.2vw, 28px);
+  line-height: 1.2; letter-spacing: -.4px;
+  margin: 0 0 7px;
+}
+.pa-card__sub { font-size: 14.2px; line-height: 1.6; color: var(--pa-muted); }
+
+/* --- tabs --- */
+.pa-tabs {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 15px;
+  background: var(--pa-page);
+  margin-bottom: 20px;
+}
+.pa-tab {
+  position: relative; z-index: 2;
+  flex: 1 1 auto;
+  padding: 11px 10px;
+  border: 0; border-radius: 11px;
+  background: none; cursor: pointer;
+  font-family: var(--pa-display);
+  font-size: 13.6px; font-weight: 600;
+  color: var(--pa-muted);
+  white-space: nowrap;
+  transition: color .24s var(--pa-ease);
+}
+.pa-tab.pa-on { color: var(--pa-navy); font-weight: 700; }
+.pa-tab:hover { color: var(--pa-navy); }
+.pa-tab:focus-visible { outline: 2px solid var(--pa-blue); outline-offset: 2px; }
+
+.pa-tabs__ink {
+  position: absolute; z-index: 1;
+  top: 5px; bottom: 5px; left: 0;
+  width: 0;
+  display: block;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 2px 10px -2px rgba(15, 42, 46, .22), 0 0 0 1px rgba(47,98,168, .1) inset;
+}
+.pa-tabs.pa-ready .pa-tabs__ink {
+  transition: transform .44s cubic-bezier(.62, .04, .24, 1), width .44s cubic-bezier(.62, .04, .24, 1);
+}
+.pa-tabs__ink::after {
+  content: "";
+  position: absolute;
+  left: 22%; right: 22%; bottom: 4px;
+  height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--pa-blue), var(--pa-cyan));
+  opacity: .9;
+}
+
+/* --- live message --- */
+.pa-msg {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 13.2px; line-height: 1.5;
+  padding: 11px 14px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--pa-line);
+  background: var(--pa-fill);
+  color: var(--pa-text);
+  animation: pa-msg-in .3s var(--pa-ease) both;
+}
+@keyframes pa-msg-in { from { opacity: 0; transform: translate3d(0, -6px, 0); } to { opacity: 1; transform: none; } }
+.pa-msg--bad { border-color: rgba(220, 59, 52, .28); background: var(--pa-danger-bg); color: #a92c26; }
+.pa-msg--ok  { border-color: rgba(4, 120, 87, .3);  background: var(--pa-ok-bg);     color: #046046; }
+
+/* --- forms --- */
+.pa-views { position: relative; }
+.pa-form { display: none; }
+.pa-form.pa-on { display: block; }
+
+/* The gap is generous on purpose: field messages are absolutely
+   positioned into it (see .pa-field__err) so that showing or hiding one
+   never reflows the form. Validation fires on blur, and a blur happens on
+   mousedown — if an error could push the layout, the following mouseup
+   would land somewhere else and the click would be lost. */
+.pa-fields { display: grid; gap: 26px; }
+
+.pa-rise { opacity: 0; }
+.pa-form.pa-on .pa-rise,
+.pa-step.pa-on .pa-rise {
+  animation: pa-rise .55s var(--pa-ease) both;
+  animation-delay: calc(var(--pa-i, 0) * 62ms);
+}
+@keyframes pa-rise {
+  from { opacity: 0; transform: translate3d(0, 15px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --- field --- */
+.pa-field { display: block; position: relative; }
+.pa-field__box { position: relative; display: block; }
+
+.pa-field__ic {
+  position: absolute;
+  left: 15px; top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: var(--pa-faint);
+  pointer-events: none;
+  transition: color .22s var(--pa-ease), transform .3s var(--pa-ease-back);
+}
+.pa-field__ic .pa-i { width: 18px; height: 18px; }
+.pa-field__box:focus-within .pa-field__ic { color: var(--pa-blue); transform: translateY(-50%) scale(1.08); }
+
+.pa-field__input {
+  width: 100%;
+  display: block;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--pa-ink);
+  padding: 23px 15px 8px 45px;
+  border: 1.5px solid var(--pa-line);
+  border-radius: var(--pa-r);
+  background: var(--pa-fill);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color .22s var(--pa-ease), background .22s var(--pa-ease), box-shadow .28s var(--pa-ease);
+}
+.pa-field__input:hover { border-color: #b9d5d1; }
+.pa-field__input:focus {
+  border-color: var(--pa-blue);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(47,98,168, .13), 0 10px 24px -16px rgba(47,98,168, .9);
+}
+.pa-field__input:focus-visible { outline: none; }
+.pa-field__input::placeholder { color: transparent; }
+
+.pa-field__label {
+  position: absolute;
+  left: 45px; top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  font-size: 15px; font-weight: 500;
+  color: var(--pa-muted);
+  pointer-events: none;
+  white-space: nowrap;
+  transition: transform .24s var(--pa-ease), color .24s var(--pa-ease);
+}
+.pa-field__input:focus + .pa-field__label,
+.pa-field__input:not(:placeholder-shown) + .pa-field__label,
+.pa-field--sel .pa-field__label {
+  transform: translateY(calc(-50% - 13px)) scale(.76);
+  color: var(--pa-blue-dark);
+  font-weight: 600;
+}
+.pa-field--sel .pa-field__input:not(:focus) + .pa-field__label { color: var(--pa-muted); }
+
+/* animated accent that draws under a focused field */
+.pa-field__spark {
+  position: absolute;
+  left: 14px; right: 14px; bottom: 0;
+  height: 2px; border-radius: 2px;
+  display: block;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--pa-blue), var(--pa-cyan));
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform .38s var(--pa-ease), opacity .28s var(--pa-ease);
+}
+.pa-field__input:focus ~ .pa-field__spark { transform: scaleX(1); opacity: 1; }
+
+.pa-field__caret {
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: var(--pa-faint);
+  pointer-events: none;
+  transition: transform .26s var(--pa-ease);
+}
+.pa-field__caret .pa-i { width: 17px; height: 17px; }
+.pa-field__box:focus-within .pa-field__caret { transform: translateY(-50%) rotate(180deg); color: var(--pa-blue); }
+.pa-field--sel .pa-field__input { padding-right: 40px; cursor: pointer; }
+
+.pa-field--pw .pa-field__input { padding-right: 48px; }
+.pa-field__eye {
+  position: absolute;
+  right: 8px; top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border: 0; border-radius: 10px;
+  background: none; cursor: pointer;
+  color: var(--pa-faint);
+  transition: color .2s var(--pa-ease), background .2s var(--pa-ease);
+}
+.pa-field__eye:hover { color: var(--pa-navy); background: rgba(26,47,92, .06); }
+.pa-field__eye:focus-visible { outline: 2px solid var(--pa-blue); outline-offset: 1px; }
+.pa-field__eye .pa-i { width: 18px; height: 18px; }
+
+.pa-field__hint { margin-top: 6px; font-size: 12.2px; line-height: 1.45; color: var(--pa-muted); }
+
+/* Both messages sit in the gap below the field rather than in the flow,
+   so appearing and disappearing costs zero layout shift. */
+.pa-field__caps,
+.pa-field__err {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  margin-top: 5px;
+  align-items: center; gap: 6px;
+  font-size: 12.3px; font-weight: 600; line-height: 1.3;
+}
+.pa-field__caps { display: flex; color: #8a6210; animation: pa-rise .28s var(--pa-ease) both; }
+.pa-field__caps .pa-i { width: 14px; height: 14px; }
+
+.pa-field__err { display: none; color: var(--pa-danger); }
+.pa-field.pa-bad .pa-field__err { display: flex; animation: pa-rise .26s var(--pa-ease) both; }
+/* a hard error takes the one message slot */
+.pa-field.pa-bad .pa-field__caps { display: none; }
+.pa-field.pa-bad .pa-field__input {
+  border-color: var(--pa-danger);
+  background: var(--pa-danger-bg);
+  animation: pa-shake .42s var(--pa-ease) both;
+}
+.pa-field.pa-bad .pa-field__input:focus { box-shadow: 0 0 0 4px rgba(220, 59, 52, .14); }
+.pa-field.pa-bad .pa-field__ic { color: var(--pa-danger); }
+@keyframes pa-shake {
+  0%   { transform: translate3d(0, 0, 0); }
+  22%  { transform: translate3d(-6px, 0, 0); }
+  44%  { transform: translate3d(5px, 0, 0); }
+  66%  { transform: translate3d(-3px, 0, 0); }
+  88%  { transform: translate3d(2px, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+/* --- rows, checkboxes, links --- */
+.pa-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+
+.pa-check { display: flex; align-items: flex-start; gap: 11px; cursor: pointer; }
+.pa-check--sm { align-items: center; }
+/* The real checkbox is hidden but still focusable. pointer-events:none
+   keeps it out of hit-testing so a click can never land on a 1px target
+   and get lost — every pointer interaction hits the mark or the label
+   text, which the <label> then forwards. Keyboard Space is unaffected. */
+.pa-check__box {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
+}
+.pa-check__mark {
+  position: relative;
+  width: 21px; height: 21px; flex: none;
+  margin-top: 1px;
+  display: grid; place-items: center;
+  border: 1.6px solid #bcd6d2;
+  border-radius: 7px;
+  background: #fff;
+  color: #fff;
+  transition: background .24s var(--pa-ease), border-color .24s var(--pa-ease),
+              transform .3s var(--pa-ease-back), box-shadow .24s var(--pa-ease);
+}
+.pa-check--sm .pa-check__mark { margin-top: 0; }
+.pa-check__svg { width: 14px; height: 14px; display: block; }
+.pa-check__path {
+  fill: none; stroke: currentColor; stroke-width: 3;
+  stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 28;
+  stroke-dashoffset: 28;
+  transition: stroke-dashoffset .34s var(--pa-ease) .05s;
+}
+.pa-check__box:checked + .pa-check__mark {
+  background: linear-gradient(140deg, var(--pa-blue), var(--pa-navy));
+  border-color: var(--pa-blue);
+  transform: scale(1.05);
+}
+.pa-check__box:checked + .pa-check__mark .pa-check__path { stroke-dashoffset: 0; }
+.pa-check__box:focus-visible + .pa-check__mark { box-shadow: 0 0 0 4px rgba(47,98,168, .25); border-color: var(--pa-blue); }
+.pa-check__txt { font-size: 13.2px; line-height: 1.55; color: var(--pa-text); }
+.pa-field.pa-bad .pa-check__mark { border-color: var(--pa-danger); box-shadow: 0 0 0 3px rgba(220, 59, 52, .12); }
+
+/* a .pa-field that wraps a checkbox instead of a text input */
+.pa-field--check {
+  margin-top: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--pa-line);
+  border-radius: var(--pa-r);
+  background: var(--pa-fill);
+  transition: border-color .22s var(--pa-ease), background .22s var(--pa-ease);
+}
+.pa-field--check:hover { border-color: #b9d5d1; }
+.pa-field--check:focus-within { border-color: var(--pa-blue); background: #fff; }
+.pa-field--check.pa-bad { border-color: var(--pa-danger); background: var(--pa-danger-bg); }
+
+.pa-link {
+  font-size: 13.2px; font-weight: 600; color: var(--pa-blue-dark);
+  text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: rgba(47,98,168, .35);
+  transition: color .2s var(--pa-ease), text-decoration-color .2s var(--pa-ease);
+}
+.pa-link:hover { color: var(--pa-navy); text-decoration-color: currentColor; }
+.pa-link:focus-visible { outline: 2px solid var(--pa-blue); outline-offset: 2px; border-radius: 4px; }
+
+/* --- buttons --- */
+.pa-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  padding: 15px 22px;
+  border: 0; border-radius: var(--pa-r);
+  cursor: pointer;
+  font-family: var(--pa-display);
+  font-size: 15px; font-weight: 700; letter-spacing: .1px;
+  transition: transform .24s var(--pa-ease), box-shadow .26s var(--pa-ease), filter .22s var(--pa-ease), background .22s var(--pa-ease);
+}
+.pa-btn:focus-visible { outline: 3px solid rgba(47,98,168, .5); outline-offset: 3px; }
+.pa-btn[hidden] { display: none; }
+.pa-btn--block { width: 100%; }
+.pa-btn--grow { flex: 1 1 auto; }
+
+.pa-btn__ic { width: 18px; height: 18px; transition: transform .26s var(--pa-ease); }
+.pa-btn:hover .pa-btn__ic { transform: translateX(4px); }
+
+.pa-btn--go {
+  color: #fff;
+  background: linear-gradient(118deg, var(--pa-navy-deep) 0%, var(--pa-navy) 42%, var(--pa-blue-dark) 100%);
+  box-shadow: 0 16px 32px -16px rgba(47,98,168, .95);
+}
+.pa-btn--go:hover { transform: translateY(-2px); filter: brightness(1.07); box-shadow: 0 22px 38px -18px rgba(47,98,168, .95); }
+.pa-btn--go:active { transform: translateY(0); }
+/* Shimmer sweep. The peak was .42, which lifted the button's ground to
+   roughly 0.39 relative luminance as it crossed the centred label — white
+   on white at 2.4:1. At .16 the sweep still reads and the label never
+   drops below 4.5:1 anywhere on its travel. */
+.pa-btn--go::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: -55%;
+  width: 42%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .16), transparent);
+  transform: skewX(-18deg);
+  animation: pa-shine 5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes pa-shine {
+  0%, 62%  { transform: translate3d(0, 0, 0) skewX(-18deg); }
+  92%, 100% { transform: translate3d(430%, 0, 0) skewX(-18deg); }
+}
+
+.pa-btn--ghost {
+  color: var(--pa-navy);
+  background: #fff;
+  border: 1.5px solid var(--pa-line);
+  padding: 13.5px 18px;
+}
+.pa-btn--ghost:hover { background: var(--pa-fill); border-color: #b9d5d1; transform: translateY(-2px); }
+.pa-btn--ghost .pa-i { width: 17px; height: 17px; transition: transform .25s var(--pa-ease); }
+.pa-btn--ghost:hover .pa-i { transform: translateX(-3px); }
+
+.pa-btn--soft {
+  color: var(--pa-navy);
+  background: var(--pa-blue-soft);
+  padding: 13px 20px;
+  font-size: 14.2px;
+}
+.pa-btn--soft:hover { background: #d3f5ec; transform: translateY(-2px); }
+.pa-btn--soft .pa-i { width: 16px; height: 16px; transition: transform .25s var(--pa-ease); }
+.pa-btn--soft:hover .pa-i { transform: translateX(-3px); }
+
+/* busy state */
+.pa-btn__spin {
+  position: absolute;
+  width: 19px; height: 19px;
+  border-radius: 50%;
+  border: 2.4px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  opacity: 0;
+  animation: pa-spin .75s linear infinite;
+  pointer-events: none;
+}
+.pa-btn.pa-busy { pointer-events: none; }
+.pa-btn.pa-busy .pa-btn__txt,
+.pa-btn.pa-busy .pa-btn__ic { opacity: 0; }
+.pa-btn.pa-busy .pa-btn__spin { opacity: 1; }
+.pa-btn.pa-busy::after { animation: none; opacity: 0; }
+
+/* click ripple (created in JS) */
+.pa-ripple {
+  position: absolute;
+  width: 18px; height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .5);
+  pointer-events: none;
+  transform: scale(0);
+  animation: pa-ripple .62s var(--pa-ease) forwards;
+}
+.pa-btn--ghost .pa-ripple,
+.pa-btn--soft .pa-ripple { background: rgba(47,98,168, .26); }
+@keyframes pa-ripple {
+  from { transform: scale(0); opacity: .65; }
+  to   { transform: scale(16); opacity: 0; }
+}
+
+.pa-alt { font-size: 13.2px; color: var(--pa-muted); text-align: center; margin-top: 2px; }
+.pa-swap {
+  border: 0; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-size: 13.2px; font-weight: 700; color: var(--pa-blue-dark);
+  text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: rgba(47,98,168, .35);
+  transition: color .2s var(--pa-ease);
+}
+.pa-swap:hover { color: var(--pa-navy); }
+.pa-swap:focus-visible { outline: 2px solid var(--pa-blue); outline-offset: 2px; border-radius: 4px; }
+
+/* ---------------------------------------------------------------------
+   5. REGISTRATION WIZARD
+   --------------------------------------------------------------------- */
+.pa-prog { position: relative; margin: 2px 0 14px; }
+
+.pa-prog__track {
+  position: absolute;
+  top: 14px; left: 16.667%; right: 16.667%;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--pa-page);
+  overflow: hidden;
+}
+.pa-prog__fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--pa-navy), var(--pa-blue) 55%, var(--pa-cyan));
+  transition: width .5s var(--pa-ease);
+}
+
+.pa-prog__list {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  margin: 0; padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.pa-prog__item { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.pa-prog__dot {
+  position: relative;
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--pa-line);
+  background: #fff;
+  color: var(--pa-muted);
+  font-family: var(--pa-display);
+  font-size: 13px; font-weight: 700;
+  transition: border-color .35s var(--pa-ease), background .35s var(--pa-ease),
+              color .35s var(--pa-ease), transform .4s var(--pa-ease-back), box-shadow .35s var(--pa-ease);
+}
+.pa-prog__dot b { grid-area: 1 / 1; transition: opacity .25s var(--pa-ease), transform .25s var(--pa-ease); }
+.pa-prog__dot .pa-i {
+  grid-area: 1 / 1;
+  width: 16px; height: 16px; stroke-width: 2.6;
+  opacity: 0;
+  transform: scale(.5);
+  transition: opacity .25s var(--pa-ease), transform .3s var(--pa-ease-back);
+}
+.pa-prog__item.pa-on .pa-prog__dot {
+  border-color: var(--pa-blue);
+  color: var(--pa-blue-dark);
+  transform: scale(1.1);
+  box-shadow: 0 0 0 5px rgba(47,98,168, .12);
+}
+.pa-prog__item.pa-past .pa-prog__dot {
+  border-color: var(--pa-blue);
+  background: linear-gradient(140deg, var(--pa-blue), var(--pa-navy));
+  color: #fff;
+}
+.pa-prog__item.pa-past .pa-prog__dot b { opacity: 0; transform: scale(.6); }
+.pa-prog__item.pa-past .pa-prog__dot .pa-i { opacity: 1; transform: scale(1); }
+
+.pa-prog__name {
+  font-size: 11.6px; font-weight: 600; letter-spacing: .04em;
+  color: var(--pa-muted);
+  transition: color .3s var(--pa-ease);
+}
+.pa-prog__item.pa-on .pa-prog__name,
+.pa-prog__item.pa-past .pa-prog__name { color: var(--pa-navy); }
+
+.pa-stepnote {
+  font-size: 12.6px; font-weight: 600; color: var(--pa-muted);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.pa-steps {
+  position: relative;
+  /* the padding/negative-margin pair keeps the temporary overflow clip
+     used during the height transition well clear of the field shadows */
+  margin-inline: -14px;
+  padding-inline: 14px;
+  transition: height .4s var(--pa-ease);
+}
+.pa-steps.pa-clip { overflow: hidden; }
+
+.pa-step { display: none; }
+.pa-step.pa-on { display: grid; gap: 26px; }   /* see .pa-fields on the gap */
+.pa-steps.pa-fwd .pa-step.pa-on { animation: pa-slide-fwd .44s var(--pa-ease) both; }
+.pa-steps.pa-rev .pa-step.pa-on { animation: pa-slide-rev .44s var(--pa-ease) both; }
+@keyframes pa-slide-fwd {
+  from { opacity: 0; transform: translate3d(36px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pa-slide-rev {
+  from { opacity: 0; transform: translate3d(-36px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+.pa-grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 13px; }
+.pa-nav { display: flex; gap: 10px; margin-top: 4px; }
+
+/* --- strength meter --- */
+.pa-meter { margin-top: 9px; display: grid; gap: 6px; }
+.pa-meter__bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.pa-meter__b {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--pa-page);
+  transform-origin: left center;
+  transition: background .35s var(--pa-ease), transform .35s var(--pa-ease-back);
+}
+.pa-meter__lbl { font-size: 12.2px; line-height: 1.45; color: var(--pa-muted); transition: color .3s var(--pa-ease); }
+
+.pa-meter[data-pa-lvl="1"] .pa-meter__b:nth-child(-n+1) { background: #e2574c; transform: scaleY(1.5); }
+.pa-meter[data-pa-lvl="2"] .pa-meter__b:nth-child(-n+2) { background: #e8963a; transform: scaleY(1.5); }
+.pa-meter[data-pa-lvl="3"] .pa-meter__b:nth-child(-n+3) { background: #196fbb; transform: scaleY(1.5); }
+.pa-meter[data-pa-lvl="4"] .pa-meter__b                 { background: var(--pa-ok); transform: scaleY(1.5); }
+.pa-meter[data-pa-lvl="1"] .pa-meter__lbl { color: #c8483e; }
+.pa-meter[data-pa-lvl="2"] .pa-meter__lbl { color: #9a6412; }
+.pa-meter[data-pa-lvl="3"] .pa-meter__lbl { color: #7a1a44; }
+.pa-meter[data-pa-lvl="4"] .pa-meter__lbl { color: var(--pa-ok); }
+
+/* ---------------------------------------------------------------------
+   6. SUCCESS STATE
+   --------------------------------------------------------------------- */
+.pa-done {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 8px 0 6px;
+  animation: pa-rise .5s var(--pa-ease) both;
+}
+.pa-done[hidden] { display: none; }
+
+.pa-done__ring {
+  position: relative;
+  width: 88px; height: 88px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(47,98,168, .14), rgba(52, 211, 153, .06) 55%, transparent 72%);
+}
+.pa-done__ring::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 2px solid rgba(52, 211, 153, .55);
+  animation: pa-halo 2.6s var(--pa-ease) infinite;
+}
+@keyframes pa-halo {
+  0%   { transform: scale(.86); opacity: .75; }
+  70%  { transform: scale(1.28); opacity: 0; }
+  100% { transform: scale(1.28); opacity: 0; }
+}
+.pa-done__svg { position: relative; width: 76px; height: 76px; display: block; }
+.pa-done__circle {
+  fill: none;
+  stroke: var(--pa-blue);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 208;          /* 2 * PI * r(33) rounded up */
+  stroke-dashoffset: 208;
+  transform: rotate(-90deg);
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: pa-draw .8s var(--pa-ease) .08s forwards;
+}
+.pa-done__tick {
+  fill: none;
+  stroke: var(--pa-cyan);
+  stroke-width: 4.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 46;
+  stroke-dashoffset: 46;
+  animation: pa-draw .46s var(--pa-ease) .66s forwards;
+}
+@keyframes pa-draw { to { stroke-dashoffset: 0; } }
+
+.pa-done__title { color: var(--pa-navy); font-family: var(--pa-display); font-size: 21px; margin: 4px 0 0; }
+.pa-done__txt { font-size: 14.2px; line-height: 1.6; color: var(--pa-text); max-width: 34ch; }
+.pa-done__note {
+  font-size: 12.6px; line-height: 1.6; color: var(--pa-muted);
+  background: var(--pa-fill);
+  border: 1px solid var(--pa-line);
+  border-radius: 13px;
+  padding: 12px 15px;
+  max-width: 40ch;
+}
+
+/* ---------------------------------------------------------------------
+   7. CARD FOOTER
+   --------------------------------------------------------------------- */
+.pa-demo {
+  display: flex; align-items: flex-start; gap: 9px;
+  margin-top: 22px;
+  padding-top: 17px;
+  border-top: 1px dashed var(--pa-line);
+  font-size: 12.4px; line-height: 1.55; color: var(--pa-muted);
+}
+.pa-demo .pa-i { width: 15px; height: 15px; flex: none; margin-top: 2px; color: var(--pa-blue); }
+
+.pa-fine {
+  display: flex; align-items: center; justify-content: center;
+  gap: 9px; flex-wrap: wrap;
+  font-size: 12.4px; color: var(--pa-faint);
+}
+.pa-fine .pa-link { font-size: 12.4px; font-weight: 500; color: var(--pa-text); }
+
+/* ---------------------------------------------------------------------
+   8. PHONE FIELD — dialling-code select joined to the number input
+   The pair reads as a single control: .pa-tel carries the border, the
+   focus ring and the error state, and both segments inside it are
+   borderless so no seam or double outline ever shows.
+   --------------------------------------------------------------------- */
+.pa-tel {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--pa-line);
+  border-radius: var(--pa-r);
+  background: var(--pa-fill);
+  transition: border-color .22s var(--pa-ease), background .22s var(--pa-ease), box-shadow .28s var(--pa-ease);
+}
+.pa-tel:hover { border-color: #b9d5d1; }
+.pa-tel:focus-within {
+  border-color: var(--pa-blue);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(47,98,168, .13), 0 10px 24px -16px rgba(47,98,168, .9);
+}
+
+.pa-tel__code {
+  position: relative;
+  flex: none;
+  display: flex; align-items: center; gap: 7px;
+  padding: 0 10px 0 13px;
+  border-right: 1.5px solid var(--pa-line);
+  border-radius: calc(var(--pa-r) - 1px) 0 0 calc(var(--pa-r) - 1px);
+  transition: background .22s var(--pa-ease), box-shadow .22s var(--pa-ease), border-color .22s var(--pa-ease);
+}
+.pa-tel:focus-within .pa-tel__code { border-right-color: rgba(47,98,168, .34); }
+/* :focus-within here can only mean the <select>, which is its only
+   focusable child — so this is the select's own focus indicator */
+.pa-tel__code:focus-within { background: rgba(47,98,168, .09); box-shadow: inset 0 0 0 2px var(--pa-blue); }
+
+.pa-tel__ic { display: flex; color: var(--pa-faint); transition: color .22s var(--pa-ease); }
+.pa-tel__ic .pa-i { width: 18px; height: 18px; }
+.pa-tel:focus-within .pa-tel__ic { color: var(--pa-blue); }
+
+.pa-tel__val {
+  font-size: 14.6px; font-weight: 700; line-height: 1;
+  color: var(--pa-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pa-tel__caret { width: 15px; height: 15px; color: var(--pa-faint); transition: transform .26s var(--pa-ease), color .22s var(--pa-ease); }
+.pa-tel__code:focus-within .pa-tel__caret { transform: rotate(180deg); color: var(--pa-blue); }
+
+/* The real control. Kept in the layout rather than display:none so it
+   stays focusable, clickable and announced — only its painting is
+   suppressed, and the printed .pa-tel__val mirrors its value. */
+.pa-tel__sel {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  margin: 0; padding: 0; border: 0;
+  font: inherit; font-size: 15px;
+  opacity: 0;
+  cursor: pointer;
+  background: none;
+  -webkit-appearance: none; appearance: none;
+}
+
+.pa-tel__num { position: relative; flex: 1 1 auto; min-width: 0; }
+.pa-tel .pa-field__input {
+  border: 0;
+  border-radius: 0 calc(var(--pa-r) - 1px) calc(var(--pa-r) - 1px) 0;
+  background: none;
+  padding: 23px 14px 8px 13px;
+}
+.pa-tel .pa-field__input:focus { background: none; box-shadow: none; }
+.pa-tel .pa-field__label { left: 13px; }
+.pa-tel .pa-field__spark { left: 12px; right: 12px; bottom: -1px; }
+.pa-tel:focus-within .pa-field__spark { transform: scaleX(1); opacity: 1; }
+
+/* the error belongs to the pair, never to one half of it */
+.pa-field.pa-bad .pa-tel {
+  border-color: var(--pa-danger);
+  background: var(--pa-danger-bg);
+  animation: pa-shake .42s var(--pa-ease) both;
+}
+.pa-field.pa-bad .pa-tel:focus-within { box-shadow: 0 0 0 4px rgba(220, 59, 52, .14); }
+.pa-field.pa-bad .pa-tel .pa-field__input { border: 0; background: none; animation: none; }
+.pa-field.pa-bad .pa-tel__ic { color: var(--pa-danger); }
+.pa-field.pa-bad .pa-tel__code { border-right-color: rgba(198, 47, 40, .38); }
+
+/* ---------------------------------------------------------------------
+   9. ONE-TIME-CODE ENTRY (vfi-partner-verify.html)
+   --------------------------------------------------------------------- */
+.pa-otp__lbl {
+  font-family: var(--pa-display);
+  font-size: 13.6px; font-weight: 700;
+  color: var(--pa-navy);
+  margin-bottom: 9px;
+}
+.pa-otp {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(6px, 2.4vw, 11px);
+}
+.pa-otp__in {
+  width: 100%;
+  height: 58px;
+  display: block;
+  font: inherit;
+  font-family: var(--pa-display);
+  font-size: clamp(19px, 5.2vw, 24px);
+  font-weight: 700;
+  text-align: center;
+  color: var(--pa-ink);
+  padding: 0;
+  border: 1.5px solid var(--pa-line);
+  border-radius: 13px;
+  background: var(--pa-fill);
+  outline: none;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color .2s var(--pa-ease), background .2s var(--pa-ease),
+              box-shadow .26s var(--pa-ease), transform .26s var(--pa-ease-back);
+}
+.pa-otp__in:hover { border-color: #b9d5d1; }
+.pa-otp__in.pa-filled { border-color: rgba(47,98,168, .55); background: #fff; }
+.pa-otp__in:focus {
+  border-color: var(--pa-blue);
+  background: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 4px rgba(47,98,168, .16), 0 12px 22px -16px rgba(47,98,168, .95);
+}
+.pa-otp__hint { margin-top: 9px; font-size: 12.2px; line-height: 1.45; color: var(--pa-muted); }
+
+.pa-field.pa-bad .pa-otp { animation: pa-shake .42s var(--pa-ease) both; }
+.pa-field.pa-bad .pa-otp__in { border-color: var(--pa-danger); background: var(--pa-danger-bg); }
+.pa-field.pa-bad .pa-otp__in:focus { box-shadow: 0 0 0 4px rgba(220, 59, 52, .14); }
+
+/* ---------------------------------------------------------------------
+   10. "CHECK YOUR INBOX" STATE, ADDRESS CHIP, RESEND COOLDOWN
+   --------------------------------------------------------------------- */
+.pa-sent {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 13px;
+  padding: 4px 0 2px;
+  animation: pa-rise .5s var(--pa-ease) both;
+}
+.pa-sent__ic {
+  width: 78px; height: 78px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  color: var(--pa-blue);
+  background: radial-gradient(circle, rgba(47,98,168, .16), rgba(52, 211, 153, .07) 55%, transparent 72%);
+}
+.pa-sent__ic .pa-i {
+  width: 34px; height: 34px; stroke-width: 1.5;
+  animation: pa-float 3.6s ease-in-out infinite;
+}
+@keyframes pa-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -5px, 0); }
+}
+
+.pa-sent__title { color: var(--pa-navy); font-family: var(--pa-display); font-size: 21px; margin: 2px 0 0; }
+
+/* JS moves focus to these headings when a state resolves, so they have to
+   show something — but the UA default ring reads as a stray box. Give it
+   the page's own ring instead, and drop it for pointer-driven focus. */
+.pa-sent__title:focus-visible,
+.pa-done__title:focus-visible {
+  outline: 2px solid var(--pa-blue);
+  outline-offset: 5px;
+  border-radius: 9px;
+}
+.pa-sent__title:focus:not(:focus-visible),
+.pa-done__title:focus:not(:focus-visible) { outline: none; }
+.pa-sent__txt { font-size: 14px; line-height: 1.6; color: var(--pa-text); max-width: 36ch; }
+.pa-sent__txt--sm { font-size: 12.6px; color: var(--pa-muted); max-width: 42ch; }
+.pa-sent__alt { font-size: 13.2px; color: var(--pa-muted); }
+
+.pa-addr {
+  display: inline-flex; align-items: center; gap: 9px;
+  max-width: 100%;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--pa-line);
+  background: var(--pa-fill);
+  font-size: 13.6px; line-height: 1.45;
+  color: var(--pa-text);
+}
+.pa-addr .pa-i { width: 16px; height: 16px; color: var(--pa-blue-dark); }
+.pa-addr b { min-width: 0; color: var(--pa-navy); font-weight: 700; overflow-wrap: anywhere; }
+.pa-addr--block { display: flex; justify-content: center; border-radius: 14px; text-align: left; }
+
+.pa-resend {
+  display: flex; align-items: center; justify-content: center;
+  gap: 5px 9px; flex-wrap: wrap;
+  font-size: 13.2px; color: var(--pa-muted);
+}
+.pa-swap[aria-disabled="true"] { color: var(--pa-muted); text-decoration-color: transparent; cursor: default; }
+.pa-swap[aria-disabled="true"]:hover { color: var(--pa-muted); }
+
+.pa-cool {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12.4px; font-weight: 700;
+  color: var(--pa-muted);
+  font-variant-numeric: tabular-nums;
+}
+.pa-cool[hidden] { display: none; }
+/* a discrete progress ring — JS rewrites --pa-p once a second, so there is
+   no animation here to switch off under reduced motion */
+.pa-cool__ring {
+  width: 15px; height: 15px; flex: none;
+  border-radius: 50%;
+  background: conic-gradient(var(--pa-blue) calc(var(--pa-p, 100) * 1%), rgba(26,47,92, .16) 0);
+  -webkit-mask: radial-gradient(circle, transparent 50%, #000 52%);
+  mask: radial-gradient(circle, transparent 50%, #000 52%);
+}
+
+/* the "use a different address" mini form on the verification page.
+   It is a sibling of the code form, never nested inside it. */
+.pa-mail { display: grid; gap: 24px; }
+.pa-mail[hidden] { display: none; }
+.pa-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------------
+   11. RESPONSIVE
+   --------------------------------------------------------------------- */
+@media (max-width: 1180px) {
+  .pa-brand__title { font-size: clamp(25px, 3vw, 34px); }
+  .pa-stack { height: 190px; }
+  .pa-glass--stat { top: 58px; width: 152px; }
+}
+
+/* below 900px the two panels stack and the brand side becomes a banner */
+@media (max-width: 900px) {
+  .pa-shell { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+
+  .pa-brand {
+    gap: 18px;
+    padding: 22px 20px 30px;
+    border-radius: 0 0 30px 30px;
+  }
+  .pa-brand__mid { justify-content: flex-start; }
+  .pa-brand__title { font-size: clamp(23px, 6vw, 30px); margin: 14px 0 10px; max-width: 22ch; }
+  .pa-brand__lead { font-size: 14.2px; max-width: none; }
+  .pa-stack,
+  .pa-perks,
+  .pa-brand__help { display: none; }
+  .pa-brand__foot { margin-top: 2px; }
+  .pa-orb--c { display: none; }
+
+  .pa-panel { padding: 26px 18px 34px; justify-content: flex-start; }
+  .pa-back {
+    position: static;
+    align-self: flex-start;
+    margin: 0 0 4px -6px;
+  }
+  .pa-card { max-width: 520px; padding: 28px 20px 22px; }
+}
+
+@media (max-width: 520px) {
+  .pa-brand { padding: 20px 16px 26px; }
+  /* the label is hidden visually, not removed — display:none would leave
+     this link with no accessible name at all */
+  .pa-exit span {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0; border: 0;
+    overflow: hidden; white-space: nowrap;
+  }
+  .pa-exit { padding: 9px 11px; }
+  .pa-tick { width: auto; padding: 7px 13px 7px 12px; }
+  .pa-tick__lbl { display: none; }
+
+  .pa-panel { padding: 22px 14px 30px; }
+  .pa-card { padding: 24px 17px 20px; border-radius: 22px; }
+  .pa-card__title { font-size: 21px; }
+  .pa-tab { font-size: 12.6px; padding: 10px 6px; }
+  .pa-grid2 { grid-template-columns: minmax(0, 1fr); }
+  .pa-prog__name { font-size: 10.6px; }
+  .pa-nav { flex-wrap: wrap; }
+  .pa-btn { font-size: 14.4px; }
+  .pa-row { gap: 10px; }
+
+  .pa-otp__in { height: 52px; border-radius: 11px; }
+  .pa-tel__code { padding: 0 8px 0 11px; gap: 5px; }
+  .pa-tel__val { font-size: 13.6px; }
+  .pa-tel__ic .pa-i { width: 16px; height: 16px; }
+  .pa-sent__ic { width: 68px; height: 68px; }
+  .pa-sent__ic .pa-i { width: 30px; height: 30px; }
+  .pa-actions .pa-btn { flex: 1 1 auto; }
+}
+
+/* Short viewports: shed the brand panel's optional furniture in order of
+   least value rather than letting it run past the fold. */
+@media (min-width: 901px) and (max-height: 820px) {
+  .pa-brand__help { display: none; }
+}
+@media (min-width: 901px) and (max-height: 780px) {
+  .pa-stack { display: none; }
+  .pa-brand { gap: 16px; padding-top: 28px; padding-bottom: 28px; }
+  .pa-brand__title { font-size: clamp(24px, 2.1vw, 32px); margin: 12px 0 10px; }
+  .pa-brand__lead { font-size: 14.2px; }
+  .pa-perks { gap: 11px; }
+  /* on a short window the form side is what sets the page height */
+  .pa-panel { padding-top: 54px; padding-bottom: 26px; }
+  .pa-card { padding-top: 28px; padding-bottom: 20px; }
+  .pa-card__head { margin-bottom: 17px; }
+}
+@media (min-width: 901px) and (max-height: 700px) {
+  .pa-brand__foot { display: none; }
+}
+@media (min-width: 901px) and (max-height: 620px) {
+  .pa-perks { display: none; }
+  .pa-panel { justify-content: flex-start; }
+}
+
+/* ---------------------------------------------------------------------
+   12. REDUCED MOTION — switches off everything this file animates
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .pa-body *,
+  .pa-body *::before,
+  .pa-body *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: .001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* anything whose resting state is produced by an animation is pinned
+     to its finished state instead */
+  .pa-mesh, .pa-grid, .pa-beam, .pa-orb, .pa-dust__i,
+  .pa-lockup__ring, .pa-eyebrow__dot, .pa-bar, .pa-glass, .pa-toast,
+  .pa-tick__roll, .pa-card__edge, .pa-btn--go::after,
+  .pa-panel__blob, .pa-done__ring::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .pa-glass { translate: none !important; }
+  .pa-beam { display: none; }
+  .pa-dust { display: none; }
+  .pa-bar { transform: none; opacity: 1; }
+  .pa-toast { opacity: 1; transform: none; }
+  .pa-btn--go::after { opacity: 0; }
+  .pa-tick__roll { transform: none; }
+  .pa-done__ring::after { opacity: 0; }
+
+  .pa-rise,
+  .pa-form.pa-on .pa-rise,
+  .pa-step.pa-on .pa-rise,
+  .pa-card,
+  .pa-done,
+  .pa-sent,
+  .pa-msg {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* forgot / verify additions */
+  .pa-sent__ic .pa-i { animation: none !important; transform: none !important; }
+  .pa-field.pa-bad .pa-otp,
+  .pa-field.pa-bad .pa-tel { animation: none !important; }
+  .pa-otp__in,
+  .pa-otp__in:focus { transform: none !important; }
+  .pa-steps.pa-fwd .pa-step.pa-on,
+  .pa-steps.pa-rev .pa-step.pa-on { animation: none !important; }
+  .pa-field.pa-bad .pa-field__input { animation: none !important; }
+  .pa-done__circle, .pa-done__tick { animation: none !important; stroke-dashoffset: 0 !important; }
+  .pa-btn__spin { animation: pa-spin 1.6s linear infinite !important; }
+  .pa-ripple { display: none !important; }
+  .pa-steps { transition: none !important; }
+}

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — allied services that make your students' journey smoother: education loans, accommodation and test prep." />
+  <title>Allied Services | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    /* page-scoped — every selector prefixed .pg-allied */
+    /* keep the fixed top bar from covering an anchored section when jumped to */
+    .pg-allied section { scroll-margin-top: 88px; }
+    .pg-allied__stack { display: flex; flex-direction: column; gap: var(--pp-gap); }
+    .pg-allied__sec { display: grid; grid-template-columns: 300px 1fr; gap: 30px; align-items: center; }
+    .pg-allied__sec--flip .pg-allied__media { order: 2; }
+    .pg-allied__media {
+      background: linear-gradient(150deg, var(--pp-teal-soft), #f2fbf9);
+      border: 1px solid #d3f0ea; border-radius: var(--pp-radius); padding: 22px;
+      display: grid; place-items: center; min-height: 200px;
+    }
+    .pg-allied__media svg { width: 100%; height: auto; max-width: 256px; }
+    .pg-allied__badge {
+      width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
+      background: var(--pp-teal-soft); color: var(--pp-teal); margin-bottom: 14px;
+    }
+    .pg-allied__body h2 { font-size: 21px; margin-top: 4px; }
+    .pg-allied__body p { color: var(--pp-slate); font-size: 14.5px; line-height: 1.65; margin: 10px 0 0; }
+    .pg-allied__list { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 10px; }
+    .pg-allied__list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--pp-slate); }
+    .pg-allied__list .ic { color: var(--pp-ok); flex: none; margin-top: 2px; }
+    .pg-allied__cta { margin-top: 20px; }
+    .pg-allied__note { color: var(--pp-faint); font-size: 12.5px; margin-top: 12px; }
+    @media (max-width: 860px) {
+      .pg-allied__sec { grid-template-columns: 1fr; }
+      .pg-allied__sec--flip .pg-allied__media { order: -1; }
+      .pg-allied__media { order: -1; }
+    }
+  </style>
+</head>
+<body class="pp" data-pp-page="allied">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap pg-allied">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <h1 class="pp-head__title">Allied Services</h1>
+          <p class="pp-head__sub">Extra services that make your students' journey smoother.</p>
+        </div>
+      </div>
+
+      <div class="pg-allied__stack">
+
+        <!-- ============================== LOANS ============================== -->
+        <section id="loans" class="pp-card pp-card--pad-lg pg-allied__sec pp-anim">
+          <div class="pg-allied__media">
+            <svg viewBox="0 0 260 210" role="img" aria-label="Education loan assistance illustration">
+              <circle cx="130" cy="105" r="92" fill="#ffffff" opacity=".65"/>
+              <!-- document -->
+              <rect x="58" y="46" width="108" height="128" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="3"/>
+              <path d="M78 74h68M78 92h68M78 110h44" stroke="#cdddde" stroke-width="6" stroke-linecap="round"/>
+              <!-- signature line -->
+              <path d="M78 138h40" stroke="#0a6a62" stroke-width="4" stroke-linecap="round"/>
+              <!-- coin -->
+              <circle cx="176" cy="146" r="36" fill="#10b981" stroke="#ffffff" stroke-width="4"/>
+              <circle cx="176" cy="146" r="27" fill="none" stroke="#ffffff" stroke-width="2.4" opacity=".7"/>
+              <path d="M176 130v32M168 137a10 10 0 0 1 16 1c0 6-16 4-16 10a10 10 0 0 0 16 2" fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+              <!-- upward growth arrow -->
+              <path d="M188 74l22-22M210 52h-14M210 52v14" fill="none" stroke="#0d9488" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="pg-allied__body">
+            <span class="pg-allied__badge"><svg class="ic"><use href="#pi-loan"/></svg></span>
+            <span class="pp-eyebrow">Allied service</span>
+            <h2>Élan Education Loans</h2>
+            <p data-ppr="loanText">End-to-end overseas education loan assistance for your students — from eligibility checks and lender matching to documentation support and disbursement. Submit a case in a few clicks and follow every step from your console.</p>
+            <ul class="pg-allied__list">
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Guidance across the full loan journey, from enquiry to disbursement</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Real-time loan status tracking for each student case</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Help gathering and reviewing the required documents</li>
+            </ul>
+            <div class="pg-allied__cta">
+              <button type="button" class="pp-btn pp-btn--primary pp-btn--lg" id="pgAlliedLoan">
+                <svg class="ic ic--sm"><use href="#pi-send"/></svg> Submit a loan case
+              </button>
+            </div>
+            <p class="pg-allied__note">Front-end demo — submitting opens a confirmation only.</p>
+          </div>
+        </section>
+
+        <!-- ========================= ACCOMMODATION ========================= -->
+        <section id="accommodation" class="pp-card pp-card--pad-lg pg-allied__sec pg-allied__sec--flip pp-anim">
+          <div class="pg-allied__media">
+            <svg viewBox="0 0 260 210" role="img" aria-label="Student accommodation illustration">
+              <circle cx="130" cy="105" r="92" fill="#ffffff" opacity=".65"/>
+              <!-- ground line -->
+              <path d="M46 168h168" stroke="#cdddde" stroke-width="4" stroke-linecap="round"/>
+              <!-- house body -->
+              <path d="M76 100l54-40 54 40" fill="none" stroke="#0d9488" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="86" y="100" width="88" height="68" rx="8" fill="#ffffff" stroke="#0d9488" stroke-width="3"/>
+              <!-- roof fill -->
+              <path d="M130 60l-54 40h108z" fill="#e6fbf6" stroke="#0d9488" stroke-width="3" stroke-linejoin="round"/>
+              <!-- door -->
+              <rect x="118" y="128" width="24" height="40" rx="5" fill="#10b981"/>
+              <circle cx="137" cy="149" r="2.2" fill="#ffffff"/>
+              <!-- windows -->
+              <rect x="96" y="114" width="18" height="18" rx="3" fill="#d1f4ec" stroke="#0d9488" stroke-width="2.4"/>
+              <rect x="146" y="114" width="18" height="18" rx="3" fill="#d1f4ec" stroke="#0d9488" stroke-width="2.4"/>
+              <!-- location pin -->
+              <path d="M196 66c0 12-14 20-14 20s-14-8-14-20a14 14 0 0 1 28 0z" fill="#0d9488"/>
+              <circle cx="182" cy="66" r="5.5" fill="#ffffff"/>
+            </svg>
+          </div>
+          <div class="pg-allied__body">
+            <span class="pg-allied__badge"><svg class="ic"><use href="#pi-house"/></svg></span>
+            <span class="pp-eyebrow">Allied service</span>
+            <h2>Accommodation</h2>
+            <p data-ppr="accomText">Give your students a smoother arrival. We help them find a place to stay from a curated list of verified properties near their campus — student residences, shared homes and studios — with clear details so they can choose with confidence.</p>
+            <ul class="pg-allied__list">
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> A curated list of properties close to partner campuses</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Options for every budget and room preference</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Support with enquiries and booking the right room</li>
+            </ul>
+            <div class="pg-allied__cta">
+              <button type="button" class="pp-btn pp-btn--primary pp-btn--lg" id="pgAlliedAcc">
+                <svg class="ic ic--sm"><use href="#pi-search"/></svg> Browse properties
+              </button>
+            </div>
+            <p class="pg-allied__note">Front-end demo — browsing opens a confirmation only.</p>
+          </div>
+        </section>
+
+        <!-- ============================ TEST PREP ============================ -->
+        <section id="testprep" class="pp-card pp-card--pad-lg pg-allied__sec pp-anim">
+          <div class="pg-allied__media">
+            <svg viewBox="0 0 260 210" role="img" aria-label="White-labelled test preparation illustration">
+              <circle cx="130" cy="105" r="92" fill="#ffffff" opacity=".65"/>
+              <!-- book -->
+              <path d="M60 150V72a2 2 0 0 1 2-2h44a10 10 0 0 1 10 10v78a8 8 0 0 0-8-6H62a2 2 0 0 1-2-2z" fill="#ffffff" stroke="#0d9488" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M74 90h30M74 106h30M74 122h22" stroke="#cdddde" stroke-width="5" stroke-linecap="round"/>
+              <!-- flask -->
+              <path d="M150 66h34M156 66v30l-20 42a10 10 0 0 0 9 15h40a10 10 0 0 0 9-15l-20-42V66" fill="#ffffff" stroke="#0d9488" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M143 128h48" stroke="#0d9488" stroke-width="2.6"/>
+              <path d="M147 140a48 48 0 0 0 40 0l6 12a10 10 0 0 1-9 15h-40a10 10 0 0 1-9-15z" fill="#10b981" opacity=".9"/>
+              <circle cx="162" cy="152" r="3.2" fill="#ffffff"/>
+              <circle cx="176" cy="160" r="2.4" fill="#ffffff"/>
+              <circle cx="184" cy="148" r="2" fill="#ffffff"/>
+              <!-- spark -->
+              <path d="M196 78l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#34d399"/>
+            </svg>
+          </div>
+          <div class="pg-allied__body">
+            <span class="pg-allied__badge"><svg class="ic"><use href="#pi-flask"/></svg></span>
+            <span class="pp-eyebrow">Allied service</span>
+            <h2>White-Labelled Test Prep</h2>
+            <p data-ppr="testprepText">Offer a complete test-prep solution under your own brand. Students prepare for IELTS, PTE and other admission tests with expert-built material and flexible batch timings — so preparation fits around study, work and time zones.</p>
+            <ul class="pg-allied__list">
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> A white-labelled solution that carries your identity</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Flexible batch timings that suit each student</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Expert-built lessons, practice sets and mock tests</li>
+            </ul>
+            <div class="pg-allied__cta">
+              <button type="button" class="pp-btn pp-btn--primary pp-btn--lg" id="pgAlliedPrep">
+                <svg class="ic ic--sm"><use href="#pi-arrow"/></svg> Explore test prep
+              </button>
+            </div>
+            <p class="pg-allied__note">Front-end demo — exploring opens a confirmation only.</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+  <script>
+    /* page-only wiring — ES5 to match js/ */
+    (function () {
+      function wire(id, msg) {
+        var b = document.getElementById(id);
+        if (b) b.addEventListener("click", function () { window.VFIToast(msg); });
+      }
+      wire("pgAlliedLoan", "Your loan case form would open here.");
+      wire("pgAlliedAcc", "The accommodation catalogue would open here.");
+      wire("pgAlliedPrep", "Test-prep details would open here.");
+    })();
+  </script>
+</body>
+</html>

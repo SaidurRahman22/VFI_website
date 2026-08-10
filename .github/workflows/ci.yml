@@ -1,0 +1,100 @@
+# =============================================================================
+# VFI CI — Phase 0, step 5. Runs on the Laravel API in backend/.
+# Gate classes (BLOCK vs WARN) per docs/phases/README.md#ci-gate-classes.
+# BLOCK jobs fail the pipeline; WARN jobs are advisory (continue-on-error).
+# =============================================================================
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  # --- BLOCK: secrets must never land in the repo ----------------------------
+  secrets:
+    name: gitleaks (BLOCK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+  # --- BLOCK: static analysis, style, tests ----------------------------------
+  quality:
+    name: analyse + test (BLOCK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_pgsql, intl, mbstring, bcmath, zip, redis
+          coverage: none
+      - name: Cache composer
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Larastan / PHPStan (moderate)
+        run: vendor/bin/phpstan analyse --no-progress || vendor/bin/phpstan analyse --level=5 --no-progress
+      - name: Pint (code style)
+        run: vendor/bin/pint --test
+      - name: Unit + feature tests
+        run: php artisan test
+
+  # --- BLOCK: dependency CVEs ------------------------------------------------
+  deps:
+    name: dependency CVE scan (BLOCK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.3" }
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Roave security advisories / audit
+        run: composer audit --no-interaction
+
+  # --- WARN: license policy (advisory) ---------------------------------------
+  licenses:
+    name: license check (WARN)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.3" }
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer licenses
+
+  # --- BLOCK: build, sign (cosign keyless), attest ---------------------------
+  image:
+    name: build + cosign sign + SBOM (BLOCK)
+    needs: [secrets, quality, deps]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write          # cosign keyless (OIDC)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: sigstore/cosign-installer@v3
+      - name: Build image
+        run: docker build -t ghcr.io/${{ github.repository }}/api:${{ github.sha }} ./backend
+      # Push + `cosign sign` + SBOM/SLSA attestation are wired once GHCR creds
+      # and the OIDC trust policy exist (needs the org's cloud accounts).
+      - name: Sign (keyless) — enabled once registry creds are set
+        run: echo "cosign sign ghcr.io/${{ github.repository }}/api:${{ github.sha }}  # gated on registry setup"

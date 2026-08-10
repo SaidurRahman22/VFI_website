@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — manage your students' enquiries and request program options in one place." />
+  <title>Enquiries | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    /* page-scoped: every selector prefixed .pg-enq */
+    .pg-enq .pp-empty { padding: 66px 24px; }
+    .pg-enq .pp-empty__art { width: 210px; max-width: 62%; }
+  </style>
+</head>
+<body class="pp" data-pp-page="enquiries">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <h1 class="pp-head__title">Enquiries</h1>
+          <p class="pp-head__sub">Manage your students' enquiries.</p>
+        </div>
+      </div>
+
+      <div class="pg-enq">
+        <div class="pp-card pp-anim">
+          <div class="pp-empty">
+            <svg class="pp-empty__art" viewBox="0 0 210 180" role="img" aria-label="Enquiries illustration" xmlns="http://www.w3.org/2000/svg">
+              <!-- soft backdrop -->
+              <circle cx="105" cy="88" r="74" fill="#e6fbf6"/>
+              <ellipse cx="105" cy="160" rx="64" ry="8" fill="#0d9488" opacity=".08"/>
+              <!-- document card -->
+              <rect x="44" y="40" width="92" height="104" rx="12" fill="#ffffff" stroke="#cdeae6" stroke-width="2"/>
+              <!-- logo block -->
+              <rect x="58" y="54" width="28" height="28" rx="8" fill="#e6fbf6" stroke="#0d9488" stroke-width="2"/>
+              <rect x="64" y="63" width="16" height="3" rx="1.5" fill="#0d9488"/>
+              <rect x="64" y="70" width="16" height="3" rx="1.5" fill="#0d9488"/>
+              <rect x="64" y="77" width="10" height="3" rx="1.5" fill="#0d9488"/>
+              <!-- content lines -->
+              <rect x="58" y="94" width="64" height="7" rx="3.5" fill="#cfe9e5"/>
+              <rect x="58" y="108" width="48" height="7" rx="3.5" fill="#e0f2ef"/>
+              <rect x="58" y="122" width="58" height="7" rx="3.5" fill="#e0f2ef"/>
+              <!-- magnifying glass -->
+              <circle cx="138" cy="112" r="23" fill="#0d9488" opacity=".08"/>
+              <circle cx="138" cy="112" r="26" fill="none" stroke="#0d9488" stroke-width="6"/>
+              <line x1="156" y1="130" x2="172" y2="146" stroke="#0a6a62" stroke-width="8" stroke-linecap="round"/>
+              <!-- enquiry (question) badge -->
+              <circle cx="132" cy="50" r="15" fill="#10b981"/>
+              <path d="M128 46a4 4 0 0 1 7.4 1.9c0 2.4-3 2.6-3 4.5" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"/>
+              <circle cx="132" cy="57" r="1.6" fill="#ffffff"/>
+            </svg>
+            <h2 class="pp-empty__title">Welcome to Enquiries</h2>
+            <p class="pp-empty__text">Request program options to get started.</p>
+            <button class="pp-btn pp-btn--primary" data-pp-open="request-program"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Request Program Options</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+</body>
+</html>

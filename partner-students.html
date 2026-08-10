@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — manage your students and their profiles in one place." />
+  <title>Students | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="pp" data-pp-page="students">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <h1 class="pp-head__title">Students</h1>
+          <p class="pp-head__sub">Manage your students and their profiles.</p>
+        </div>
+        <div class="pp-head__actions">
+          <button type="button" class="pp-btn pp-btn--ghost" id="ppArchived"><svg class="ic ic--sm"><use href="#pi-archive"/></svg> Archived Students</button>
+          <button type="button" class="pp-btn pp-btn--primary" data-pp-open="register-student"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Register New Student</button>
+        </div>
+      </div>
+
+      <!-- filters -->
+      <div class="pp-filters pp-anim">
+        <div class="pp-daterange" id="ppStuDateRange" style="flex:1 1 220px">
+          <svg class="ic ic--sm"><use href="#pi-calendar"/></svg>
+          <span>01 Jan 2025 – 08 Aug 2026</span>
+          <button type="button" class="pp-daterange__x" id="ppStuDates" aria-label="Clear dates"><svg class="ic ic--sm"><use href="#pi-x"/></svg></button>
+        </div>
+        <div class="pp-field"><select class="pp-select" aria-label="Country">
+          <option value="" disabled selected>Country</option>
+          <option>USA</option><option>Canada</option><option>UK</option><option>Australia</option><option>Ireland</option><option>New Zealand</option><option>Germany</option>
+        </select></div>
+        <div class="pp-field"><select class="pp-select" aria-label="Intake">
+          <option value="" disabled selected>Intake</option>
+          <option>Jan</option><option>May</option><option>Sep</option>
+        </select></div>
+        <div class="pp-field"><select class="pp-select" aria-label="Year">
+          <option value="" disabled selected>Year</option>
+          <option>2025</option><option>2026</option><option>2027</option>
+        </select></div>
+        <div class="pp-field"><select class="pp-select" aria-label="Status">
+          <option value="" disabled selected>Status</option>
+          <option>Application Started</option><option>Submitted</option><option>Offer Received</option><option>Visa Received</option>
+        </select></div>
+        <div class="pp-field pp-field--wide">
+          <div class="pp-search-wrap" style="position:relative">
+            <span class="pp-search-wrap__ic"><svg class="ic ic--sm"><use href="#pi-search"/></svg></span>
+            <input class="pp-input" type="text" id="ppStuKeyword" placeholder="Search by keyword" aria-label="Search by keyword" autocomplete="off">
+          </div>
+        </div>
+        <button type="button" class="pp-btn pp-btn--primary" id="ppStuSearch">Search</button>
+      </div>
+
+      <!-- empty state -->
+      <div class="pp-card pp-anim" style="margin-top:22px">
+        <div class="pp-empty">
+          <svg class="pp-empty__art" viewBox="0 0 220 180" role="img" aria-label="No students illustration" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="110" cy="152" rx="80" ry="11" fill="#e6fbf6"/>
+            <circle cx="110" cy="88" r="66" fill="#f2fbf9"/>
+            <rect x="64" y="38" width="76" height="98" rx="11" fill="#ffffff" stroke="#0d9488" stroke-width="3"/>
+            <path d="M78 62h48" stroke="#9ccfc9" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M78 78h48" stroke="#cbe8e4" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M78 94h30" stroke="#cbe8e4" stroke-width="4.5" stroke-linecap="round"/>
+            <circle cx="128" cy="106" r="31" fill="#ffffff" stroke="#10b981" stroke-width="4"/>
+            <circle cx="128" cy="106" r="22" fill="#e6fbf6"/>
+            <path d="M118 106l7 7 13-14" stroke="#0d9488" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M150 128l17 17" stroke="#0a6a62" stroke-width="7" stroke-linecap="round"/>
+          </svg>
+          <h2 class="pp-empty__title">No Student Found</h2>
+          <p class="pp-empty__text">You haven't registered any students yet. Register your first student to build their profile, then track every application from one place.</p>
+          <button type="button" class="pp-btn pp-btn--primary" data-pp-open="register-student"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Register New Student</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+  <script>
+    /* students-only wiring: archived toast, search feedback, clear dates */
+    (function () {
+      var $ = function (s, c) { return (c || document).querySelector(s); };
+      var arch = $("#ppArchived");
+      if (arch) arch.addEventListener("click", function () { window.VFIToast("No archived students yet."); });
+      var search = $("#ppStuSearch");
+      if (search) search.addEventListener("click", function () { window.VFIToast("No students match your filters yet."); });
+      var clear = $("#ppStuDates");
+      if (clear) clear.addEventListener("click", function () {
+        var pill = $("#ppStuDateRange");
+        if (pill) pill.style.display = "none";
+        window.VFIToast("Date filter cleared.");
+      });
+    })();
+  </script>
+</body>
+</html>

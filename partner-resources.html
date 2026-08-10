@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — the Learning Resources library: country guides, forms, financial and visa documents." />
+  <title>Learning Resources | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    /* page-scoped: every selector prefixed .pg-res */
+    .pg-res__panels {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (min-width: 981px) {
+      .pg-res__panels { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr); }
+    }
+    .pg-res__panel {
+      background: #fff;
+      border: 1px solid var(--pp-line);
+      border-radius: var(--pp-radius);
+      box-shadow: var(--pp-shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .pg-res__panelhead {
+      padding: 16px 20px;
+      font-family: var(--pp-display);
+      font-weight: 700;
+      color: var(--pp-ink);
+      font-size: 17px;
+      border-bottom: 1px solid var(--pp-line);
+      background: var(--pp-card-2);
+    }
+    .pg-res__list {
+      max-height: 470px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pg-res__list::-webkit-scrollbar { width: 8px; }
+    .pg-res__list::-webkit-scrollbar-thumb { background: var(--pp-line); border-radius: 4px; }
+    .pg-res__row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      text-align: left;
+      padding: 11px 13px;
+      border-radius: var(--pp-radius-sm);
+      border: 1px solid transparent;
+      background: #fff;
+      color: var(--pp-slate);
+      font-family: var(--pp-display);
+      font-weight: 600;
+      font-size: 14.5px;
+      cursor: pointer;
+      transition: background .16s var(--pp-ease), color .16s var(--pp-ease), box-shadow .16s var(--pp-ease);
+    }
+    .pg-res__row:hover { background: var(--pp-teal-soft); color: var(--pp-teal-dark); }
+    .pg-res__row.is-active {
+      background: linear-gradient(100deg, var(--pp-teal), var(--pp-teal-dark));
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(13, 148, 136, .28);
+    }
+    .pg-res__flag {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex: none;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      border: 1px solid var(--pp-line);
+      font-size: 19px;
+      line-height: 1;
+      overflow: hidden;
+    }
+    .pg-res__row .ic { color: var(--pp-muted); flex: none; transition: color .16s var(--pp-ease); }
+    .pg-res__row:hover .ic { color: var(--pp-teal); }
+    .pg-res__row.is-active .ic { color: #fff; }
+    .pg-res__label { flex: 1 1 auto; min-width: 0; }
+    .pg-res__chev { margin-left: auto; }
+    /* category folder icon tint */
+    .pg-res__folder { color: var(--pp-gold); }
+    .pg-res__row:hover .pg-res__folder { color: var(--pp-warn); }
+    .pg-res__row.is-active .pg-res__folder { color: #fff; }
+
+    /* documents panel */
+    .pg-res__docs { padding: 20px; }
+    .pg-res .pp-search-wrap { position: relative; display: block; margin-bottom: 22px; }
+    .pg-res__docs-title { font-size: 18px; font-family: var(--pp-display); font-weight: 700; color: var(--pp-ink); margin: 0 0 16px; }
+    .pg-res__doclist { display: flex; flex-wrap: wrap; gap: 16px; }
+    .pg-res__doc {
+      width: 220px;
+      max-width: 100%;
+      border: 1px solid var(--pp-line);
+      border-radius: var(--pp-radius);
+      box-shadow: var(--pp-shadow-sm);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      transition: transform .16s var(--pp-ease), box-shadow .16s var(--pp-ease), border-color .16s var(--pp-ease);
+    }
+    .pg-res__doc:hover { transform: translateY(-3px); box-shadow: var(--pp-shadow); border-color: #d5e6e4; }
+    .pg-res__doc-ic {
+      width: 64px;
+      height: 64px;
+      margin: 6px auto 14px;
+      display: grid;
+      place-items: center;
+      color: var(--pp-teal);
+    }
+    .pg-res__doc-ic .ic { width: 46px; height: 46px; stroke-width: 1.6; }
+    .pg-res__doc-title { text-align: center; font-family: var(--pp-display); font-weight: 700; color: var(--pp-ink); font-size: 15px; }
+    .pg-res__doc-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 16px 0;
+      padding-top: 14px;
+      border-top: 1px solid var(--pp-line-2);
+      font-size: 12.5px;
+      color: var(--pp-muted);
+      font-weight: 600;
+    }
+    .pg-res__empty-hint { color: var(--pp-muted); font-size: 13.5px; margin-top: 4px; }
+  </style>
+</head>
+<body class="pp" data-pp-page="resources">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <nav class="pp-crumb" aria-label="Breadcrumb">
+            <a href="partner-dashboard.html">Dashboard</a>
+            <span class="pp-crumb__sep">&rsaquo;</span>
+            <span class="pp-crumb__now">Learning Resources</span>
+          </nav>
+          <h1 class="pp-head__title">Learning Resources</h1>
+        </div>
+        <div class="pp-head__actions">
+          <a class="pp-btn pp-btn--ghost" href="partner-email-updates.html"><svg class="ic ic--sm"><use href="#pi-mail"/></svg> Email Updates</a>
+        </div>
+      </div>
+
+      <div class="pg-res">
+        <div class="pg-res__panels pp-anim">
+
+          <!-- Panel 1: Countries -->
+          <section class="pg-res__panel" aria-label="Countries">
+            <div class="pg-res__panelhead">Countries</div>
+            <div class="pg-res__list" id="resCountries">
+              <button type="button" class="pg-res__row is-active"><span class="pg-res__flag">🇦🇺</span><span class="pg-res__label">Australia</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><span class="pg-res__flag">🇨🇦</span><span class="pg-res__label">Canada</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><span class="pg-res__flag">🇦🇪</span><span class="pg-res__label">United Arab Emirates</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><span class="pg-res__flag">🇩🇪</span><span class="pg-res__label">Germany</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><span class="pg-res__flag">🇮🇪</span><span class="pg-res__label">Ireland</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><span class="pg-res__flag">🇳🇿</span><span class="pg-res__label">New Zealand</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><span class="pg-res__flag">🇸🇬</span><span class="pg-res__label">Singapore</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><span class="pg-res__flag">🇨🇭</span><span class="pg-res__label">Switzerland</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><span class="pg-res__flag">🇬🇧</span><span class="pg-res__label">United Kingdom</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+            </div>
+          </section>
+
+          <!-- Panel 2: Select Category -->
+          <section class="pg-res__panel" aria-label="Select Category">
+            <div class="pg-res__panelhead">Select Category</div>
+            <div class="pg-res__list" id="resCategories">
+              <button type="button" class="pg-res__row"><svg class="ic pg-res__folder"><use href="#pi-folder"/></svg><span class="pg-res__label">General Presentations</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row is-active"><svg class="ic pg-res__folder"><use href="#pi-folder"/></svg><span class="pg-res__label">Enquiry Form</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><svg class="ic pg-res__folder"><use href="#pi-folder"/></svg><span class="pg-res__label">Financial Documents</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><svg class="ic pg-res__folder"><use href="#pi-folder"/></svg><span class="pg-res__label">Visa Documents</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><svg class="ic pg-res__folder"><use href="#pi-folder"/></svg><span class="pg-res__label">Application Forms</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><svg class="ic pg-res__folder"><use href="#pi-folder"/></svg><span class="pg-res__label">Application Guide &amp; Method</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><svg class="ic pg-res__folder"><use href="#pi-folder"/></svg><span class="pg-res__label">GS Forms</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+              <button type="button" class="pg-res__row"><svg class="ic pg-res__folder"><use href="#pi-folder"/></svg><span class="pg-res__label">Samples &amp; Formats</span><svg class="ic ic--sm pg-res__chev"><use href="#pi-chev-right"/></svg></button>
+            </div>
+          </section>
+
+          <!-- Panel 3: Documents -->
+          <section class="pg-res__panel" aria-label="Documents">
+            <div class="pg-res__docs">
+              <div class="pp-search-wrap">
+                <span class="pp-search-wrap__ic"><svg class="ic ic--sm"><use href="#pi-search"/></svg></span>
+                <input class="pp-input" type="search" id="resSearch" placeholder="Search Document" aria-label="Search Document" />
+              </div>
+              <h2 class="pg-res__docs-title">Documents</h2>
+              <div class="pg-res__doclist" data-ppr="docs">
+                <article class="pg-res__doc">
+                  <div class="pg-res__doc-ic"><svg class="ic"><use href="#pi-file"/></svg></div>
+                  <div class="pg-res__doc-title">Student Enquiry Form</div>
+                  <div class="pg-res__doc-meta"><span>04-12-2025</span><span>0.16 MB</span></div>
+                  <button type="button" class="pp-btn pp-btn--primary pp-btn--block" data-res-download><svg class="ic ic--sm"><use href="#pi-download"/></svg> Download</button>
+                </article>
+                <article class="pg-res__doc">
+                  <div class="pg-res__doc-ic"><svg class="ic"><use href="#pi-file"/></svg></div>
+                  <div class="pg-res__doc-title">Counsellor Enquiry Checklist</div>
+                  <div class="pg-res__doc-meta"><span>04-12-2025</span><span>0.22 MB</span></div>
+                  <button type="button" class="pp-btn pp-btn--primary pp-btn--block" data-res-download><svg class="ic ic--sm"><use href="#pi-download"/></svg> Download</button>
+                </article>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+  <script>
+    /* page-only wiring: move the teal highlight between rows (visual), and the
+       Download buttons raise a demo toast. ES5 to match js/. */
+    (function () {
+      var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+
+      function wireList(id) {
+        var list = document.getElementById(id);
+        if (!list) return;
+        var rows = $$(".pg-res__row", list);
+        rows.forEach(function (row) {
+          row.addEventListener("click", function () {
+            rows.forEach(function (r) { r.classList.remove("is-active"); });
+            row.classList.add("is-active");
+          });
+        });
+      }
+      wireList("resCountries");
+      wireList("resCategories");
+
+      $$("[data-res-download]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (window.VFIToast) window.VFIToast("Download would start.");
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

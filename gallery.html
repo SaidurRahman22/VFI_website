@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Photo gallery — VFI Overseas Education events, seminars and student moments." />
+  <title>Gallery | VFI Overseas Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body data-page="company" data-header="overlay">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="site-header"></div>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="page-hero__bg" style="background-image:url('assets/img/students-friends.jpg')"></div>
+      <div class="container page-hero__inner">
+        <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="crumb__dot"></span><span>Gallery</span></nav>
+        <h1>Moments from VFI</h1>
+        <p>Education fairs, seminars, spot admissions days and the students we've helped along the way.</p>
+      </div>
+      <svg class="page-hero__wave" viewBox="0 0 1440 130" preserveAspectRatio="none" aria-hidden="true"><path d="M0,0 Q720,150 1440,0 L1440,130 L0,130 Z"/></svg>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="gal-grid" data-render="photos"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/site.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/render.js"></script>
+</body>
+</html>

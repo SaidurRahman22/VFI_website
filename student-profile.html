@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI student profile — keep your personal details, academic record, test scores, study preferences and document checklist in one place." />
+  <title>Student Profile | VFI Overseas Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/student-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="sp-scope" data-header="overlay">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="site-header"></div>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="container page-hero__inner">
+        <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="crumb__dot"></span><span class="sp-crumb-now">Student Profile</span></nav>
+        <h1>Your student profile</h1>
+        <p class="sp-hero__lead">One place for the details your counsellor needs — who you are, what you have studied, how you scored and where you want to go.</p>
+      </div>
+      <svg class="page-hero__wave" viewBox="0 0 1440 130" preserveAspectRatio="none" aria-hidden="true"><path d="M0,0 Q720,150 1440,0 L1440,130 L0,130 Z"/></svg>
+    </section>
+
+    <section class="section">
+      <div class="container">
+
+        <p class="sp-note">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-shield"/></svg>
+          <span><b>Demonstration page.</b> Everything below is sample data for a fictional student. There is no backend and nothing is uploaded — edits are kept only in this browser's local storage and files are recorded by name alone.</span>
+        </p>
+
+        <!-- ============ identity band ============ -->
+        <div class="sp-idcard">
+          <span class="sp-ava" id="spAvatar" aria-hidden="true">AR</span>
+          <div>
+            <p class="sp-id__name" id="spName">Ayesha Rahman</p>
+            <div class="sp-id__meta">
+              <span class="sp-tagline"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg> Student ID <b id="spSid">VFI-2026-04871</b></span>
+              <span class="sp-tagline"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg> Gulshan branch, Dhaka</span>
+              <span class="sp-tagline"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg> With VFI since Feb 2026</span>
+            </div>
+          </div>
+          <div class="sp-id__foot">
+            <div class="sp-meter__top">
+              <span class="sp-meter__label" id="spPctLabel">Profile 0% complete</span>
+              <span class="sp-meter__hint" id="spPctHint">Finish the remaining sections so your counsellor can shortlist courses.</span>
+            </div>
+            <div class="sp-track" id="spMeter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="spPctLabel">
+              <span class="sp-track__fill" id="spMeterFill"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sp-shell">
+          <aside class="sp-side" id="spSide" aria-label="Student portal navigation"></aside>
+          <div class="sp-body">
+
+        <!-- ============ personal details ============ -->
+        <form class="sp-card" id="spFormPersonal" data-sp-form="personal" novalidate>
+          <div class="sp-card__head">
+            <div class="sp-card__titlewrap">
+              <span class="sp-card__ic" aria-hidden="true"><svg class="ic"><use href="#i-users"/></svg></span>
+              <div>
+                <h2 class="sp-h2">Personal details</h2>
+                <p class="sp-card__sub">Must match your passport exactly.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sp-grid">
+            <div class="sp-field">
+              <label for="spFirst">First name <span class="sp-req" aria-hidden="true">*</span></label>
+              <input class="sp-input" id="spFirst" name="first" type="text" autocomplete="given-name" maxlength="40"
+                     data-sp-filter="name" data-sp-required="First name" aria-describedby="spFirstErr" />
+              <p class="sp-err" id="spFirstErr"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-x"/></svg><span></span></p>
+            </div>
+            <div class="sp-field">
+              <label for="spLast">Family name <span class="sp-req" aria-hidden="true">*</span></label>
+              <input class="sp-input" id="spLast" name="last" type="text" autocomplete="family-name" maxlength="40"
+                     data-sp-filter="name" data-sp-required="Family name" aria-describedby="spLastErr" />
+              <p class="sp-err" id="spLastErr"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-x"/></svg><span></span></p>
+            </div>
+            <div class="sp-field">
+              <label for="spDob">Date of birth</label>
+              <input class="sp-input" id="spDob" name="dob" type="date" max="2015-12-31" autocomplete="bday" />
+            </div>
+            <div class="sp-field">
+              <label for="spNat">Nationality</label>
+              <select class="sp-select" id="spNat" name="nationality">
+                <option value="">Select nationality</option>
+                <option>Bangladeshi</option>
+                <option>Nepali</option>
+                <option>Sri Lankan</option>
+                <option>Indian</option>
+                <option>Pakistani</option>
+                <option>Bhutanese</option>
+                <option>Maldivian</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="sp-field">
+              <label for="spPhone">Mobile number <span class="sp-req" aria-hidden="true">*</span></label>
+              <div class="sp-phone">
+                <select class="sp-select" id="spCc" name="cc" aria-label="Country dialling code">
+                  <option value="+880">+880 BD</option>
+                  <option value="+977">+977 NP</option>
+                  <option value="+94">+94 LK</option>
+                  <option value="+91">+91 IN</option>
+                  <option value="+975">+975 BT</option>
+                  <option value="+960">+960 MV</option>
+                  <option value="+44">+44 UK</option>
+                  <option value="+1">+1 US/CA</option>
+                  <option value="+61">+61 AU</option>
+                  <option value="+64">+64 NZ</option>
+                  <option value="+353">+353 IE</option>
+                  <option value="+971">+971 AE</option>
+                </select>
+                <input class="sp-input" id="spPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national"
+                       maxlength="14" placeholder="1700000000" data-sp-filter="digits" data-sp-required="Mobile number"
+                       aria-describedby="spPhoneHint spPhoneErr" />
+              </div>
+              <p class="sp-hint" id="spPhoneHint">Digits only — the dialling code is chosen separately.</p>
+              <p class="sp-err" id="spPhoneErr"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-x"/></svg><span></span></p>
+            </div>
+            <div class="sp-field">
+              <label for="spEmail">Email address <span class="sp-req" aria-hidden="true">*</span></label>
+              <input class="sp-input" id="spEmail" name="email" type="email" autocomplete="email" maxlength="80"
+                     data-sp-required="Email address" aria-describedby="spEmailErr" />
+              <p class="sp-err" id="spEmailErr"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-x"/></svg><span></span></p>
+            </div>
+          </div>
+
+          <div class="sp-card__foot">
+            <button class="btn btn--dark btn--sm" type="submit">Save personal details</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-sp-cancel>Cancel</button>
+            <span class="sp-saved" data-sp-saved role="status"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> <span data-sp-savedtext>Saved</span></span>
+          </div>
+        </form>
+
+        <!-- ============ address ============ -->
+        <form class="sp-card" id="spFormAddress" data-sp-form="address" novalidate>
+          <div class="sp-card__head">
+            <div class="sp-card__titlewrap">
+              <span class="sp-card__ic sp-card__ic--blue" aria-hidden="true"><svg class="ic"><use href="#i-home"/></svg></span>
+              <div>
+                <h2 class="sp-h2">Correspondence address</h2>
+                <p class="sp-card__sub">Where couriered offer letters and visa papers should reach you.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sp-grid">
+            <div class="sp-field sp-span2">
+              <label for="spAddr1">Address line 1</label>
+              <input class="sp-input" id="spAddr1" name="line1" type="text" maxlength="90" autocomplete="address-line1" />
+            </div>
+            <div class="sp-field sp-span2">
+              <label for="spAddr2">Address line 2 <span class="sp-hint" style="display:inline">(optional)</span></label>
+              <input class="sp-input" id="spAddr2" name="line2" type="text" maxlength="90" autocomplete="address-line2" />
+            </div>
+            <div class="sp-field">
+              <label for="spCity">City or town</label>
+              <input class="sp-input" id="spCity" name="city" type="text" maxlength="40" data-sp-filter="name" autocomplete="address-level2" />
+            </div>
+            <div class="sp-field">
+              <label for="spDistrict">District or division</label>
+              <input class="sp-input" id="spDistrict" name="district" type="text" maxlength="40" data-sp-filter="name" autocomplete="address-level1" />
+            </div>
+            <div class="sp-field">
+              <label for="spPost">Post code</label>
+              <input class="sp-input" id="spPost" name="postcode" type="text" inputmode="numeric" maxlength="8"
+                     data-sp-filter="digits" autocomplete="postal-code" aria-describedby="spPostHint" />
+              <p class="sp-hint" id="spPostHint">Digits only.</p>
+            </div>
+            <div class="sp-field">
+              <label for="spCountry">Country</label>
+              <select class="sp-select" id="spCountry" name="country">
+                <option value="">Select country</option>
+                <option>Bangladesh</option>
+                <option>Nepal</option>
+                <option>Sri Lanka</option>
+                <option>India</option>
+                <option>Bhutan</option>
+                <option>Maldives</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="sp-card__foot">
+            <button class="btn btn--dark btn--sm" type="submit">Save address</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-sp-cancel>Cancel</button>
+            <span class="sp-saved" data-sp-saved role="status"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> <span data-sp-savedtext>Saved</span></span>
+          </div>
+        </form>
+
+        <!-- ============ academic background ============ -->
+        <form class="sp-card" id="spFormAcademic" data-sp-form="academic" novalidate>
+          <div class="sp-card__head">
+            <div class="sp-card__titlewrap">
+              <span class="sp-card__ic sp-card__ic--mint" aria-hidden="true"><svg class="ic"><use href="#i-cap"/></svg></span>
+              <div>
+                <h2 class="sp-h2">Academic background</h2>
+                <p class="sp-card__sub">List every qualification, most recent first.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sp-rows" id="spAcademicRows"></div>
+          <button class="sp-addbtn" type="button" id="spAddAcademic">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> Add another qualification
+          </button>
+
+          <div class="sp-card__foot">
+            <button class="btn btn--dark btn--sm" type="submit">Save academic background</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-sp-cancel>Cancel</button>
+            <span class="sp-saved" data-sp-saved role="status"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> <span data-sp-savedtext>Saved</span></span>
+          </div>
+        </form>
+
+        <!-- ============ test scores ============ -->
+        <form class="sp-card" id="spFormTests" data-sp-form="tests" novalidate>
+          <div class="sp-card__head">
+            <div class="sp-card__titlewrap">
+              <span class="sp-card__ic sp-card__ic--peach" aria-hidden="true"><svg class="ic"><use href="#i-award"/></svg></span>
+              <div>
+                <h2 class="sp-h2">Test scores</h2>
+                <p class="sp-card__sub">English and admission tests you have already sat.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sp-rows" id="spTestRows"></div>
+          <button class="sp-addbtn" type="button" id="spAddTest">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> Add another test score
+          </button>
+
+          <div class="sp-card__foot">
+            <button class="btn btn--dark btn--sm" type="submit">Save test scores</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-sp-cancel>Cancel</button>
+            <span class="sp-saved" data-sp-saved role="status"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> <span data-sp-savedtext>Saved</span></span>
+          </div>
+        </form>
+
+        <!-- ============ preferences ============ -->
+        <form class="sp-card" id="spFormPrefs" data-sp-form="prefs" novalidate>
+          <div class="sp-card__head">
+            <div class="sp-card__titlewrap">
+              <span class="sp-card__ic" aria-hidden="true"><svg class="ic"><use href="#i-compass"/></svg></span>
+              <div>
+                <h2 class="sp-h2">Study preferences</h2>
+                <p class="sp-card__sub">What we search on when we build your shortlist.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sp-grid sp-grid--1">
+            <fieldset class="sp-fieldset sp-field">
+              <legend class="sp-field__legend">Destination countries</legend>
+              <div class="sp-checks" id="spCountries">
+                <label class="sp-check"><input type="checkbox" name="dest" value="United Kingdom" /> United Kingdom</label>
+                <label class="sp-check"><input type="checkbox" name="dest" value="Canada" /> Canada</label>
+                <label class="sp-check"><input type="checkbox" name="dest" value="Australia" /> Australia</label>
+                <label class="sp-check"><input type="checkbox" name="dest" value="Ireland" /> Ireland</label>
+                <label class="sp-check"><input type="checkbox" name="dest" value="United States" /> United States</label>
+                <label class="sp-check"><input type="checkbox" name="dest" value="New Zealand" /> New Zealand</label>
+                <label class="sp-check"><input type="checkbox" name="dest" value="Germany" /> Germany</label>
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="sp-grid sp-grid--3" style="margin-top:18px">
+            <div class="sp-field">
+              <label for="spIntake">Preferred intake</label>
+              <select class="sp-select" id="spIntake" name="intake">
+                <option value="">Select an intake</option>
+                <option>September 2026</option>
+                <option>January 2027</option>
+                <option>May 2027</option>
+                <option>September 2027</option>
+              </select>
+            </div>
+            <div class="sp-field">
+              <label for="spBudget">Yearly budget (tuition)</label>
+              <select class="sp-select" id="spBudget" name="budget">
+                <option value="">Select a range</option>
+                <option>Under USD 15,000</option>
+                <option>USD 15,000 to 25,000</option>
+                <option>USD 25,000 to 35,000</option>
+                <option>USD 35,000 to 50,000</option>
+                <option>Above USD 50,000</option>
+              </select>
+            </div>
+            <div class="sp-field">
+              <label for="spFieldStudy">Field of study</label>
+              <select class="sp-select" id="spFieldStudy" name="field">
+                <option value="">Select a field</option>
+                <option>Computing &amp; Data</option>
+                <option>Engineering</option>
+                <option>Business &amp; Management</option>
+                <option>Health &amp; Life Sciences</option>
+                <option>Architecture &amp; Design</option>
+                <option>Law &amp; Policy</option>
+                <option>Media &amp; Communication</option>
+                <option>Education</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="sp-card__foot">
+            <button class="btn btn--dark btn--sm" type="submit">Save preferences</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-sp-cancel>Cancel</button>
+            <span class="sp-saved" data-sp-saved role="status"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> <span data-sp-savedtext>Saved</span></span>
+          </div>
+        </form>
+
+        <!-- ============ documents ============ -->
+        <form class="sp-card" id="spFormDocs" data-sp-form="documents" novalidate>
+          <div class="sp-card__head">
+            <div class="sp-card__titlewrap">
+              <span class="sp-card__ic sp-card__ic--rose" aria-hidden="true"><svg class="ic"><use href="#i-doc"/></svg></span>
+              <div>
+                <h2 class="sp-h2">Document checklist</h2>
+                <p class="sp-card__sub" id="spDocsSub">Six files make up a complete application pack.</p>
+              </div>
+            </div>
+            <span class="sp-chip sp-chip--info" id="spDocsCount">0 of 6 ready</span>
+          </div>
+
+          <div class="sp-docs" id="spDocList"></div>
+
+          <div class="sp-card__foot">
+            <button class="btn btn--dark btn--sm" type="submit">Save checklist</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-sp-cancel>Cancel</button>
+            <span class="sp-saved" data-sp-saved role="status"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> <span data-sp-savedtext>Saved</span></span>
+          </div>
+        </form>
+
+        <!-- ============ visa processing documents ============ -->
+        <form class="sp-card" id="spFormVisa" data-sp-form="visadocs" novalidate>
+          <div class="sp-card__head">
+            <div class="sp-card__titlewrap">
+              <span class="sp-card__ic sp-card__ic--peach" aria-hidden="true"><svg class="ic"><use href="#i-passport"/></svg></span>
+              <div>
+                <h2 class="sp-h2">Visa processing documents</h2>
+                <p class="sp-card__sub" id="spVisaSub">Upload the papers your student-visa application needs — the same way your counsellor collects them in the VFI portal.</p>
+              </div>
+            </div>
+            <span class="sp-chip sp-chip--info" id="spVisaCount">0 of 6 ready</span>
+          </div>
+
+          <div class="sp-docs" id="spVisaList"></div>
+
+          <div class="sp-card__foot">
+            <button class="btn btn--dark btn--sm" type="submit">Save visa documents</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-sp-cancel>Cancel</button>
+            <span class="sp-saved" data-sp-saved role="status"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg> <span data-sp-savedtext>Saved</span></span>
+          </div>
+        </form>
+
+        <p class="sp-note" style="margin:34px 0 0">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-clock"/></svg>
+          <span>Following your file already? Open <a href="student-tracking.html" style="text-decoration:underline;font-weight:600">application tracking</a> to see where each university stands.</span>
+        </p>
+
+          </div><!-- /.sp-body -->
+        </div><!-- /.sp-shell -->
+
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <div class="sp-toast" id="spToast" role="status" aria-live="polite">
+    <svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"/></svg><span id="spToastText"></span>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/site.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/student-portal.js"></script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Confirm the work email on your VFI Partner registration with the six-digit code we sent to it." />
+  <title>Verify Your Email | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- style.css first: it supplies the font stack and the shared design tokens.
+       partner-auth.css is loaded after so every pa- rule wins. -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/partner-auth.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="pa-body" data-pa-page="vfi-partner-verify.html">
+
+  <a class="pa-skip" href="#main">Skip to the verification form</a>
+
+  <!-- =====================================================================
+       Inline icon sprite. This page deliberately skips js/site.js (no shared
+       header or footer), so the site-wide sprite is not available here.
+       Every symbol id is pa- prefixed.
+       ===================================================================== -->
+  <svg class="pa-sprite" width="0" height="0" aria-hidden="true" focusable="false"><defs>
+    <symbol id="pa-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.4"/><path d="m3.6 7.2 8.4 5.6 8.4-5.6"/></symbol>
+    <symbol id="pa-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.4"/><path d="M8 10V7.2a4 4 0 0 1 8 0V10"/><path d="M12 14.4v2.6"/></symbol>
+    <symbol id="pa-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M17 6l2.6 2.6M14.4 8.6 17 11.2"/></symbol>
+    <symbol id="pa-user" viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0"/></symbol>
+    <symbol id="pa-arrow" viewBox="0 0 24 24"><path d="M4.5 12h15M13 5.5 19.5 12 13 18.5"/></symbol>
+    <symbol id="pa-back" viewBox="0 0 24 24"><path d="M19.5 12h-15M11 5.5 4.5 12 11 18.5"/></symbol>
+    <symbol id="pa-check" viewBox="0 0 24 24"><path d="m5 12.6 4.6 4.6L19 7.2"/></symbol>
+    <symbol id="pa-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.4v5.2M12 16.3h.01"/></symbol>
+    <symbol id="pa-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16.6v-5.2M12 7.8h.01"/></symbol>
+    <symbol id="pa-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.8v5.4c0 4.4 2.9 8.2 7 9.4 4.1-1.2 7-5 7-9.4V5.8L12 3Z"/><path d="m9.2 11.9 2 2 3.6-3.9"/></symbol>
+    <symbol id="pa-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.2 2"/></symbol>
+    <symbol id="pa-refresh" viewBox="0 0 24 24"><path d="M20.4 12a8.4 8.4 0 1 1-2.5-6"/><path d="M20.6 4.4v5.2h-5.2"/></symbol>
+    <symbol id="pa-bolt" viewBox="0 0 24 24"><path d="M13.4 2.6 4.8 13.4h5.9l-.5 8 8.6-10.8h-5.9l.5-8Z"/></symbol>
+    <symbol id="pa-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="m16 16 4.4 4.4"/></symbol>
+    <symbol id="pa-wallet" viewBox="0 0 24 24"><rect x="3.4" y="6" width="16.6" height="13" rx="2.4"/><path d="M3.4 10.6h5.2a2 2 0 0 1 0 4H3.4"/></symbol>
+    <symbol id="pa-chevron" viewBox="0 0 24 24"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></symbol>
+  </defs></svg>
+
+  <main class="pa-shell" id="main">
+
+    <!-- ================================================================
+         BRAND PANEL — the same shell, palette and decorative layers as
+         vfi-partner-login.html, with verification-specific copy.
+         ================================================================ -->
+    <aside class="pa-brand">
+
+      <span class="pa-brand__fx" aria-hidden="true">
+        <span class="pa-mesh"></span>
+        <span class="pa-grid"></span>
+        <span class="pa-beam"></span>
+        <span class="pa-orb pa-orb--a"></span>
+        <span class="pa-orb pa-orb--b"></span>
+        <span class="pa-orb pa-orb--c"></span>
+        <span class="pa-dust">
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+        </span>
+      </span>
+
+      <div class="pa-brand__top">
+        <a class="pa-lockup" href="vfi-partner.html">
+          <span class="pa-lockup__mark">V<span class="pa-lockup__ring" aria-hidden="true"></span></span>
+          <span class="pa-lockup__txt">
+            <b class="pa-lockup__name">VFI</b>
+            <small>partner platform</small>
+          </span>
+        </a>
+        <a class="pa-exit" href="index.html">
+          <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+          <span>Main site</span>
+        </a>
+      </div>
+
+      <div class="pa-brand__mid">
+        <p class="pa-eyebrow"><span class="pa-eyebrow__dot" aria-hidden="true"></span>Email verification</p>
+        <h2 class="pa-brand__title">Six digits and your partner desk is open.</h2>
+        <p class="pa-brand__lead">Confirming your work address is what lets us send offer letters, document requests and commission statements to a place only you can read.</p>
+
+        <!-- floating glass cards -->
+        <div class="pa-stack" aria-hidden="true">
+          <div class="pa-glass pa-glass--main">
+            <div class="pa-glass__head">
+              <span class="pa-glass__dot"></span><span class="pa-glass__dot"></span><span class="pa-glass__dot"></span>
+              <em class="pa-glass__title">Account setup</em>
+            </div>
+            <div class="pa-glass__body">
+              <div class="pa-bars">
+                <i class="pa-bar" style="--pa-h:40%"></i>
+                <i class="pa-bar" style="--pa-h:58%"></i>
+                <i class="pa-bar" style="--pa-h:48%"></i>
+                <i class="pa-bar" style="--pa-h:72%"></i>
+                <i class="pa-bar" style="--pa-h:66%"></i>
+                <i class="pa-bar" style="--pa-h:88%"></i>
+                <i class="pa-bar" style="--pa-h:96%"></i>
+              </div>
+              <div class="pa-glass__rows"><i></i><i></i></div>
+            </div>
+          </div>
+
+          <div class="pa-glass pa-glass--stat">
+            <span class="pa-glass__k">Code expires in</span>
+            <b class="pa-glass__v">10 min</b>
+            <span class="pa-glass__trend"><svg class="pa-i" aria-hidden="true"><use href="#pa-bolt"/></svg>one attempt at a time</span>
+          </div>
+
+          <div class="pa-toast">
+            <span class="pa-toast__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-check"/></svg></span>
+            <span class="pa-toast__txt"><b>Email confirmed</b><small>Partner console unlocked</small></span>
+          </div>
+        </div>
+
+        <ul class="pa-perks">
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-shield"/></svg></span>
+            <span class="pa-perk__txt"><b>Offers go to a verified inbox</b><small>Nothing sensitive is sent to an address we have not confirmed.</small></span>
+          </li>
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-clock"/></svg></span>
+            <span class="pa-perk__txt"><b>Codes are short-lived</b><small>Each one lasts ten minutes, and asking for a new one retires the old.</small></span>
+          </li>
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-wallet"/></svg></span>
+            <span class="pa-perk__txt"><b>Then the console opens</b><small>Course search, applications, documents and commission, all in one place.</small></span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pa-brand__foot">
+        <p class="pa-tick">
+          <span class="pa-tick__lbl">Good to know</span>
+          <span class="pa-tick__win" aria-hidden="true">
+            <span class="pa-tick__roll">
+              <span>Codes expire after 10 minutes</span>
+              <span>A new code retires the last one</span>
+              <span>Paste the code to fill every box</span>
+              <span>Codes expire after 10 minutes</span>
+            </span>
+          </span>
+          <span class="pa-sr">Codes expire after 10 minutes, a new code retires the last one, and pasting a code fills every box at once.</span>
+        </p>
+        <p class="pa-brand__help">Not registered yet? <a href="vfi-partner-login.html#register">Register your agency</a></p>
+      </div>
+    </aside>
+
+    <!-- ================================================================
+         FORM PANEL
+         ================================================================ -->
+    <section class="pa-panel">
+      <span class="pa-panel__fx" aria-hidden="true"><span class="pa-panel__blob"></span></span>
+
+      <a class="pa-back" href="vfi-partner-login.html#signin">
+        <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+        <span>Back to sign in</span>
+      </a>
+
+      <div class="pa-card" id="paCard">
+        <span class="pa-card__glow" id="paGlow" aria-hidden="true"></span>
+        <span class="pa-card__edge" aria-hidden="true"></span>
+
+        <header class="pa-card__head">
+          <h1 class="pa-card__title" id="paVfTitle">Verify your email</h1>
+          <p class="pa-card__sub" id="paVfSub">We sent a six-digit code to the address on your registration. Type it below to confirm the inbox is yours.</p>
+        </header>
+
+        <p class="pa-msg" id="paMsg" role="status" aria-live="polite" hidden></p>
+
+        <div class="pa-views" id="paViews">
+
+          <!-- ------------------------------------------- CODE ENTRY -->
+          <form class="pa-form pa-on" id="paVfForm" novalidate>
+            <div class="pa-fields">
+
+              <p class="pa-addr pa-addr--block pa-rise" style="--pa-i:1">
+                <svg class="pa-i" aria-hidden="true"><use href="#pa-mail"/></svg>
+                <span>Sent to <b id="paVfAddr">the address on your application</b></span>
+              </p>
+
+              <div class="pa-field pa-rise" id="paVfField" style="--pa-i:2">
+                <p class="pa-otp__lbl" id="paVfOtpLbl">Your 6-digit verification code</p>
+                <div class="pa-otp" id="paVfOtp" role="group" aria-labelledby="paVfOtpLbl" aria-describedby="paVfHint paVfErr">
+                  <input class="pa-otp__in" id="paVfD1" type="text" maxlength="1" inputmode="numeric" autocomplete="one-time-code"
+                         data-pa-otp data-pa-chars="digits" aria-label="Digit 1 of 6" />
+                  <input class="pa-otp__in" id="paVfD2" type="text" maxlength="1" inputmode="numeric" autocomplete="off"
+                         data-pa-otp data-pa-chars="digits" aria-label="Digit 2 of 6" />
+                  <input class="pa-otp__in" id="paVfD3" type="text" maxlength="1" inputmode="numeric" autocomplete="off"
+                         data-pa-otp data-pa-chars="digits" aria-label="Digit 3 of 6" />
+                  <input class="pa-otp__in" id="paVfD4" type="text" maxlength="1" inputmode="numeric" autocomplete="off"
+                         data-pa-otp data-pa-chars="digits" aria-label="Digit 4 of 6" />
+                  <input class="pa-otp__in" id="paVfD5" type="text" maxlength="1" inputmode="numeric" autocomplete="off"
+                         data-pa-otp data-pa-chars="digits" aria-label="Digit 5 of 6" />
+                  <input class="pa-otp__in" id="paVfD6" type="text" maxlength="1" inputmode="numeric" autocomplete="off"
+                         data-pa-otp data-pa-chars="digits" aria-label="Digit 6 of 6" />
+                </div>
+                <p class="pa-otp__hint" id="paVfHint">Digits only. Paste the whole code anywhere and every box fills at once; arrow keys and Backspace move between boxes.</p>
+                <p class="pa-field__err" id="paVfErr"></p>
+              </div>
+
+              <div class="pa-rise" style="--pa-i:3">
+                <button type="submit" class="pa-btn pa-btn--go pa-btn--block" id="paVfGo">
+                  <span class="pa-btn__txt">Verify my email</span>
+                  <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+                  <span class="pa-btn__spin" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <p class="pa-resend pa-rise" style="--pa-i:4">
+                <span>No code yet?</span>
+                <button type="button" class="pa-swap" id="paVfResend" aria-disabled="true" aria-describedby="paVfCool">Send another one</button>
+                <span class="pa-cool" id="paVfCool">
+                  <span class="pa-cool__ring" id="paVfCoolRing" aria-hidden="true" style="--pa-p:100"></span>
+                  <span id="paVfCoolTxt">available in 30s</span>
+                </span>
+              </p>
+
+              <p class="pa-alt pa-rise" style="--pa-i:5">
+                <button type="button" class="pa-swap" id="paVfWrong">Wrong email? Send the code somewhere else</button>
+              </p>
+            </div>
+          </form>
+
+          <!-- ------------------------------- CHANGE THE ADDRESS (a
+               sibling form, never nested: forms cannot contain forms) -->
+          <form class="pa-mail" id="paVfMail" hidden novalidate>
+            <div class="pa-field">
+              <span class="pa-field__box">
+                <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-mail"/></svg></span>
+                <input class="pa-field__input" id="paVfEmail" name="email" type="email" placeholder=" "
+                       autocomplete="email" inputmode="email" data-pa-rule="email" data-pa-chars="email"
+                       aria-describedby="paVfEmailHint paVfEmailErr" required />
+                <label class="pa-field__label" for="paVfEmail">Work email</label>
+                <span class="pa-field__spark" aria-hidden="true"></span>
+              </span>
+              <p class="pa-field__hint" id="paVfEmailHint">We will send a fresh code to this address instead. Spaces are not allowed.</p>
+              <p class="pa-field__err" id="paVfEmailErr"></p>
+            </div>
+
+            <div class="pa-actions">
+              <button type="button" class="pa-btn pa-btn--ghost" id="paVfMailCancel">
+                <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+                <span class="pa-btn__txt">Cancel</span>
+              </button>
+              <button type="submit" class="pa-btn pa-btn--go pa-btn--grow">
+                <span class="pa-btn__txt">Send the code here</span>
+                <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+                <span class="pa-btn__spin" aria-hidden="true"></span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ------------------------------------------- SUCCESS STATE -->
+        <div class="pa-done" id="paVfDone" hidden>
+          <span class="pa-done__ring" aria-hidden="true">
+            <svg class="pa-done__svg" viewBox="0 0 76 76">
+              <circle class="pa-done__circle" cx="38" cy="38" r="33"/>
+              <path class="pa-done__tick" d="M23.5 39.5 33.5 49.5 53 28.5"/>
+            </svg>
+          </span>
+          <h2 class="pa-done__title" id="paVfDoneTitle" tabindex="-1">Code accepted</h2>
+          <p class="pa-done__txt" id="paVfDoneTxt">All six digits are in and correctly formatted.</p>
+          <p class="pa-done__note">Nothing was verified. This page is a front-end demo with no server behind it, so any six digits are accepted, no email was ever sent, and no account or session was created.</p>
+          <a class="pa-btn pa-btn--go" id="paVfContinue" href="vfi-partner-login.html#signin">
+            <span class="pa-btn__txt">Continue to sign in</span>
+            <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+          </a>
+          <button type="button" class="pa-btn pa-btn--soft" id="paVfDoneBack">
+            <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+            <span class="pa-btn__txt">Enter another code</span>
+          </button>
+        </div>
+
+        <p class="pa-demo">
+          <svg class="pa-i" aria-hidden="true"><use href="#pa-info"/></svg>
+          <span>Front-end demo &mdash; there is no partner server connected to this page. No code was emailed, any six digits are accepted, and nothing you type leaves this browser.</span>
+        </p>
+      </div>
+
+      <p class="pa-fine">
+        <a class="pa-link" href="privacy.html">Privacy</a>
+        <span aria-hidden="true">&middot;</span>
+        <a class="pa-link" href="terms.html">Terms</a>
+        <span aria-hidden="true">&middot;</span>
+        <a class="pa-link" href="contact.html">Talk to the partner team</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/partner-auth.js"></script>
+</body>
+</html>

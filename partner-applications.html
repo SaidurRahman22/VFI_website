@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — track every student application in one place." />
+  <title>Applications | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="pp" data-pp-page="applications">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <h1 class="pp-head__title">Applications</h1>
+          <p class="pp-head__sub">Track every student application in one place.</p>
+        </div>
+      </div>
+
+      <!-- empty notice -->
+      <div class="pp-notice pp-anim">
+        <svg class="pg-app__art" viewBox="0 0 220 170" role="img" aria-label="No applications illustration" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 18px;width:172px;max-width:56%">
+          <ellipse cx="110" cy="146" rx="78" ry="11" fill="#e6fbf6"/>
+          <rect x="70" y="34" width="78" height="98" rx="10" fill="#f2fbf9" stroke="#9ccfc9" stroke-width="2.5" transform="rotate(-7 109 83)"/>
+          <rect x="64" y="40" width="78" height="98" rx="10" fill="#ffffff" stroke="#0d9488" stroke-width="3"/>
+          <path d="M78 64h50" stroke="#cbe8e4" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M78 80h50" stroke="#cbe8e4" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M78 96h30" stroke="#cbe8e4" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="138" cy="116" r="23" fill="#e6fbf6" stroke="#10b981" stroke-width="3"/>
+          <path d="M138 106v20M128 116h20" stroke="#0a6a62" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <p style="margin:0">You currently have no active applications for any students. Click <strong>Manage Students</strong> to create a new student and their application.</p>
+        <p style="margin:16px 0 0"><a href="partner-students.html">Go to Manage Students</a></p>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+</body>
+</html>

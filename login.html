@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Student sign-in for VFI Overseas Education — one screen for your applications, documents, offers and deadlines." />
+  <meta name="theme-color" content="#04081c" />
+  <title>Student Sign In | VFI Overseas Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- style.css first: it only supplies the shared font stack + reset here.
+       student-auth.css owns every visual rule on this page (sa- namespace). -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/student-auth.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="sa-body" data-sa-page="login.html">
+
+  <a class="sa-skip" href="#saCard">Skip to the sign-in form</a>
+
+  <!-- ==================================================================
+       Local icon sprite. js/site.js (which injects the site-wide sprite)
+       is deliberately NOT loaded on this page, so every symbol used
+       below is defined right here.
+       ================================================================== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="a-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="a-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/></symbol>
+    <symbol id="a-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="a-phone" viewBox="0 0 24 24"><path d="M6.6 3H4.2a1.2 1.2 0 0 0-1.2 1.3C3.4 13 11 20.6 19.7 21a1.2 1.2 0 0 0 1.3-1.2v-2.4a1.2 1.2 0 0 0-1-1.2l-3-.5a1.2 1.2 0 0 0-1.1.5l-1 1.3a13.5 13.5 0 0 1-5.9-5.9l1.3-1a1.2 1.2 0 0 0 .5-1.1l-.5-3a1.2 1.2 0 0 0-1.2-1Z"/></symbol>
+    <symbol id="a-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="a-eye-off" viewBox="0 0 24 24"><path d="M4 4l16 16"/><path d="M9.9 5.7A9.6 9.6 0 0 1 12 5.5c6.4 0 10 6.5 10 6.5a17 17 0 0 1-3.6 4.3M6.3 7.8A17 17 0 0 0 2 12s3.6 6.5 10 6.5a9.7 9.7 0 0 0 3.4-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="a-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="a-chev" viewBox="0 0 24 24"><path d="m6 9.5 6 6 6-6"/></symbol>
+    <symbol id="a-back" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+    <symbol id="a-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+    <symbol id="a-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></symbol>
+    <symbol id="a-doc" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6M9 17h4"/></symbol>
+    <symbol id="a-bell" viewBox="0 0 24 24"><path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5Z"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></symbol>
+    <symbol id="a-cap" viewBox="0 0 24 24"><path d="m2 8 10-4 10 4-10 4L2 8Z"/><path d="M6 10v5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5"/><path d="M22 8v5"/></symbol>
+    <symbol id="a-spark" viewBox="0 0 24 24"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.4 10.1 12.8 4.5 10.9 10.1 9 12 3.5Z"/><path d="M18.5 3.5v3M20 5h-3"/></symbol>
+  </defs></svg>
+
+  <main class="sa-shell" id="main">
+
+    <!-- ================================================================
+         BRAND SIDE — aurora backdrop, drifting mesh, floating glass cards
+         ================================================================ -->
+    <aside class="sa-brand">
+      <div class="sa-bg" aria-hidden="true">
+        <span class="sa-orb sa-orb--a"></span>
+        <span class="sa-orb sa-orb--b"></span>
+        <span class="sa-orb sa-orb--c"></span>
+        <span class="sa-mesh"></span>
+        <span class="sa-stars"></span>
+        <span class="sa-beam"></span>
+      </div>
+
+      <a class="sa-logo" href="index.html">
+        <span class="sa-logo__mark"><img src="assets/img/vfi-emblem.png" alt="" /></span>
+        <span class="sa-logo__txt">VFI<small>overseas education</small></span>
+      </a>
+
+      <div class="sa-pitch">
+        <p class="sa-kicker"><svg class="sa-i"><use href="#a-spark"/></svg> Student portal</p>
+        <h2 class="sa-pitch__h">Every offer, file and deadline on <em>one calm screen</em>.</h2>
+        <p class="sa-pitch__p">Stop digging through email threads. Your counsellor keeps this updated — you just check in whenever you want to know where things stand.</p>
+
+        <ul class="sa-perks">
+          <li class="sa-perk" style="--sa-i:1">
+            <span class="sa-perk__ic"><svg class="sa-i"><use href="#a-doc"/></svg></span>
+            <span class="sa-perk__txt">
+              <span class="sa-perk__t">Follow every application</span>
+              <span class="sa-perk__d">See which university is reviewing, waiting or done.</span>
+            </span>
+          </li>
+          <li class="sa-perk" style="--sa-i:2">
+            <span class="sa-perk__ic"><svg class="sa-i"><use href="#a-bell"/></svg></span>
+            <span class="sa-perk__txt">
+              <span class="sa-perk__t">Get nudged before it's late</span>
+              <span class="sa-perk__d">Reminders for documents, deposits and interviews.</span>
+            </span>
+          </li>
+          <li class="sa-perk" style="--sa-i:3">
+            <span class="sa-perk__ic"><svg class="sa-i"><use href="#a-cap"/></svg></span>
+            <span class="sa-perk__txt">
+              <span class="sa-perk__t">Keep offers and awards together</span>
+              <span class="sa-perk__d">Every letter and scholarship decision in one folder.</span>
+            </span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- decorative preview of what the portal would show -->
+      <div class="sa-floats" aria-hidden="true">
+        <div class="sa-chip sa-chip--a">
+          <span class="sa-chip__ic"><svg class="sa-i"><use href="#a-check"/></svg></span>
+          <span class="sa-chip__txt">
+            <span class="sa-chip__t">Offer received</span>
+            <span class="sa-chip__d">Sample preview</span>
+          </span>
+        </div>
+        <div class="sa-chip sa-chip--b">
+          <span class="sa-chip__ic"><svg class="sa-i"><use href="#a-doc"/></svg></span>
+          <span class="sa-chip__txt">
+            <span class="sa-chip__t">Documents 4 of 5</span>
+            <span class="sa-chip__bar"><i></i></span>
+          </span>
+        </div>
+        <div class="sa-chip sa-chip--c">
+          <span class="sa-chip__ic"><svg class="sa-i"><use href="#a-bell"/></svg></span>
+          <span class="sa-chip__txt">
+            <span class="sa-chip__t">Interview booked</span>
+            <span class="sa-chip__d">Sample preview</span>
+          </span>
+        </div>
+      </div>
+
+      <p class="sa-brandfoot">Something not adding up? <a href="contact.html">Message your counsellor</a></p>
+    </aside>
+
+    <!-- ================================================================
+         FORM SIDE
+         ================================================================ -->
+    <section class="sa-panel">
+      <a class="sa-back" href="index.html"><svg class="sa-i"><use href="#a-back"/></svg><span>Back to the website</span></a>
+
+      <div class="sa-card" id="saCard">
+
+        <header class="sa-card__head">
+          <h1 class="sa-card__title" id="saTitle">Student sign in</h1>
+          <p class="sa-card__sub" id="saSub">Pick up exactly where you left off.</p>
+        </header>
+
+        <div class="sa-tabs" id="saTabs" role="tablist" aria-label="Sign in or create an account">
+          <button class="sa-tab sa-on" id="saTabLogin" type="button" role="tab"
+                  aria-selected="true" aria-controls="saLoginForm" data-auth="login">Sign in</button>
+          <button class="sa-tab" id="saTabRegister" type="button" role="tab" tabindex="-1"
+                  aria-selected="false" aria-controls="saRegisterForm" data-auth="register">Create account</button>
+          <span class="sa-tabs__ink" aria-hidden="true"></span>
+        </div>
+
+        <!-- visible status strip -->
+        <p class="sa-note" id="saMsg"></p>
+        <!-- always-present polite live region for screen readers -->
+        <p class="sa-live" id="saLive" role="status" aria-live="polite"></p>
+
+        <!-- ---------------------------------------------------- SIGN IN -->
+        <form class="sa-form sa-on" id="saLoginForm" role="tabpanel" aria-labelledby="saTabLogin" novalidate>
+
+          <div class="sa-field" style="--sa-i:1">
+            <span class="sa-field__wrap">
+              <svg class="sa-i sa-field__ic"><use href="#a-mail"/></svg>
+              <input class="sa-field__input" id="li-email" type="email" name="email"
+                     autocomplete="username" placeholder="you@example.com"
+                     inputmode="email" spellcheck="false" data-sa-mask="nospace"
+                     aria-describedby="li-email-err" required />
+              <label class="sa-field__label" for="li-email">Email address</label>
+            </span>
+            <p class="sa-field__err" id="li-email-err"><svg class="sa-i"><use href="#a-warn"/></svg><span></span></p>
+          </div>
+
+          <div class="sa-field" style="--sa-i:2">
+            <span class="sa-field__wrap">
+              <svg class="sa-i sa-field__ic"><use href="#a-lock"/></svg>
+              <input class="sa-field__input sa-field__input--pw" id="li-pw" type="password" name="password"
+                     autocomplete="current-password" placeholder="Your password"
+                     aria-describedby="li-pw-err" required />
+              <label class="sa-field__label" for="li-pw">Password</label>
+              <button class="sa-field__eye" type="button" aria-label="Show password" aria-pressed="false">
+                <svg class="sa-i"><use href="#a-eye"/></svg>
+              </button>
+            </span>
+            <p class="sa-field__caps"><svg class="sa-i"><use href="#a-warn"/></svg><span>Caps Lock is on.</span></p>
+            <p class="sa-field__err" id="li-pw-err"><svg class="sa-i"><use href="#a-warn"/></svg><span></span></p>
+          </div>
+
+          <div class="sa-row" style="--sa-i:3">
+            <label class="sa-check">
+              <input type="checkbox" name="remember" checked />
+              <span class="sa-check__box"></span>
+              <span class="sa-check__txt">Keep me signed in</span>
+            </label>
+            <a class="sa-link" href="student-forgot.html">Forgotten password?</a>
+          </div>
+
+          <button class="sa-submit" type="submit" style="--sa-i:4">
+            <span class="sa-submit__shine" aria-hidden="true"></span>
+            <span class="sa-submit__fill" aria-hidden="true"></span>
+            <span class="sa-submit__txt">Sign in</span>
+            <svg class="sa-i sa-submit__ic" aria-hidden="true"><use href="#a-arrow"/></svg>
+            <span class="sa-submit__spin" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <!-- --------------------------------------------- CREATE ACCOUNT -->
+        <form class="sa-form" id="saRegisterForm" role="tabpanel" aria-labelledby="saTabRegister" novalidate>
+
+          <div class="sa-field" style="--sa-i:1">
+            <span class="sa-field__wrap">
+              <svg class="sa-i sa-field__ic"><use href="#a-user"/></svg>
+              <input class="sa-field__input" id="rg-name" type="text" name="name"
+                     autocomplete="name" placeholder="Ayesha Rahman"
+                     data-sa-mask="name"
+                     aria-describedby="rg-name-err" required />
+              <label class="sa-field__label" for="rg-name">Full name</label>
+            </span>
+            <p class="sa-field__err" id="rg-name-err"><svg class="sa-i"><use href="#a-warn"/></svg><span></span></p>
+          </div>
+
+          <!-- Country code + number. The <select> lives inside the same
+               .sa-field__wrap as the input so the pair sits inside one ring and
+               reads as a single control.
+               NOT type="number": that brings spinners, drops leading zeros and
+               empties its own value on anything non-numeric. inputmode gives
+               the same keypad with none of that. -->
+          <div class="sa-field" style="--sa-i:2">
+            <span class="sa-field__wrap sa-field__wrap--tel">
+              <span class="sa-tel">
+                <select class="sa-tel__cc" id="rg-cc" name="cc"
+                        autocomplete="tel-country-code" aria-label="Country calling code">
+                  <option value="+880" selected>+880 (Bangladesh)</option>
+                  <option value="+91">+91 (India)</option>
+                  <option value="+977">+977 (Nepal)</option>
+                  <option value="+94">+94 (Sri Lanka)</option>
+                  <option value="+92">+92 (Pakistan)</option>
+                  <option value="+44">+44 (UK)</option>
+                  <option value="+1">+1 (US / Canada)</option>
+                  <option value="+61">+61 (Australia)</option>
+                  <option value="+64">+64 (New Zealand)</option>
+                  <option value="+353">+353 (Ireland)</option>
+                  <option value="+49">+49 (Germany)</option>
+                  <option value="+971">+971 (UAE)</option>
+                </select>
+                <svg class="sa-i sa-tel__chev" aria-hidden="true"><use href="#a-chev"/></svg>
+              </span>
+              <input class="sa-field__input" id="rg-phone" type="tel" name="phone"
+                     autocomplete="tel-national" inputmode="numeric" maxlength="15"
+                     placeholder="1712345678" data-sa-mask="digits"
+                     aria-describedby="rg-phone-hint rg-phone-err" required />
+              <label class="sa-field__label" for="rg-phone">Phone number</label>
+            </span>
+            <span class="sa-field__hint" id="rg-phone-hint">Digits only, without the country code &mdash; pick that on the left.</span>
+            <p class="sa-field__err" id="rg-phone-err"><svg class="sa-i"><use href="#a-warn"/></svg><span></span></p>
+          </div>
+
+          <div class="sa-field" style="--sa-i:3">
+            <span class="sa-field__wrap">
+              <svg class="sa-i sa-field__ic"><use href="#a-mail"/></svg>
+              <input class="sa-field__input" id="rg-email" type="email" name="email"
+                     autocomplete="email" placeholder="you@example.com"
+                     inputmode="email" spellcheck="false" data-sa-mask="nospace"
+                     aria-describedby="rg-email-err" required />
+              <label class="sa-field__label" for="rg-email">Email address</label>
+            </span>
+            <p class="sa-field__err" id="rg-email-err"><svg class="sa-i"><use href="#a-warn"/></svg><span></span></p>
+          </div>
+
+          <div class="sa-field" style="--sa-i:4">
+            <span class="sa-field__wrap">
+              <svg class="sa-i sa-field__ic"><use href="#a-lock"/></svg>
+              <input class="sa-field__input sa-field__input--pw" id="rg-pw" type="password" name="password"
+                     autocomplete="new-password" placeholder="At least 8 characters"
+                     aria-describedby="rg-pw-hint rg-pw-err" required />
+              <label class="sa-field__label" for="rg-pw">Create a password</label>
+              <button class="sa-field__eye" type="button" aria-label="Show password" aria-pressed="false">
+                <svg class="sa-i"><use href="#a-eye"/></svg>
+              </button>
+            </span>
+            <p class="sa-field__caps"><svg class="sa-i"><use href="#a-warn"/></svg><span>Caps Lock is on.</span></p>
+
+            <span class="sa-pw" id="saPwMeter" data-lvl="0" aria-hidden="true">
+              <span class="sa-pw__track">
+                <span class="sa-pw__fill"></span>
+                <span class="sa-pw__tick"></span>
+                <span class="sa-pw__tick"></span>
+                <span class="sa-pw__tick"></span>
+              </span>
+              <span class="sa-pw__row">
+                <span class="sa-pw__label">Password strength</span>
+                <span class="sa-pw__val" id="saPwVal">&mdash;</span>
+              </span>
+            </span>
+
+            <span class="sa-field__hint" id="rg-pw-hint">Eight characters or more, with a capital letter and a number.</span>
+            <p class="sa-field__err" id="rg-pw-err"><svg class="sa-i"><use href="#a-warn"/></svg><span></span></p>
+          </div>
+
+          <div class="sa-field" style="--sa-i:5">
+            <div class="sa-check">
+              <input type="checkbox" id="rg-agree" name="agree" aria-describedby="rg-agree-err" required />
+              <label class="sa-check__box" for="rg-agree"><span class="sa-live">I accept the terms and the privacy policy</span></label>
+              <p class="sa-check__txt">I've read and accept the <a class="sa-link" href="terms.html">Terms</a> and the <a class="sa-link" href="privacy.html">Privacy&nbsp;Policy</a>.</p>
+            </div>
+            <p class="sa-field__err" id="rg-agree-err"><svg class="sa-i"><use href="#a-warn"/></svg><span></span></p>
+          </div>
+
+          <button class="sa-submit" type="submit" style="--sa-i:6">
+            <span class="sa-submit__shine" aria-hidden="true"></span>
+            <span class="sa-submit__fill" aria-hidden="true"></span>
+            <span class="sa-submit__txt">Create account</span>
+            <svg class="sa-i sa-submit__ic" aria-hidden="true"><use href="#a-arrow"/></svg>
+            <span class="sa-submit__spin" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <!-- the honest bit, always visible -->
+        <p class="sa-demo">
+          <svg class="sa-i"><use href="#a-warn"/></svg>
+          <span><b>Front-end demo.</b> There is no account server behind this page — nothing you type is sent anywhere, saved, or used to sign you in.</span>
+        </p>
+
+        <!-- ------------------------------------------- SUCCESS OVERLAY -->
+        <div class="sa-done" id="saDone" aria-hidden="true">
+          <span class="sa-done__markwrap">
+            <svg class="sa-done__mark" viewBox="0 0 72 72" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="sa-tickgrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#4f46e5"/>
+                  <stop offset="0.55" stop-color="#2563eb"/>
+                  <stop offset="1" stop-color="#22d3ee"/>
+                </linearGradient>
+              </defs>
+              <circle class="sa-done__ring" cx="36" cy="36" r="30"/>
+              <path class="sa-done__tick" d="M22.5 37.5 32 47l17.5-19"/>
+            </svg>
+            <span class="sa-done__halo" aria-hidden="true"></span>
+          </span>
+          <h2 class="sa-done__t" id="saDoneTitle" tabindex="-1">Everything checks out</h2>
+          <p class="sa-done__p" id="saDoneMsg">Your details passed every check on this page. Nothing was sent and no account exists yet — this demo has no server to talk to.</p>
+          <div class="sa-done__row">
+            <button class="sa-done__back" type="button" id="saDoneBack">
+              <svg class="sa-i"><use href="#a-back"/></svg> Back to the form
+            </button>
+            <!-- shown only after "Create account"; auth.js fills in the address -->
+            <a class="sa-done__ghost" id="saDoneNext" href="student-verify.html" hidden>
+              <svg class="sa-i"><use href="#a-mail"/></svg> Confirm your email
+            </a>
+            <!-- the way into the portal; auth.js reveals it after any success -->
+            <a class="sa-done__ghost sa-done__ghost--go" id="saDonePortal" href="student-profile.html" hidden>
+              <svg class="sa-i"><use href="#a-user"/></svg> Go to your portal
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

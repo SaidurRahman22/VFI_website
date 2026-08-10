@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Sign in to VFI Partner or register your agency — one console for course search, applications, documents and commission." />
+  <title>Partner Sign In &amp; Agency Registration | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- style.css first: it supplies the font stack and the shared design tokens.
+       partner-auth.css is loaded after so every pa- rule wins. -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/partner-auth.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="pa-body" data-pa-page="vfi-partner-login.html">
+
+  <a class="pa-skip" href="#main">Skip to the sign-in form</a>
+
+  <!-- =====================================================================
+       Inline icon sprite. This page deliberately skips js/site.js (no shared
+       header or footer), so the site-wide sprite is not available here.
+       Every symbol id is pa- prefixed.
+       ===================================================================== -->
+  <svg class="pa-sprite" width="0" height="0" aria-hidden="true" focusable="false"><defs>
+    <symbol id="pa-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.4"/><path d="m3.6 7.2 8.4 5.6 8.4-5.6"/></symbol>
+    <symbol id="pa-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.4"/><path d="M8 10V7.2a4 4 0 0 1 8 0V10"/><path d="M12 14.4v2.6"/></symbol>
+    <symbol id="pa-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M17 6l2.6 2.6M14.4 8.6 17 11.2"/></symbol>
+    <symbol id="pa-eye" viewBox="0 0 24 24"><path d="M2.2 12S6 5.6 12 5.6 21.8 12 21.8 12 18 18.4 12 18.4 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="pa-eye-off" viewBox="0 0 24 24"><path d="M4 4 20 20"/><path d="M9.9 5.8A9.9 9.9 0 0 1 12 5.6c6 0 9.8 6.4 9.8 6.4a17.4 17.4 0 0 1-3.6 4.3M6.2 7.9A17 17 0 0 0 2.2 12S6 18.4 12 18.4a9.8 9.8 0 0 0 3.3-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="pa-user" viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0"/></symbol>
+    <symbol id="pa-phone" viewBox="0 0 24 24"><path d="M6.7 3.2H4.3A1.2 1.2 0 0 0 3.1 4.5C3.5 13.1 10.9 20.5 19.5 20.9a1.2 1.2 0 0 0 1.3-1.2v-2.4a1.2 1.2 0 0 0-1-1.2l-3-.5a1.2 1.2 0 0 0-1.1.5l-1 1.3a13.4 13.4 0 0 1-5.8-5.8l1.3-1a1.2 1.2 0 0 0 .5-1.1l-.5-3a1.2 1.2 0 0 0-1.2-1Z"/></symbol>
+    <symbol id="pa-agency" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V6.6a1.4 1.4 0 0 1 .96-1.33l6-2a1 1 0 0 1 1.32.95V21"/><path d="M13.28 9.6h4.32a1.4 1.4 0 0 1 1.4 1.4V21"/><path d="M8 8.6h1.6M8 12.2h1.6M8 15.8h1.6M15.6 13.2h.9M15.6 16.8h.9"/></symbol>
+    <symbol id="pa-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.2 9.6h17.6M3.2 14.4h17.6"/><path d="M12 3a14.4 14.4 0 0 1 0 18 14.4 14.4 0 0 1 0-18Z"/></symbol>
+    <symbol id="pa-pin" viewBox="0 0 24 24"><path d="M12 21.2s7-5.7 7-11.2a7 7 0 1 0-14 0c0 5.5 7 11.2 7 11.2Z"/><circle cx="12" cy="9.8" r="2.6"/></symbol>
+    <symbol id="pa-arrow" viewBox="0 0 24 24"><path d="M4.5 12h15M13 5.5 19.5 12 13 18.5"/></symbol>
+    <symbol id="pa-back" viewBox="0 0 24 24"><path d="M19.5 12h-15M11 5.5 4.5 12 11 18.5"/></symbol>
+    <symbol id="pa-check" viewBox="0 0 24 24"><path d="m5 12.6 4.6 4.6L19 7.2"/></symbol>
+    <symbol id="pa-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.4v5.2M12 16.3h.01"/></symbol>
+    <symbol id="pa-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16.6v-5.2M12 7.8h.01"/></symbol>
+    <symbol id="pa-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.8v5.4c0 4.4 2.9 8.2 7 9.4 4.1-1.2 7-5 7-9.4V5.8L12 3Z"/><path d="m9.2 11.9 2 2 3.6-3.9"/></symbol>
+    <symbol id="pa-wallet" viewBox="0 0 24 24"><rect x="3.4" y="6" width="16.6" height="13" rx="2.4"/><path d="M3.4 10.6h5.2a2 2 0 0 1 0 4H3.4"/></symbol>
+    <symbol id="pa-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="m16 16 4.4 4.4"/></symbol>
+    <symbol id="pa-bolt" viewBox="0 0 24 24"><path d="M13.4 2.6 4.8 13.4h5.9l-.5 8 8.6-10.8h-5.9l.5-8Z"/></symbol>
+    <symbol id="pa-chevron" viewBox="0 0 24 24"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></symbol>
+  </defs></svg>
+
+  <main class="pa-shell" id="main">
+
+    <!-- ================================================================
+         BRAND PANEL
+         ================================================================ -->
+    <aside class="pa-brand">
+
+      <!-- Every decorative layer lives in this clipped, absolutely
+           positioned box so the panel itself never clips real content. -->
+      <span class="pa-brand__fx" aria-hidden="true">
+        <span class="pa-mesh"></span>
+        <span class="pa-grid"></span>
+        <span class="pa-beam"></span>
+        <span class="pa-orb pa-orb--a"></span>
+        <span class="pa-orb pa-orb--b"></span>
+        <span class="pa-orb pa-orb--c"></span>
+        <span class="pa-dust">
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+        </span>
+      </span>
+
+      <div class="pa-brand__top">
+        <a class="pa-lockup" href="vfi-partner.html">
+          <span class="pa-lockup__mark"><img src="assets/img/vfi-emblem.png" alt="" /><span class="pa-lockup__ring" aria-hidden="true"></span></span>
+          <span class="pa-lockup__txt">
+            <b class="pa-lockup__name">VFI</b>
+            <small>partner platform</small>
+          </span>
+        </a>
+        <a class="pa-exit" href="index.html">
+          <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+          <span>Main site</span>
+        </a>
+      </div>
+
+      <div class="pa-brand__mid">
+        <p class="pa-eyebrow"><span class="pa-eyebrow__dot" aria-hidden="true"></span>Partner access</p>
+        <h2 class="pa-brand__title">Run your whole recruitment desk from one console.</h2>
+        <p class="pa-brand__lead">Search courses, file applications, collect documents and follow every commission — without switching tabs or emailing anyone for a status update.</p>
+
+        <!-- floating glass cards -->
+        <div class="pa-stack" aria-hidden="true">
+          <div class="pa-glass pa-glass--main">
+            <div class="pa-glass__head">
+              <span class="pa-glass__dot"></span><span class="pa-glass__dot"></span><span class="pa-glass__dot"></span>
+              <em class="pa-glass__title">Applications filed</em>
+            </div>
+            <div class="pa-glass__body">
+              <div class="pa-bars">
+                <i class="pa-bar" style="--pa-h:34%"></i>
+                <i class="pa-bar" style="--pa-h:56%"></i>
+                <i class="pa-bar" style="--pa-h:44%"></i>
+                <i class="pa-bar" style="--pa-h:78%"></i>
+                <i class="pa-bar" style="--pa-h:62%"></i>
+                <i class="pa-bar" style="--pa-h:92%"></i>
+                <i class="pa-bar" style="--pa-h:70%"></i>
+              </div>
+              <div class="pa-glass__rows"><i></i><i></i></div>
+            </div>
+          </div>
+
+          <div class="pa-glass pa-glass--stat">
+            <span class="pa-glass__k">Offers issued</span>
+            <b class="pa-glass__v">1,284</b>
+            <span class="pa-glass__trend"><svg class="pa-i" aria-hidden="true"><use href="#pa-bolt"/></svg>+18% this term</span>
+          </div>
+
+          <div class="pa-toast">
+            <span class="pa-toast__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-check"/></svg></span>
+            <span class="pa-toast__txt"><b>Conditional offer received</b><small>MSc Data Science &middot; Sept intake</small></span>
+          </div>
+        </div>
+
+        <ul class="pa-perks">
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-search"/></svg></span>
+            <span class="pa-perk__txt"><b>One search, 100,000+ courses</b><small>Twenty-five filters and an eligibility check before you apply.</small></span>
+          </li>
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-shield"/></svg></span>
+            <span class="pa-perk__txt"><b>Documents verified once</b><small>Upload a student file once and reuse it across every application.</small></span>
+          </li>
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-wallet"/></svg></span>
+            <span class="pa-perk__txt"><b>Commission you can follow</b><small>Fees, payouts and reconciliation without a spreadsheet.</small></span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pa-brand__foot">
+        <p class="pa-tick">
+          <span class="pa-tick__lbl">Inside the platform</span>
+          <span class="pa-tick__win" aria-hidden="true">
+            <span class="pa-tick__roll">
+              <span>900+ partner institutions</span>
+              <span>35 destination countries</span>
+              <span>25 course search filters</span>
+              <span>900+ partner institutions</span>
+            </span>
+          </span>
+          <span class="pa-sr">900+ partner institutions, 35 destination countries, 25 course search filters.</span>
+        </p>
+        <p class="pa-brand__help">Not a partner yet? <a href="vfi-partner.html">See what the platform does</a></p>
+      </div>
+    </aside>
+
+    <!-- ================================================================
+         FORM PANEL
+         ================================================================ -->
+    <section class="pa-panel">
+      <span class="pa-panel__fx" aria-hidden="true"><span class="pa-panel__blob"></span></span>
+
+      <a class="pa-back" href="vfi-partner.html">
+        <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+        <span>Back to VFI Partner</span>
+      </a>
+
+      <div class="pa-card" id="paCard">
+        <span class="pa-card__glow" id="paGlow" aria-hidden="true"></span>
+        <span class="pa-card__edge" aria-hidden="true"></span>
+
+        <header class="pa-card__head">
+          <h1 class="pa-card__title" id="paTitle">Partner sign in</h1>
+          <p class="pa-card__sub" id="paSub">Welcome back. Pick up your applications exactly where you left them.</p>
+        </header>
+
+        <div class="pa-tabs" id="paTabs" role="tablist" aria-label="Partner access">
+          <button type="button" class="pa-tab pa-on" id="paTabSignin" role="tab"
+                  aria-selected="true" aria-controls="paSignin" tabindex="0" data-pa-view="signin">Sign in</button>
+          <button type="button" class="pa-tab" id="paTabRegister" role="tab"
+                  aria-selected="false" aria-controls="paRegister" tabindex="-1" data-pa-view="register">Register your agency</button>
+          <span class="pa-tabs__ink" aria-hidden="true"></span>
+        </div>
+
+        <p class="pa-msg" id="paMsg" role="status" aria-live="polite" hidden></p>
+
+        <div class="pa-views" id="paViews">
+
+          <!-- ---------------------------------------------- SIGN IN -->
+          <form class="pa-form pa-on" id="paSignin" role="tabpanel" aria-labelledby="paTabSignin" novalidate>
+            <div class="pa-fields">
+
+              <div class="pa-field pa-rise" style="--pa-i:1">
+                <span class="pa-field__box">
+                  <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-mail"/></svg></span>
+                  <input class="pa-field__input" id="paSiEmail" name="email" type="email" placeholder=" "
+                         autocomplete="username" inputmode="email" data-pa-rule="email" data-pa-chars="email"
+                         aria-describedby="paSiEmailErr" required />
+                  <label class="pa-field__label" for="paSiEmail">Work email</label>
+                  <span class="pa-field__spark" aria-hidden="true"></span>
+                </span>
+                <p class="pa-field__err" id="paSiEmailErr"></p>
+              </div>
+
+              <div class="pa-field pa-field--pw pa-rise" style="--pa-i:2">
+                <span class="pa-field__box">
+                  <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-lock"/></svg></span>
+                  <input class="pa-field__input" id="paSiPass" name="password" type="password" placeholder=" "
+                         autocomplete="current-password" data-pa-rule="pass"
+                         aria-describedby="paSiPassErr" required />
+                  <label class="pa-field__label" for="paSiPass">Password</label>
+                  <button type="button" class="pa-field__eye" data-pa-eye aria-label="Show password">
+                    <svg class="pa-i" aria-hidden="true"><use href="#pa-eye"/></svg>
+                  </button>
+                  <span class="pa-field__spark" aria-hidden="true"></span>
+                </span>
+                <p class="pa-field__caps" hidden><svg class="pa-i" aria-hidden="true"><use href="#pa-warn"/></svg>Caps Lock is on</p>
+                <p class="pa-field__err" id="paSiPassErr"></p>
+              </div>
+
+              <div class="pa-row pa-rise" style="--pa-i:3">
+                <label class="pa-check pa-check--sm" for="paSiRemember">
+                  <input type="checkbox" class="pa-check__box" id="paSiRemember" name="remember" checked />
+                  <span class="pa-check__mark" aria-hidden="true">
+                    <svg class="pa-check__svg" viewBox="0 0 24 24"><path class="pa-check__path" d="m5.5 12.6 4.4 4.4L18.6 8"/></svg>
+                  </span>
+                  <span class="pa-check__txt">Keep me signed in</span>
+                </label>
+                <a class="pa-link" href="vfi-partner-forgot.html">Forgot password?</a>
+              </div>
+
+              <div class="pa-rise" style="--pa-i:4">
+                <button type="submit" class="pa-btn pa-btn--go pa-btn--block">
+                  <span class="pa-btn__txt">Sign in to VFI Partner</span>
+                  <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+                  <span class="pa-btn__spin" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <p class="pa-alt pa-rise" style="--pa-i:5">
+                New to VFI Partner?
+                <button type="button" class="pa-swap" data-pa-goto="register">Register your agency</button>
+              </p>
+            </div>
+          </form>
+
+          <!-- --------------------------------------------- REGISTER -->
+          <form class="pa-form" id="paRegister" role="tabpanel" aria-labelledby="paTabRegister" novalidate>
+
+            <div class="pa-prog">
+              <div class="pa-prog__track" aria-hidden="true"><span class="pa-prog__fill" id="paProgFill"></span></div>
+              <ol class="pa-prog__list">
+                <li class="pa-prog__item pa-on" data-pa-dot="1">
+                  <span class="pa-prog__dot"><b>1</b><svg class="pa-i" aria-hidden="true"><use href="#pa-check"/></svg></span>
+                  <span class="pa-prog__name">Agency</span>
+                </li>
+                <li class="pa-prog__item" data-pa-dot="2">
+                  <span class="pa-prog__dot"><b>2</b><svg class="pa-i" aria-hidden="true"><use href="#pa-check"/></svg></span>
+                  <span class="pa-prog__name">Contact</span>
+                </li>
+                <li class="pa-prog__item" data-pa-dot="3">
+                  <span class="pa-prog__dot"><b>3</b><svg class="pa-i" aria-hidden="true"><use href="#pa-check"/></svg></span>
+                  <span class="pa-prog__name">Security</span>
+                </li>
+              </ol>
+            </div>
+
+            <p class="pa-stepnote" id="paStepNote" aria-live="polite">Step 1 of 3 &mdash; tell us about your agency</p>
+
+            <div class="pa-steps" id="paSteps">
+
+              <!-- step 1 -->
+              <div class="pa-step pa-on" data-pa-step="1" role="group" aria-label="Agency details">
+                <div class="pa-field pa-rise" style="--pa-i:1">
+                  <span class="pa-field__box">
+                    <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-agency"/></svg></span>
+                    <input class="pa-field__input" id="paRgAgency" name="agency" type="text" placeholder=" "
+                           autocomplete="organization" data-pa-rule="agency" data-pa-chars="name" aria-describedby="paRgAgencyErr" required />
+                    <label class="pa-field__label" for="paRgAgency">Registered agency name</label>
+                    <span class="pa-field__spark" aria-hidden="true"></span>
+                  </span>
+                  <p class="pa-field__err" id="paRgAgencyErr"></p>
+                </div>
+
+                <div class="pa-grid2">
+                  <div class="pa-field pa-field--sel pa-rise" style="--pa-i:2">
+                    <span class="pa-field__box">
+                      <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-globe"/></svg></span>
+                      <select class="pa-field__input" id="paRgCountry" name="country"
+                              autocomplete="country-name" data-pa-rule="country" aria-describedby="paRgCountryErr" required>
+                        <option value="">Choose one</option>
+                        <option>Bangladesh</option>
+                        <option>India</option>
+                        <option>Nepal</option>
+                        <option>Sri Lanka</option>
+                        <option>Pakistan</option>
+                        <option>Nigeria</option>
+                        <option>Ghana</option>
+                        <option>Kenya</option>
+                        <option>Vietnam</option>
+                        <option>Philippines</option>
+                        <option>Indonesia</option>
+                        <option>Uzbekistan</option>
+                        <option>Other</option>
+                      </select>
+                      <label class="pa-field__label" for="paRgCountry">Country</label>
+                      <span class="pa-field__caret" aria-hidden="true"><svg class="pa-i" aria-hidden="true"><use href="#pa-chevron"/></svg></span>
+                      <span class="pa-field__spark" aria-hidden="true"></span>
+                    </span>
+                    <p class="pa-field__err" id="paRgCountryErr"></p>
+                  </div>
+
+                  <div class="pa-field pa-rise" style="--pa-i:3">
+                    <span class="pa-field__box">
+                      <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-pin"/></svg></span>
+                      <input class="pa-field__input" id="paRgCity" name="city" type="text" placeholder=" "
+                             autocomplete="address-level2" data-pa-rule="city" data-pa-chars="name" aria-describedby="paRgCityErr" required />
+                      <label class="pa-field__label" for="paRgCity">City</label>
+                      <span class="pa-field__spark" aria-hidden="true"></span>
+                    </span>
+                    <p class="pa-field__err" id="paRgCityErr"></p>
+                  </div>
+                </div>
+
+                <div class="pa-nav pa-rise" style="--pa-i:4">
+                  <button type="submit" class="pa-btn pa-btn--go pa-btn--grow">
+                    <span class="pa-btn__txt">Continue</span>
+                    <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+                    <span class="pa-btn__spin" aria-hidden="true"></span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- step 2 -->
+              <div class="pa-step" data-pa-step="2" role="group" aria-label="Contact details">
+                <div class="pa-field pa-rise" style="--pa-i:1">
+                  <span class="pa-field__box">
+                    <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-user"/></svg></span>
+                    <input class="pa-field__input" id="paRgPerson" name="person" type="text" placeholder=" "
+                           autocomplete="name" data-pa-rule="person" data-pa-chars="name" aria-describedby="paRgPersonErr" required />
+                    <label class="pa-field__label" for="paRgPerson">Contact person</label>
+                    <span class="pa-field__spark" aria-hidden="true"></span>
+                  </span>
+                  <p class="pa-field__err" id="paRgPersonErr"></p>
+                </div>
+
+                <div class="pa-field pa-rise" style="--pa-i:2">
+                  <span class="pa-field__box">
+                    <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-mail"/></svg></span>
+                    <input class="pa-field__input" id="paRgEmail" name="email" type="email" placeholder=" "
+                           autocomplete="email" inputmode="email" data-pa-rule="email" data-pa-chars="email" aria-describedby="paRgEmailHint paRgEmailErr" required />
+                    <label class="pa-field__label" for="paRgEmail">Work email</label>
+                    <span class="pa-field__spark" aria-hidden="true"></span>
+                  </span>
+                  <p class="pa-field__hint" id="paRgEmailHint">Use an address on your agency domain if you have one.</p>
+                  <p class="pa-field__err" id="paRgEmailErr"></p>
+                </div>
+
+                <!-- Dialling code + number are one control. The <select> is
+                     painted-out but still focusable and announced; the printed
+                     .pa-tel__val mirrors whatever it is set to. NOT type=number:
+                     that brings spinners and eats leading zeros. -->
+                <div class="pa-field pa-rise" style="--pa-i:3">
+                  <span class="pa-field__box pa-tel">
+                    <span class="pa-tel__code">
+                      <span class="pa-tel__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-phone"/></svg></span>
+                      <span class="pa-tel__val" id="paRgDialVal" aria-hidden="true">+880</span>
+                      <svg class="pa-i pa-tel__caret" aria-hidden="true"><use href="#pa-chevron"/></svg>
+                      <label class="pa-sr" for="paRgDial">Country dialling code</label>
+                      <select class="pa-tel__sel" id="paRgDial" name="dial" autocomplete="tel-country-code">
+                        <option value="+880" selected>+880 (Bangladesh)</option>
+                        <option value="+91">+91 (India)</option>
+                        <option value="+977">+977 (Nepal)</option>
+                        <option value="+94">+94 (Sri Lanka)</option>
+                        <option value="+92">+92 (Pakistan)</option>
+                        <option value="+44">+44 (United Kingdom)</option>
+                        <option value="+1">+1 (United States / Canada)</option>
+                        <option value="+61">+61 (Australia)</option>
+                        <option value="+64">+64 (New Zealand)</option>
+                        <option value="+353">+353 (Ireland)</option>
+                        <option value="+49">+49 (Germany)</option>
+                        <option value="+971">+971 (United Arab Emirates)</option>
+                        <option value="+234">+234 (Nigeria)</option>
+                        <option value="+233">+233 (Ghana)</option>
+                        <option value="+254">+254 (Kenya)</option>
+                        <option value="+60">+60 (Malaysia)</option>
+                        <option value="+65">+65 (Singapore)</option>
+                        <option value="+84">+84 (Vietnam)</option>
+                        <option value="+63">+63 (Philippines)</option>
+                        <option value="+62">+62 (Indonesia)</option>
+                        <option value="+998">+998 (Uzbekistan)</option>
+                      </select>
+                    </span>
+                    <span class="pa-tel__num">
+                      <input class="pa-field__input" id="paRgPhone" name="phone" type="tel" placeholder=" "
+                             autocomplete="tel-national" inputmode="numeric" data-pa-rule="phone" data-pa-chars="digits"
+                             aria-describedby="paRgPhoneHint paRgPhoneErr" required />
+                      <label class="pa-field__label" for="paRgPhone">Phone number</label>
+                    </span>
+                    <span class="pa-field__spark" aria-hidden="true"></span>
+                  </span>
+                  <p class="pa-field__hint" id="paRgPhoneHint">Digits only &mdash; pick your dialling code on the left, for example 1712345678.</p>
+                  <p class="pa-field__err" id="paRgPhoneErr"></p>
+                </div>
+
+                <div class="pa-nav pa-rise" style="--pa-i:4">
+                  <button type="button" class="pa-btn pa-btn--ghost" data-pa-back="1">
+                    <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+                    <span class="pa-btn__txt">Back</span>
+                  </button>
+                  <button type="submit" class="pa-btn pa-btn--go pa-btn--grow">
+                    <span class="pa-btn__txt">Continue</span>
+                    <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+                    <span class="pa-btn__spin" aria-hidden="true"></span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- step 3 -->
+              <div class="pa-step" data-pa-step="3" role="group" aria-label="Account security">
+                <div class="pa-field pa-field--pw pa-rise" style="--pa-i:1">
+                  <span class="pa-field__box">
+                    <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-key"/></svg></span>
+                    <input class="pa-field__input" id="paRgPass" name="password" type="password" placeholder=" "
+                           autocomplete="new-password" data-pa-rule="newpass" aria-describedby="paRgPassMeter paRgPassErr" required />
+                    <label class="pa-field__label" for="paRgPass">Create a password</label>
+                    <button type="button" class="pa-field__eye" data-pa-eye aria-label="Show password">
+                      <svg class="pa-i" aria-hidden="true"><use href="#pa-eye"/></svg>
+                    </button>
+                    <span class="pa-field__spark" aria-hidden="true"></span>
+                  </span>
+                  <p class="pa-field__caps" hidden><svg class="pa-i" aria-hidden="true"><use href="#pa-warn"/></svg>Caps Lock is on</p>
+                  <div class="pa-meter" id="paRgPassMeter" data-pa-lvl="0">
+                    <span class="pa-meter__bars" aria-hidden="true"><i class="pa-meter__b"></i><i class="pa-meter__b"></i><i class="pa-meter__b"></i><i class="pa-meter__b"></i></span>
+                    <span class="pa-meter__lbl" id="paRgPassLbl">Use 8+ characters with a number and a capital letter.</span>
+                  </div>
+                  <p class="pa-field__err" id="paRgPassErr"></p>
+                </div>
+
+                <div class="pa-field pa-field--pw pa-rise" style="--pa-i:2">
+                  <span class="pa-field__box">
+                    <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-lock"/></svg></span>
+                    <input class="pa-field__input" id="paRgPass2" name="confirm" type="password" placeholder=" "
+                           autocomplete="new-password" data-pa-rule="confirm" aria-describedby="paRgPass2Err" required />
+                    <label class="pa-field__label" for="paRgPass2">Confirm password</label>
+                    <button type="button" class="pa-field__eye" data-pa-eye aria-label="Show password">
+                      <svg class="pa-i" aria-hidden="true"><use href="#pa-eye"/></svg>
+                    </button>
+                    <span class="pa-field__spark" aria-hidden="true"></span>
+                  </span>
+                  <p class="pa-field__caps" hidden><svg class="pa-i" aria-hidden="true"><use href="#pa-warn"/></svg>Caps Lock is on</p>
+                  <p class="pa-field__err" id="paRgPass2Err"></p>
+                </div>
+
+                <div class="pa-field pa-field--check pa-rise" style="--pa-i:3">
+                  <label class="pa-check" for="paRgAgree">
+                    <input type="checkbox" class="pa-check__box" id="paRgAgree" name="agree"
+                           data-pa-rule="agree" aria-describedby="paRgAgreeErr" required />
+                    <span class="pa-check__mark" aria-hidden="true">
+                      <svg class="pa-check__svg" viewBox="0 0 24 24"><path class="pa-check__path" d="m5.5 12.6 4.4 4.4L18.6 8"/></svg>
+                    </span>
+                    <span class="pa-check__txt">I confirm I am authorised to register this agency and I accept the <a class="pa-link" href="terms.html">Partner Terms</a> and <a class="pa-link" href="privacy.html">Privacy Policy</a>.</span>
+                  </label>
+                  <p class="pa-field__err" id="paRgAgreeErr"></p>
+                </div>
+
+                <div class="pa-nav pa-rise" style="--pa-i:4">
+                  <button type="button" class="pa-btn pa-btn--ghost" data-pa-back="2">
+                    <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+                    <span class="pa-btn__txt">Back</span>
+                  </button>
+                  <button type="submit" class="pa-btn pa-btn--go pa-btn--grow">
+                    <span class="pa-btn__txt">Create partner account</span>
+                    <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+                    <span class="pa-btn__spin" aria-hidden="true"></span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <!-- ------------------------------------------- SUCCESS STATE -->
+        <div class="pa-done" id="paDone" hidden>
+          <span class="pa-done__ring" aria-hidden="true">
+            <svg class="pa-done__svg" viewBox="0 0 76 76">
+              <circle class="pa-done__circle" cx="38" cy="38" r="33"/>
+              <path class="pa-done__tick" d="M23.5 39.5 33.5 49.5 53 28.5"/>
+            </svg>
+          </span>
+          <h2 class="pa-done__title" id="paDoneTitle" tabindex="-1">Everything checks out</h2>
+          <p class="pa-done__txt" id="paDoneTxt">Your details are complete and correctly formatted.</p>
+          <p class="pa-done__note">Nothing was submitted. This page is a front-end demo with no server behind it, so what you typed never left this browser and no account or session was created.</p>
+          <!-- shown only after the registration wizard: the next step a real
+               partner console would take you to -->
+          <a class="pa-btn pa-btn--go" id="paDoneVerify" href="vfi-partner-verify.html" hidden>
+            <span class="pa-btn__txt">Verify your email address</span>
+            <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+          </a>
+          <button type="button" class="pa-btn pa-btn--soft" id="paDoneBack">
+            <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+            <span class="pa-btn__txt">Back to the form</span>
+          </button>
+        </div>
+
+        <p class="pa-demo">
+          <svg class="pa-i" aria-hidden="true"><use href="#pa-info"/></svg>
+          <span>Front-end demo &mdash; there is no partner server connected to this page, so nothing you type is sent anywhere or stored.</span>
+        </p>
+      </div>
+
+      <p class="pa-fine">
+        <a class="pa-link" href="privacy.html">Privacy</a>
+        <span aria-hidden="true">&middot;</span>
+        <a class="pa-link" href="terms.html">Terms</a>
+        <span aria-hidden="true">&middot;</span>
+        <a class="pa-link" href="contact.html">Talk to the partner team</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/partner-auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — all your notifications in one place." />
+  <title>Notifications | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    /* page-scoped — every selector prefixed .pg-notif */
+    .pg-notif__card { padding: 0; overflow: hidden; }
+    .pg-notif__list { border-bottom: 1px solid var(--pp-line-2); }
+    .pg-notif__row {
+      display: flex; align-items: flex-start; gap: 14px; padding: 16px 22px;
+      border-bottom: 1px solid var(--pp-line-2); position: relative;
+    }
+    .pg-notif__row:last-child { border-bottom: 0; }
+    .pg-notif__row--unread { background: var(--pp-teal-soft); }
+    .pg-notif__ic {
+      width: 40px; height: 40px; border-radius: 11px; flex: none; display: grid; place-items: center;
+      background: #fff; border: 1px solid var(--pp-line); color: var(--pp-teal);
+    }
+    .pg-notif__row--unread .pg-notif__ic { background: #fff; border-color: #bdeee3; }
+    .pg-notif__body { flex: 1 1 auto; min-width: 0; }
+    .pg-notif__title { font-family: var(--pp-display); font-weight: 700; color: var(--pp-ink); font-size: 14.5px; }
+    .pg-notif__text { color: var(--pp-muted); font-size: 13.5px; margin-top: 3px; line-height: 1.5; }
+    .pg-notif__time { color: var(--pp-faint); font-size: 12px; margin-top: 5px; }
+    .pg-notif__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--pp-emerald); flex: none; margin-top: 7px; }
+    .pg-notif__seen { width: 9px; flex: none; }
+    .pg-notif__empty { padding: 56px 24px 64px; }
+    .pg-notif__art { width: 220px; max-width: 62%; height: auto; margin-bottom: 20px; }
+    @media (max-width: 480px) {
+      .pg-notif__row { padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body class="pp" data-pp-page="dashboard">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap pg-notif">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <div class="pp-crumb">
+            <a href="partner-dashboard.html">Dashboard</a>
+            <span class="pp-crumb__sep">›</span>
+            <span class="pp-crumb__now">Notifications</span>
+          </div>
+          <h1 class="pp-head__title">All Notifications</h1>
+          <p class="pp-head__sub">Everything that happens on your student portal shows up here.</p>
+        </div>
+      </div>
+
+      <!-- notifications card: (empty, brand-new account) -->
+      <div class="pp-card pg-notif__card pp-anim">
+        <div class="pg-notif__list" data-ppr="notifs" hidden></div>
+        <div class="pp-empty pg-notif__empty">
+          <svg class="pg-notif__art" viewBox="0 0 240 190" role="img" aria-label="An open envelope with a new-notification badge">
+            <circle cx="120" cy="96" r="74" fill="#e6fbf6"/>
+            <!-- confetti dots -->
+            <circle cx="46" cy="52" r="4" fill="#34d399"/>
+            <circle cx="205" cy="120" r="4.5" fill="#0d9488" opacity=".55"/>
+            <path d="M40 118l7 2M44 114l-1 7" stroke="#0d9488" stroke-width="2.4" stroke-linecap="round" opacity=".5"/>
+            <path d="M198 46l6 2M201 43l-1 6" stroke="#34d399" stroke-width="2.4" stroke-linecap="round"/>
+            <!-- envelope pocket -->
+            <rect x="60" y="88" width="120" height="70" rx="11" fill="#ffffff" stroke="#0d9488" stroke-width="3"/>
+            <!-- letter -->
+            <rect x="80" y="54" width="80" height="58" rx="8" fill="#d1f4ec" stroke="#0d9488" stroke-width="2.6"/>
+            <line x1="93" y1="72" x2="147" y2="72" stroke="#0a6a62" stroke-width="3.2" stroke-linecap="round"/>
+            <line x1="93" y1="84" x2="135" y2="84" stroke="#5a6f75" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+            <line x1="93" y1="96" x2="147" y2="96" stroke="#5a6f75" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+            <!-- front flap V -->
+            <path d="M62 92 L120 130 L178 92" fill="none" stroke="#0d9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- notification badge -->
+            <circle cx="174" cy="62" r="17" fill="#10b981" stroke="#ffffff" stroke-width="3.5"/>
+            <path d="M174 55v9" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+            <circle cx="174" cy="70" r="2.1" fill="#ffffff"/>
+          </svg>
+          <div class="pp-empty__title">Get… set… get notified!</div>
+          <p class="pp-empty__text">Here's where you'll get notified in real time for every activity on your student portal.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+</body>
+</html>

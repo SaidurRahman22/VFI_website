@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — practise visa and admission interviews with instant AI feedback." />
+  <title>AI Mock Interview | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    /* page-scoped — every selector prefixed .pg-int */
+    .pg-int__hero { display: grid; grid-template-columns: 1fr 260px; gap: 26px; align-items: center; }
+    .pg-int__intro .pp-eyebrow { display: block; margin-bottom: 8px; }
+    .pg-int__intro h2 { font-size: 20px; }
+    .pg-int__intro p { color: var(--pp-muted); font-size: 14.5px; line-height: 1.6; margin: 8px 0 0; }
+    .pg-int__form { margin-top: 20px; }
+    .pg-int__actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
+    .pg-int__demo { color: var(--pp-faint); font-size: 12.5px; }
+    /* decorative illustration panel */
+    .pg-int__art {
+      background: linear-gradient(150deg, var(--pp-teal-soft), #f2fbf9);
+      border: 1px solid #d3f0ea; border-radius: var(--pp-radius); padding: 22px;
+      display: grid; place-items: center;
+    }
+    .pg-int__art svg { width: 100%; height: auto; max-width: 210px; }
+    /* step number chips on the how-it-works cards */
+    .pg-int__step { position: absolute; top: 16px; right: 16px; width: 26px; height: 26px; border-radius: 50%;
+      display: grid; place-items: center; background: var(--pp-teal-soft); color: var(--pp-teal-dark);
+      font-family: var(--pp-display); font-weight: 700; font-size: 13px; }
+    .pg-int__features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .pg-int__past .pp-empty { padding: 40px 24px; }
+    @media (max-width: 1080px) { .pg-int__features { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px) { .pg-int__hero { grid-template-columns: 1fr; } .pg-int__art { order: -1; } }
+    @media (max-width: 560px) { .pg-int__features { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="pp" data-pp-page="interview">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap pg-int">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <h1 class="pp-head__title">AI Mock Interview</h1>
+          <p class="pp-head__sub">Practise visa &amp; admission interviews with instant AI feedback.</p>
+        </div>
+        <div class="pp-head__actions">
+          <span class="pp-badge pp-badge--teal"><svg class="ic ic--sm"><use href="#pi-interview"/></svg> 10 / 10 interviews left</span>
+        </div>
+      </div>
+
+      <!-- setup card -->
+      <div class="pp-card pp-card--pad-lg pp-anim">
+        <div class="pg-int__hero">
+          <div class="pg-int__intro">
+            <span class="pp-eyebrow">Set up your session</span>
+            <h2>Rehearse the real questions, minus the nerves</h2>
+            <p>Pick a scenario and our AI interviewer will ask the questions a visa or admissions officer might — then score your answers on clarity, confidence and consistency. Practise as many times as you like before the real thing.</p>
+
+            <div class="pg-int__form pp-form-grid">
+              <div class="pp-field">
+                <label class="pp-field__label" for="pgIntCountry">Destination country</label>
+                <select class="pp-select" id="pgIntCountry">
+                  <option>USA</option>
+                  <option>Canada</option>
+                  <option>UK</option>
+                  <option>Australia</option>
+                  <option>Ireland</option>
+                  <option>New Zealand</option>
+                  <option>Germany</option>
+                </select>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label" for="pgIntType">Interview type</label>
+                <select class="pp-select" id="pgIntType">
+                  <option>F-1 Visa</option>
+                  <option>UKVI Credibility</option>
+                  <option>Admission</option>
+                  <option>Scholarship</option>
+                </select>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label" for="pgIntLevel">Difficulty</label>
+                <select class="pp-select" id="pgIntLevel">
+                  <option>Warm-up</option>
+                  <option>Standard</option>
+                  <option>Tough</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pg-int__actions">
+              <button type="button" class="pp-btn pp-btn--primary pp-btn--lg" id="pgIntStart">
+                <svg class="ic ic--sm"><use href="#pi-spark"/></svg> Start Mock Interview
+              </button>
+              <span class="pg-int__demo">Front-end demo — no camera or microphone is accessed.</span>
+            </div>
+          </div>
+
+          <div class="pg-int__art" aria-hidden="true">
+            <svg viewBox="0 0 200 200" role="img" aria-label="AI interviewer illustration">
+              <circle cx="100" cy="100" r="86" fill="#ffffff" opacity=".7"/>
+              <!-- speech / chat bubble -->
+              <rect x="34" y="40" width="96" height="60" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="3"/>
+              <path d="M60 100l-2 16 18-14" fill="#ffffff" stroke="#0d9488" stroke-width="3" stroke-linejoin="round"/>
+              <circle cx="62" cy="70" r="4.5" fill="#0d9488"/>
+              <circle cx="82" cy="70" r="4.5" fill="#10b981"/>
+              <circle cx="102" cy="70" r="4.5" fill="#34d399"/>
+              <!-- candidate avatar -->
+              <circle cx="138" cy="126" r="24" fill="#0d9488"/>
+              <circle cx="138" cy="118" r="9" fill="#ffffff"/>
+              <path d="M124 142a14 14 0 0 1 28 0" fill="#ffffff"/>
+              <!-- score check -->
+              <circle cx="150" cy="60" r="16" fill="#10b981" stroke="#ffffff" stroke-width="3"/>
+              <polyline points="143 60 148 65 158 55" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- how it works -->
+      <h2 class="pp-section-title">How it works</h2>
+      <div class="pp-features pg-int__features pp-anim">
+        <div class="pp-feature">
+          <span class="pg-int__step">1</span>
+          <span class="pp-feature__ic"><svg class="ic"><use href="#pi-list"/></svg></span>
+          <span class="pp-feature__title">Choose your scenario</span>
+          <span class="pp-feature__text">Set the destination, interview type and difficulty so the questions match your student's real situation.</span>
+        </div>
+        <div class="pp-feature">
+          <span class="pg-int__step">2</span>
+          <span class="pp-feature__ic"><svg class="ic"><use href="#pi-user"/></svg></span>
+          <span class="pp-feature__title">Answer on camera or text</span>
+          <span class="pp-feature__text">Respond by webcam or by typing. The AI listens, follows up and keeps the conversation natural.</span>
+        </div>
+        <div class="pp-feature">
+          <span class="pg-int__step">3</span>
+          <span class="pp-feature__ic"><svg class="ic"><use href="#pi-medal"/></svg></span>
+          <span class="pp-feature__title">Get scored feedback</span>
+          <span class="pp-feature__text">Receive a clear score with notes on clarity, confidence and the answers worth polishing.</span>
+        </div>
+        <div class="pp-feature">
+          <span class="pg-int__step">4</span>
+          <span class="pp-feature__ic"><svg class="ic"><use href="#pi-spark"/></svg></span>
+          <span class="pp-feature__title">Track improvement</span>
+          <span class="pp-feature__text">Repeat the session and watch scores climb, so your student walks in ready and calm.</span>
+        </div>
+      </div>
+
+      <!-- past interviews -->
+      <h2 class="pp-section-title">Your past interviews</h2>
+      <div class="pp-card pg-int__past pp-anim">
+        <div class="pp-empty">
+          <svg class="pp-empty__art" viewBox="0 0 220 150" role="img" aria-label="No interviews yet">
+            <rect x="34" y="30" width="152" height="92" rx="12" fill="#f7fafb" stroke="#e4edef" stroke-width="3"/>
+            <path d="M34 52h152" stroke="#e4edef" stroke-width="3"/>
+            <circle cx="46" cy="41" r="3" fill="#0d9488"/>
+            <circle cx="58" cy="41" r="3" fill="#34d399" opacity=".6"/>
+            <path d="M70 74h44M70 88h80M70 102h60" stroke="#cdddde" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="150" cy="90" r="24" fill="#e6fbf6" stroke="#0d9488" stroke-width="3"/>
+            <path d="M150 80v10l6 6" fill="none" stroke="#0d9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="pp-empty__title">No interviews yet</div>
+          <p class="pp-empty__text">Start your first above — once you do, every session and its score will appear here so you can review your progress.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+  <script>
+    /* page-only wiring — ES5 to match js/ */
+    (function () {
+      var start = document.getElementById("pgIntStart");
+      if (start) start.addEventListener("click", function () {
+        window.VFIToast("Your AI interviewer would start now.");
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node \"C:\\\\Users\\\\saidu\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--project-VFI-website\\\\fbc09554-1a97-4c16-abfc-45d35f4b60dc\\\\scratchpad\\\\portalcheck2.mjs\" \"partner-dashboard.html\")",
+      "PowerShell(node \"C:\\\\Users\\\\saidu\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--project-VFI-website\\\\fbc09554-1a97-4c16-abfc-45d35f4b60dc\\\\scratchpad\\\\ppshot.mjs\" \"partner-dashboard.html\" \"dash-full\" \"full\")",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8777/partner-dashboard.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8777/partner-students.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8777/partner-applications.html)",
+      "PowerShell(node \"C:\\\\Users\\\\saidu\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--project-VFI-website\\\\fbc09554-1a97-4c16-abfc-45d35f4b60dc\\\\scratchpad\\\\loginflow.mjs\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8777/partner-notifications.html)",
+      "Bash(node check-new-pages.mjs)",
+      "Bash(node pages3check.mjs)",
+      "Bash(node shot-new-pages.mjs)",
+      "Bash(node pages3shot.mjs)",
+      "Bash(node vficheck3.mjs)",
+      "PowerShell(node \"C:\\\\Users\\\\saidu\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--project-VFI-website\\\\fbc09554-1a97-4c16-abfc-45d35f4b60dc\\\\scratchpad\\\\ppshot.mjs\" \"partner-students.html\" \"students\" \"full\")",
+      "PowerShell(node \"C:\\\\Users\\\\saidu\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--project-VFI-website\\\\fbc09554-1a97-4c16-abfc-45d35f4b60dc\\\\scratchpad\\\\ppshot.mjs\" \"partner-applications.html\" \"applications\" \"full\")",
+      "Bash(node vfishot3.mjs)",
+      "Bash(node searchwalletcheck.mjs)"
+    ]
+  }
+}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — manage your students, applications and enquiries in one place." />
+  <title>Dashboard | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="pp" data-pp-page="dashboard">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <h1 class="pp-head__title">Dashboard</h1>
+          <p class="pp-head__sub" data-ppr="welcome">Welcome to your VFI Partner console.</p>
+        </div>
+        <div class="pp-head__actions">
+          <button class="pp-btn pp-btn--ghost" data-pp-open="request-program"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Request Program Options</button>
+          <button class="pp-btn pp-btn--primary" data-pp-open="register-student"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Register New Student</button>
+        </div>
+      </div>
+
+      <div class="pp-dash">
+        <!-- ================= main column ================= -->
+        <div class="pp-grid">
+
+          <!-- QR registration -->
+          <div class="pp-card pp-anim">
+            <div class="pp-qr">
+              <svg class="pp-qr__code" viewBox="0 0 29 29" role="img" aria-label="Student registration QR code">
+                <rect width="29" height="29" fill="#fff"/>
+                <g fill="#0f2a2e">
+                  <!-- finder patterns -->
+                  <path d="M0 0h7v7H0zM1 1v5h5V1z M2 2h3v3H2z"/>
+                  <path d="M22 0h7v7h-7zM23 1v5h5V1z M24 2h3v3h-3z"/>
+                  <path d="M0 22h7v7H0zM1 23v5h5v-5z M2 24h3v3H2z"/>
+                  <!-- data modules -->
+                  <path d="M9 0h1v1H9zM11 0h1v3h-1zM14 1h1v1h-1zM16 0h1v1h-1zM19 1h1v1h-1z"/>
+                  <path d="M9 2h1v1H9zM13 3h1v1h-1zM17 2h1v2h-1zM20 3h1v1h-1z"/>
+                  <path d="M0 9h1v1H0zM2 9h3v1H2zM0 11h1v1H0zM3 11h1v2H3zM1 13h1v1H1z"/>
+                  <path d="M9 9h2v2H9zM12 9h1v1h-1zM14 9h2v1h-2zM17 9h1v3h-1zM20 9h1v1h-1zM23 9h1v2h-1zM26 9h1v1h-1z"/>
+                  <path d="M10 12h1v1h-1zM13 11h1v2h-1zM15 12h2v1h-2zM19 11h1v1h-1zM21 12h1v1h-1zM25 12h1v1h-1zM27 11h1v1h-1z"/>
+                  <path d="M9 14h1v2H9zM12 14h1v1h-1zM14 15h1v1h-1zM16 14h2v1h-2zM20 14h1v2h-1zM23 15h2v1h-2zM27 14h1v1h-1z"/>
+                  <path d="M11 16h2v1h-2zM15 17h1v1h-1zM18 16h1v2h-1zM22 17h1v1h-1zM25 16h1v1h-1z"/>
+                  <path d="M9 18h1v1H9zM13 18h1v2h-1zM16 19h1v1h-1zM19 18h2v1h-2zM24 18h1v2h-1zM27 18h1v2h-1z"/>
+                  <path d="M9 20h2v1H9zM12 21h1v1h-1zM15 20h1v2h-1zM18 21h1v1h-1zM21 20h2v1h-2zM26 21h1v1h-1z"/>
+                  <path d="M9 22h1v1H9zM11 23h1v1h-1zM13 24h1v1h-1zM10 25h1v2h-1zM12 26h1v1h-1z"/>
+                  <path d="M14 22h1v3h-1zM16 23h2v1h-2zM19 22h1v2h-1zM22 23h1v1h-1zM24 22h1v1h-1zM26 22h1v1h-1z"/>
+                  <path d="M15 26h1v1h-1zM17 25h1v2h-1zM20 26h1v1h-1zM22 25h2v1h-2zM25 26h1v1h-1zM27 25h1v2h-1z"/>
+                  <path d="M18 9h1v1h-1zM9 12h1v1H9z"/>
+                </g>
+              </svg>
+              <div class="pp-qr__body">
+                <div class="pp-qr__title">Student Registration QR Code</div>
+                <div class="pp-qr__hint">Share this code so students can register straight to your account.</div>
+              </div>
+              <div class="pp-qr__actions">
+                <button class="pp-btn pp-btn--ghost pp-btn--sm" id="ppCopyLink"><svg class="ic ic--sm"><use href="#pi-copy"/></svg> Copy Link</button>
+                <button class="pp-btn pp-btn--primary pp-btn--sm" onclick="window.print()"><svg class="ic ic--sm"><use href="#pi-print"/></svg> Print QR</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- filters -->
+          <div class="pp-card pp-anim">
+            <div class="pp-filters" style="border:0;box-shadow:none;padding:0">
+              <div class="pp-daterange" style="flex:1 1 220px"><svg class="ic ic--sm"><use href="#pi-calendar"/></svg><span>01/04/2026 – 08/08/2026</span><button class="pp-daterange__x" aria-label="Clear dates"><svg class="ic ic--sm"><use href="#pi-x"/></svg></button></div>
+              <div class="pp-field"><select class="pp-select" aria-label="Intake"><option>Intake</option><option>Jan</option><option>May</option><option>Sep</option></select></div>
+              <div class="pp-field"><select class="pp-select" aria-label="Year"><option>Year</option><option>2026</option><option>2027</option></select></div>
+              <div class="pp-field"><select class="pp-select" aria-label="Countries"><option>Countries</option><option>USA</option><option>Canada</option><option>UK</option><option>Australia</option></select></div>
+              <button class="pp-btn pp-btn--soft" id="ppApplyFilters">Apply Filters</button>
+            </div>
+          </div>
+
+          <!-- stat cards -->
+          <div class="pp-stats pp-anim">
+            <div class="pp-stat pp-stat--all"><div class="pp-stat__top"><span class="pp-stat__label">All Applications</span><svg class="ic ic--sm pp-stat__caret"><use href="#pi-chev-down"/></svg></div><div class="pp-stat__value">0</div></div>
+            <div class="pp-stat pp-stat--offer"><div class="pp-stat__top"><span class="pp-stat__label">Offers</span><svg class="ic ic--sm pp-stat__caret"><use href="#pi-chev-down"/></svg></div><div class="pp-stat__value">0</div></div>
+            <div class="pp-stat pp-stat--pay"><div class="pp-stat__top"><span class="pp-stat__label">Payments</span></div><div class="pp-stat__value">0</div></div>
+            <div class="pp-stat pp-stat--visa"><div class="pp-stat__top"><span class="pp-stat__label">Visa Received</span></div><div class="pp-stat__value">0</div></div>
+            <div class="pp-stat pp-stat--rej"><div class="pp-stat__top"><span class="pp-stat__label">Visa Rejected</span></div><div class="pp-stat__value">0</div></div>
+            <div class="pp-stat pp-stat--none"><div class="pp-stat__top"><span class="pp-stat__label">Non-Enrolment</span></div><div class="pp-stat__value">0</div></div>
+            <div class="pp-stat pp-stat--def"><div class="pp-stat__top"><span class="pp-stat__label">Deferrals</span></div><div class="pp-stat__value">0</div></div>
+            <div class="pp-stat pp-stat--pend"><div class="pp-stat__top"><span class="pp-stat__label">Pending from Partner</span></div><div class="pp-stat__value">0</div></div>
+          </div>
+
+          <!-- assistant -->
+          <div class="pp-assistant pp-anim">
+            <div class="pp-assistant__bar">
+              <span class="pp-assistant__id"><svg class="ic ic--sm"><use href="#pi-spark"/></svg> VFI Assistant</span>
+              <span class="pp-assistant__badge">100 messages left</span>
+            </div>
+            <div class="pp-assistant__row">
+              <input class="pp-input" id="ppAsk" placeholder="Ask me about overseas education…" aria-label="Ask the assistant">
+              <button class="pp-assistant__send" id="ppAskSend" aria-label="Send"><svg class="ic ic--sm"><use href="#pi-send"/></svg></button>
+            </div>
+            <div class="pp-assistant__note">Currently you get <strong>100 free assistant messages per month.</strong><br>Recruit 6 more students to unlock an extra 100 messages per month.</div>
+          </div>
+
+          <!-- quick links -->
+          <h2 class="pp-section-title">Quick Links</h2>
+          <div class="pp-quicklinks pp-anim" data-ppr="quicklinks">
+            <a class="pp-quicklink" href="partner-resources.html"><svg class="ic ic--sm"><use href="#pi-cap"/></svg> VFI Represented Universities</a>
+            <a class="pp-quicklink" href="partner-dashboard.html#managers"><svg class="ic ic--sm"><use href="#pi-users"/></svg> Contact List</a>
+            <a class="pp-quicklink" href="partner-resources.html"><svg class="ic ic--sm"><use href="#pi-globe"/></svg> Webinars by VFI</a>
+            <a class="pp-quicklink" href="partner-resources.html"><svg class="ic ic--sm"><use href="#pi-globe"/></svg> Webinars by Institutions</a>
+            <a class="pp-quicklink" href="partner-resources.html"><svg class="ic ic--sm"><use href="#pi-spark"/></svg> Promotional Schemes</a>
+            <a class="pp-quicklink" href="partner-resources.html"><svg class="ic ic--sm"><use href="#pi-book"/></svg> VFI Partner Tutorial</a>
+            <a class="pp-quicklink" href="partner-resources.html"><svg class="ic ic--sm"><use href="#pi-medal"/></svg> Counsellor Certification</a>
+          </div>
+
+          <!-- feature cards -->
+          <div class="pp-features pp-anim" style="margin-top:22px">
+            <a class="pp-feature" href="partner-search.html">
+              <span class="pp-feature__ic"><svg class="ic"><use href="#pi-search"/></svg></span>
+              <span class="pp-feature__title">Search Programs</span>
+              <span class="pp-feature__text">Explore 100,000+ program options. Filter, shortlist and compare universities, then apply to multiple institutions with a single application.</span>
+            </a>
+            <div class="pp-feature">
+              <span class="pp-feature__ic"><svg class="ic"><use href="#pi-cap"/></svg></span>
+              <span class="pp-feature__title">Students</span>
+              <span class="pp-feature__links"><a href="partner-students.html">Manage Students</a><a href="partner-applications.html">Manage Applications</a></span>
+            </div>
+            <a class="pp-feature" href="partner-applications.html">
+              <span class="pp-feature__ic"><svg class="ic"><use href="#pi-doc"/></svg></span>
+              <span class="pp-feature__title">Applications</span>
+              <span class="pp-feature__text">Open and track a student's application file end to end — every stage and status in one place.</span>
+            </a>
+            <a class="pp-feature" href="partner-resources.html">
+              <span class="pp-feature__ic"><svg class="ic"><use href="#pi-book"/></svg></span>
+              <span class="pp-feature__title">Learning Resources</span>
+              <span class="pp-feature__text">A complete library of product knowledge — country guides, presentation decks and outreach materials.</span>
+            </a>
+          </div>
+
+        </div>
+
+        <!-- ================= right rail ================= -->
+        <aside class="pp-rail">
+          <!-- benefits -->
+          <div class="pp-card pp-anim">
+            <div class="pp-benefits__top">
+              <div>
+                <div class="pp-eyebrow">Your benefits level</div>
+                <div class="pp-benefits__level" data-ppr="tierName">STARTER</div>
+              </div>
+              <span class="pp-benefits__medal"><svg class="ic"><use href="#pi-medal"/></svg></span>
+            </div>
+            <div class="pp-benefits__track">
+              <span class="pp-benefits__fill" style="width:16%"></span>
+              <span class="pp-benefits__dots"><span class="pp-benefits__dot is-on"></span><span class="pp-benefits__dot"></span><span class="pp-benefits__dot"></span><span class="pp-benefits__dot"></span></span>
+            </div>
+            <p class="pp-benefits__note">0 unique <b>“Visa Received”</b> students in the last year.</p>
+            <p class="pp-benefits__note" style="margin-top:12px;font-weight:600;color:var(--pp-ink)">Current benefits include:</p>
+            <ul class="pp-benefits__list" data-ppr="benefits">
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> 100 assistant messages per month</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Up to 2 counsellors</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> 20 student autofills per year</li>
+              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Priority support from your regional manager</li>
+            </ul>
+            <div class="pp-benefits__cta">Recruit 6 more students to unlock <b>Growth</b> &middot; <a href="partner-dashboard.html">View roadmap</a></div>
+            <div class="pp-benefits__split">
+              <div class="pp-benefits__stat"><small>Assistant Messages Left</small><b>100/100</b></div>
+              <div class="pp-benefits__stat"><small>Student Autofills Left</small><b>20/20</b></div>
+            </div>
+          </div>
+
+          <!-- upcoming deadlines -->
+          <div class="pp-card pp-anim">
+            <div class="pp-card__head"><h3 class="pp-card__title">Upcoming Deadlines</h3><a class="pp-card__link" href="partner-applications.html">View All</a></div>
+            <div class="pp-tabs" role="tablist">
+              <button class="pp-tab is-on" data-pp-tab="d0">Today</button>
+              <button class="pp-tab" data-pp-tab="d1">Tomorrow</button>
+              <button class="pp-tab" data-pp-tab="d2">In 7 days</button>
+              <button class="pp-tab" data-pp-tab="d3">In 14 days</button>
+            </div>
+            <div class="pp-tabpanel is-on" id="d0"><div class="pp-empty" style="padding:26px 0"><svg class="ic ic--lg" style="color:var(--pp-faint)"><use href="#pi-calendar"/></svg><p class="pp-empty__text" style="margin-top:10px">No upcoming deadlines.</p></div></div>
+            <div class="pp-tabpanel" id="d1"><div class="pp-empty" style="padding:26px 0"><p class="pp-empty__text">No deadlines tomorrow.</p></div></div>
+            <div class="pp-tabpanel" id="d2"><div class="pp-empty" style="padding:26px 0"><p class="pp-empty__text">No deadlines in the next 7 days.</p></div></div>
+            <div class="pp-tabpanel" id="d3"><div class="pp-empty" style="padding:26px 0"><p class="pp-empty__text">No deadlines in the next 14 days.</p></div></div>
+          </div>
+
+          <!-- important updates -->
+          <div class="pp-card pp-anim">
+            <div class="pp-card__head"><h3 class="pp-card__title">Important Updates</h3><a class="pp-card__link" href="partner-notifications.html">View All</a></div>
+            <div class="pp-updates__filters">
+              <button class="pp-chip is-on">All</button><button class="pp-chip">US</button><button class="pp-chip">AUS</button><button class="pp-chip">CAN</button><button class="pp-chip">UK</button>
+            </div>
+            <div data-ppr="updates">
+            <div class="pp-update"><span class="pp-update__flag">🇨🇦</span><div><div class="pp-update__title">Applications now open for May 2027 intake — Canada</div><div class="pp-update__sub">Partner university · Ontario</div><div class="pp-update__date">Update date — 05/08/2026</div></div></div>
+            <div class="pp-update"><span class="pp-update__flag">🇬🇧</span><div><div class="pp-update__title">New scholarship rounds announced for Fall 2026 — UK</div><div class="pp-update__sub">Partner university · England</div><div class="pp-update__date">Update date — 05/08/2026</div></div></div>
+            <div class="pp-update"><span class="pp-update__flag">🇦🇺</span><div><div class="pp-update__title">Revised intake deadlines for Jan 2027 — Australia</div><div class="pp-update__sub">Partner university · Victoria</div><div class="pp-update__date">Update date — 01/08/2026</div></div></div>
+            <div class="pp-update"><span class="pp-update__flag">🇺🇸</span><div><div class="pp-update__title">Undergraduate applications open for Fall 2027 — USA</div><div class="pp-update__sub">Partner university · Illinois</div><div class="pp-update__date">Update date — 01/08/2026</div></div></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- regional managers -->
+      <h2 class="pp-section-title" id="managers">Contact Regional Manager</h2>
+      <div class="pp-managers pp-anim" data-ppr="managers">
+        <div class="pp-manager">
+          <div class="pp-manager__top"><span class="pp-manager__av">TR</span><div><div class="pp-manager__name">Tahmeed Rahman</div><div class="pp-manager__role">Regional Manager</div><div class="pp-manager__meta">+880 1700-000000 &nbsp;|&nbsp; Dhaka</div></div></div>
+          <a class="pp-manager__mail" href="mailto:dhaka@vfi-edu.com">dhaka@vfi-edu.com</a>
+        </div>
+        <div class="pp-manager">
+          <div class="pp-manager__top"><span class="pp-manager__av">AK</span><div><div class="pp-manager__name">Ayesha Karim</div><div class="pp-manager__role">Assistant Manager — Sales</div><div class="pp-manager__meta">+880 1700-000001 &nbsp;|&nbsp; Dhaka</div></div></div>
+          <a class="pp-manager__mail" href="mailto:ayesha@vfi-edu.com">ayesha@vfi-edu.com</a>
+        </div>
+        <div class="pp-manager">
+          <div class="pp-manager__top"><span class="pp-manager__av">IH</span><div><div class="pp-manager__name">Imran Hossain</div><div class="pp-manager__role">Manager — Sales</div><div class="pp-manager__meta">+880 1700-000002 &nbsp;|&nbsp; Chattogram</div></div></div>
+          <a class="pp-manager__mail" href="mailto:imran@vfi-edu.com">imran@vfi-edu.com</a>
+        </div>
+        <div class="pp-manager">
+          <div class="pp-manager__top"><span class="pp-manager__av">NS</span><div><div class="pp-manager__name">Nadia Sultana</div><div class="pp-manager__role">Head of Strategic Initiatives</div><div class="pp-manager__meta">+880 1700-000003 &nbsp;|&nbsp; Dhaka</div></div></div>
+          <a class="pp-manager__mail" href="mailto:nadia@vfi-edu.com">nadia@vfi-edu.com</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <button class="pp-fab" aria-label="Open assistant"><svg class="ic"><use href="#pi-spark"/></svg></button>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+  <script>
+    /* tiny dashboard-only wiring: tab panels, copy link, apply/ask feedback */
+    (function () {
+      var $ = function (s, c) { return (c || document).querySelector(s); };
+      var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+      $$(".pp-tab").forEach(function (t) {
+        t.addEventListener("click", function () {
+          var id = t.getAttribute("data-pp-tab");
+          $$(".pp-tab").forEach(function (x) { x.classList.toggle("is-on", x === t); });
+          $$(".pp-tabpanel").forEach(function (p) { p.classList.toggle("is-on", p.id === id); });
+        });
+      });
+      var copy = $("#ppCopyLink");
+      if (copy) copy.addEventListener("click", function () {
+        var link = location.origin + "/vfi-partner-login.html?ref=hakim";
+        if (navigator.clipboard) navigator.clipboard.writeText(link).then(function () { window.VFIToast("Registration link copied."); }, function () { window.VFIToast("Registration link ready: " + link); });
+        else window.VFIToast("Registration link ready.");
+      });
+      var apply = $("#ppApplyFilters");
+      if (apply) apply.addEventListener("click", function () { window.VFIToast("Filters applied — no matching records yet."); });
+      var ask = $("#ppAskSend"), askIn = $("#ppAsk");
+      function sendAsk() { if (askIn && askIn.value.trim()) { window.VFIToast("Thanks! The assistant would reply here."); askIn.value = ""; } }
+      if (ask) ask.addEventListener("click", sendAsk);
+      if (askIn) askIn.addEventListener("keydown", function (e) { if (e.key === "Enter") sendAsk(); });
+      $$(".pp-chip").forEach(function (c) { c.addEventListener("click", function () { $$(".pp-chip").forEach(function (x) { x.classList.remove("is-on"); }); c.classList.add("is-on"); }); });
+    })();
+  </script>
+</body>
+</html>

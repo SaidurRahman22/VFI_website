@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — top up your wallet, pay application fees instantly and keep every transaction in one ledger." />
+  <title>My Wallet | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    /* ============================================================= page-scoped
+       Every selector is prefixed with .pg-wallet so nothing here can reach the
+       shared pp- component system (partner-portal.css is read-only).
+       ============================================================= */
+    .pg-wallet__actions { align-items: center; }
+    .pg-wallet__balance { display: inline-flex; align-items: center; gap: 10px; }
+    .pg-wallet__balance-label { font-family: var(--pp-display); font-weight: 600; font-size: 14px; color: var(--pp-muted); }
+    .pg-wallet__chip {
+      font-size: 15px; padding: 8px 16px; border: 1px solid var(--pp-teal);
+      font-family: var(--pp-display); font-weight: 700;
+    }
+
+    /* the filter bar wants the two action buttons to sit at the end */
+    .pg-wallet__filters .pg-wallet__btns { display: flex; gap: 10px; flex: none; margin-left: auto; }
+
+    /* empty-state art */
+    .pg-wallet__art { width: 150px; }
+    .pg-wallet__result { margin-top: 22px; }
+
+    @media (max-width: 600px) {
+      .pg-wallet__actions { width: 100%; justify-content: space-between; }
+      .pg-wallet__filters .pg-wallet__btns { margin-left: 0; width: 100%; }
+      .pg-wallet__filters .pg-wallet__btns .pp-btn { flex: 1 1 auto; }
+    }
+  </style>
+</head>
+<body class="pp" data-pp-page="wallet">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap pg-wallet">
+
+      <!-- page head -->
+      <div class="pp-head pp-anim">
+        <div>
+          <h1 class="pp-head__title">My Wallet</h1>
+          <p class="pp-head__sub">Top up your wallet to pay application fees instantly.</p>
+        </div>
+        <div class="pp-head__actions pg-wallet__actions">
+          <div class="pg-wallet__balance">
+            <span class="pg-wallet__balance-label">Balance:</span>
+            <span class="pp-badge pp-badge--teal pg-wallet__chip">&#2547; 0</span>
+          </div>
+          <button class="pp-btn pp-btn--primary" id="pgAddMoney"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Add Money</button>
+        </div>
+      </div>
+
+      <!-- filter bar -->
+      <div class="pp-filters pg-wallet__filters pp-anim">
+        <div class="pp-field">
+          <label class="pp-field__label pp-vh" for="pgTxnId">Transaction ID</label>
+          <input class="pp-input" id="pgTxnId" placeholder="Transaction ID" autocomplete="off">
+        </div>
+        <div class="pp-field">
+          <label class="pp-field__label pp-vh" for="pgTxnDate">Date Created</label>
+          <div class="pp-input-wrap">
+            <input class="pp-input" id="pgTxnDate" placeholder="Date Created" autocomplete="off">
+            <span class="pp-input-wrap__ic"><svg class="ic ic--sm"><use href="#pi-calendar"/></svg></span>
+          </div>
+        </div>
+        <div class="pp-field">
+          <label class="pp-field__label pp-vh" for="pgTxnAck">Ack No.</label>
+          <input class="pp-input" id="pgTxnAck" placeholder="Ack No." autocomplete="off">
+        </div>
+        <div class="pp-field">
+          <label class="pp-field__label pp-vh" for="pgTxnStudent">Student Name</label>
+          <input class="pp-input" id="pgTxnStudent" placeholder="Student Name" autocomplete="off">
+        </div>
+        <div class="pp-field">
+          <label class="pp-field__label pp-vh" for="pgTxnAmount">Trans. Amount</label>
+          <input class="pp-input" id="pgTxnAmount" placeholder="Trans. Amount" data-pp-only="digits" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="pp-field">
+          <label class="pp-field__label pp-vh" for="pgTxnType">Trans. Type</label>
+          <select class="pp-select" id="pgTxnType">
+            <option value="" disabled selected>Trans. Type</option>
+            <option>Wallet Top-up</option>
+            <option>Application Fee</option>
+            <option>Refund</option>
+            <option>Adjustment</option>
+          </select>
+        </div>
+        <div class="pg-wallet__btns">
+          <button class="pp-btn pp-btn--ghost" id="pgWalletClear">Clear</button>
+          <button class="pp-btn pp-btn--primary" id="pgWalletSearch">Search</button>
+        </div>
+      </div>
+
+      <!-- results -->
+      <div class="pp-card pg-wallet__result pp-anim">
+        <div class="pp-empty">
+          <svg class="pp-empty__art pg-wallet__art" viewBox="0 0 140 120" role="img" aria-label="Empty wallet" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <!-- card peeking out of the wallet -->
+            <rect x="41" y="22" width="70" height="26" rx="5" fill="#ffffff" stroke="#0d9488" stroke-width="2.4"/>
+            <line x1="49" y1="32" x2="88" y2="32" stroke="#8aa0a6" stroke-width="2.4"/>
+            <line x1="49" y1="39" x2="74" y2="39" stroke="#cbe9e4" stroke-width="2.4"/>
+            <!-- wallet body -->
+            <rect x="20" y="40" width="100" height="62" rx="13" fill="#e6fbf6" stroke="#0d9488" stroke-width="2.6"/>
+            <path d="M20 60 H120" stroke="#0d9488" stroke-width="2" opacity=".45"/>
+            <!-- clasp pocket + button -->
+            <path d="M120 66 h-24 a11 11 0 0 0 0 22 h24" fill="#ffffff" stroke="#0d9488" stroke-width="2.6"/>
+            <circle cx="98" cy="77" r="4" fill="#0d9488"/>
+          </svg>
+          <p class="pp-empty__title">No transactions found</p>
+          <p class="pp-empty__text">You have no wallet transactions yet. Top up your wallet to pay student application fees instantly — every payment will then appear here in one ledger.</p>
+          <button class="pp-btn pp-btn--primary" id="pgAddMoney2"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Add Money</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+  <script>
+    /* wallet-page-only wiring (ES5). VFIToast is provided by portal.js. */
+    (function () {
+      var $ = function (s, c) { return (c || document).querySelector(s); };
+      var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+
+      function topUp() { window.VFIToast("Wallet top-up would open here."); }
+      $$("#pgAddMoney, #pgAddMoney2").forEach(function (b) { b.addEventListener("click", topUp); });
+
+      var search = $("#pgWalletSearch");
+      if (search) search.addEventListener("click", function () {
+        window.VFIToast("No transactions match your search.");
+      });
+
+      var clear = $("#pgWalletClear");
+      if (clear) clear.addEventListener("click", function () {
+        $$(".pg-wallet__filters input").forEach(function (i) { i.value = ""; });
+        var sel = $("#pgTxnType"); if (sel) sel.selectedIndex = 0;
+      });
+    })();
+  </script>
+</body>
+</html>

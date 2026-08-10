@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Reset the password on your VFI Partner account — we email a one-time link to your registered work address." />
+  <title>Reset Your Password | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- style.css first: it supplies the font stack and the shared design tokens.
+       partner-auth.css is loaded after so every pa- rule wins. -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/partner-auth.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="pa-body" data-pa-page="vfi-partner-forgot.html">
+
+  <a class="pa-skip" href="#main">Skip to the reset form</a>
+
+  <!-- =====================================================================
+       Inline icon sprite. This page deliberately skips js/site.js (no shared
+       header or footer), so the site-wide sprite is not available here.
+       Every symbol id is pa- prefixed.
+       ===================================================================== -->
+  <svg class="pa-sprite" width="0" height="0" aria-hidden="true" focusable="false"><defs>
+    <symbol id="pa-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.4"/><path d="m3.6 7.2 8.4 5.6 8.4-5.6"/></symbol>
+    <symbol id="pa-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.4"/><path d="M8 10V7.2a4 4 0 0 1 8 0V10"/><path d="M12 14.4v2.6"/></symbol>
+    <symbol id="pa-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M17 6l2.6 2.6M14.4 8.6 17 11.2"/></symbol>
+    <symbol id="pa-user" viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0"/></symbol>
+    <symbol id="pa-arrow" viewBox="0 0 24 24"><path d="M4.5 12h15M13 5.5 19.5 12 13 18.5"/></symbol>
+    <symbol id="pa-back" viewBox="0 0 24 24"><path d="M19.5 12h-15M11 5.5 4.5 12 11 18.5"/></symbol>
+    <symbol id="pa-check" viewBox="0 0 24 24"><path d="m5 12.6 4.6 4.6L19 7.2"/></symbol>
+    <symbol id="pa-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.4v5.2M12 16.3h.01"/></symbol>
+    <symbol id="pa-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16.6v-5.2M12 7.8h.01"/></symbol>
+    <symbol id="pa-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.8v5.4c0 4.4 2.9 8.2 7 9.4 4.1-1.2 7-5 7-9.4V5.8L12 3Z"/><path d="m9.2 11.9 2 2 3.6-3.9"/></symbol>
+    <symbol id="pa-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.2 2"/></symbol>
+    <symbol id="pa-refresh" viewBox="0 0 24 24"><path d="M20.4 12a8.4 8.4 0 1 1-2.5-6"/><path d="M20.6 4.4v5.2h-5.2"/></symbol>
+    <symbol id="pa-bolt" viewBox="0 0 24 24"><path d="M13.4 2.6 4.8 13.4h5.9l-.5 8 8.6-10.8h-5.9l.5-8Z"/></symbol>
+    <symbol id="pa-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="m16 16 4.4 4.4"/></symbol>
+    <symbol id="pa-wallet" viewBox="0 0 24 24"><rect x="3.4" y="6" width="16.6" height="13" rx="2.4"/><path d="M3.4 10.6h5.2a2 2 0 0 1 0 4H3.4"/></symbol>
+    <symbol id="pa-chevron" viewBox="0 0 24 24"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></symbol>
+  </defs></svg>
+
+  <main class="pa-shell" id="main">
+
+    <!-- ================================================================
+         BRAND PANEL — the same shell, palette and decorative layers as
+         vfi-partner-login.html, with recovery-specific copy.
+         ================================================================ -->
+    <aside class="pa-brand">
+
+      <span class="pa-brand__fx" aria-hidden="true">
+        <span class="pa-mesh"></span>
+        <span class="pa-grid"></span>
+        <span class="pa-beam"></span>
+        <span class="pa-orb pa-orb--a"></span>
+        <span class="pa-orb pa-orb--b"></span>
+        <span class="pa-orb pa-orb--c"></span>
+        <span class="pa-dust">
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+          <i class="pa-dust__i"></i><i class="pa-dust__i"></i><i class="pa-dust__i"></i>
+        </span>
+      </span>
+
+      <div class="pa-brand__top">
+        <a class="pa-lockup" href="vfi-partner.html">
+          <span class="pa-lockup__mark">V<span class="pa-lockup__ring" aria-hidden="true"></span></span>
+          <span class="pa-lockup__txt">
+            <b class="pa-lockup__name">VFI</b>
+            <small>partner platform</small>
+          </span>
+        </a>
+        <a class="pa-exit" href="index.html">
+          <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+          <span>Main site</span>
+        </a>
+      </div>
+
+      <div class="pa-brand__mid">
+        <p class="pa-eyebrow"><span class="pa-eyebrow__dot" aria-hidden="true"></span>Account recovery</p>
+        <h2 class="pa-brand__title">A locked account should never cost you a working day.</h2>
+        <p class="pa-brand__lead">Ask for a reset link and get back to your applications in a minute. Every student file, document and commission record stays exactly where you left it.</p>
+
+        <!-- floating glass cards -->
+        <div class="pa-stack" aria-hidden="true">
+          <div class="pa-glass pa-glass--main">
+            <div class="pa-glass__head">
+              <span class="pa-glass__dot"></span><span class="pa-glass__dot"></span><span class="pa-glass__dot"></span>
+              <em class="pa-glass__title">Applications filed</em>
+            </div>
+            <div class="pa-glass__body">
+              <div class="pa-bars">
+                <i class="pa-bar" style="--pa-h:34%"></i>
+                <i class="pa-bar" style="--pa-h:56%"></i>
+                <i class="pa-bar" style="--pa-h:44%"></i>
+                <i class="pa-bar" style="--pa-h:78%"></i>
+                <i class="pa-bar" style="--pa-h:62%"></i>
+                <i class="pa-bar" style="--pa-h:92%"></i>
+                <i class="pa-bar" style="--pa-h:70%"></i>
+              </div>
+              <div class="pa-glass__rows"><i></i><i></i></div>
+            </div>
+          </div>
+
+          <div class="pa-glass pa-glass--stat">
+            <span class="pa-glass__k">Link expires in</span>
+            <b class="pa-glass__v">30 min</b>
+            <span class="pa-glass__trend"><svg class="pa-i" aria-hidden="true"><use href="#pa-bolt"/></svg>single use only</span>
+          </div>
+
+          <div class="pa-toast">
+            <span class="pa-toast__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-check"/></svg></span>
+            <span class="pa-toast__txt"><b>Reset link sent</b><small>Delivered to your work inbox</small></span>
+          </div>
+        </div>
+
+        <ul class="pa-perks">
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-clock"/></svg></span>
+            <span class="pa-perk__txt"><b>One link, thirty minutes</b><small>It works once and then expires, so a forwarded email is worthless.</small></span>
+          </li>
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-shield"/></svg></span>
+            <span class="pa-perk__txt"><b>We never email passwords</b><small>Nobody at VFI can read yours. Resetting it is the only route back in.</small></span>
+          </li>
+          <li class="pa-perk">
+            <span class="pa-perk__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-user"/></svg></span>
+            <span class="pa-perk__txt"><b>A person if you need one</b><small>The partner desk can confirm your account another way during office hours.</small></span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pa-brand__foot">
+        <p class="pa-tick">
+          <span class="pa-tick__lbl">Good to know</span>
+          <span class="pa-tick__win" aria-hidden="true">
+            <span class="pa-tick__roll">
+              <span>Reset links expire in 30 minutes</span>
+              <span>Each link can be used once</span>
+              <span>Desk open Sat&ndash;Thu, 10:00&ndash;18:30</span>
+              <span>Reset links expire in 30 minutes</span>
+            </span>
+          </span>
+          <span class="pa-sr">Reset links expire in 30 minutes, each link can be used once, and the partner desk is open Saturday to Thursday, 10:00 to 18:30.</span>
+        </p>
+        <p class="pa-brand__help">Never had an account? <a href="vfi-partner-login.html#register">Register your agency</a></p>
+      </div>
+    </aside>
+
+    <!-- ================================================================
+         FORM PANEL
+         ================================================================ -->
+    <section class="pa-panel">
+      <span class="pa-panel__fx" aria-hidden="true"><span class="pa-panel__blob"></span></span>
+
+      <a class="pa-back" href="vfi-partner-login.html#signin">
+        <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+        <span>Back to sign in</span>
+      </a>
+
+      <div class="pa-card" id="paCard">
+        <span class="pa-card__glow" id="paGlow" aria-hidden="true"></span>
+        <span class="pa-card__edge" aria-hidden="true"></span>
+
+        <header class="pa-card__head">
+          <h1 class="pa-card__title" id="paFgTitle">Reset your password</h1>
+          <p class="pa-card__sub" id="paFgSub">Tell us the work email on your partner account and we will send a single-use link to set a new password.</p>
+        </header>
+
+        <p class="pa-msg" id="paMsg" role="status" aria-live="polite" hidden></p>
+
+        <div class="pa-views" id="paViews">
+
+          <!-- ------------------------------------------- (a) ASK FOR IT -->
+          <form class="pa-form pa-on" id="paFgAsk" novalidate>
+            <div class="pa-fields">
+
+              <div class="pa-field pa-rise" style="--pa-i:1">
+                <span class="pa-field__box">
+                  <span class="pa-field__ic"><svg class="pa-i" aria-hidden="true"><use href="#pa-mail"/></svg></span>
+                  <input class="pa-field__input" id="paFgEmail" name="email" type="email" placeholder=" "
+                         autocomplete="username" inputmode="email" data-pa-rule="email" data-pa-chars="email"
+                         aria-describedby="paFgEmailHint paFgEmailErr" required />
+                  <label class="pa-field__label" for="paFgEmail">Work email</label>
+                  <span class="pa-field__spark" aria-hidden="true"></span>
+                </span>
+                <p class="pa-field__hint" id="paFgEmailHint">Use the address your agency registered with. Spaces are not allowed.</p>
+                <p class="pa-field__err" id="paFgEmailErr"></p>
+              </div>
+
+              <div class="pa-rise" style="--pa-i:2">
+                <button type="submit" class="pa-btn pa-btn--go pa-btn--block">
+                  <span class="pa-btn__txt">Email me a reset link</span>
+                  <svg class="pa-i pa-btn__ic" aria-hidden="true"><use href="#pa-arrow"/></svg>
+                  <span class="pa-btn__spin" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <p class="pa-alt pa-rise" style="--pa-i:3">
+                Remembered it after all?
+                <a class="pa-link" href="vfi-partner-login.html#signin">Back to sign in</a>
+              </p>
+            </div>
+          </form>
+
+          <!-- ------------------------------------ (b) CHECK YOUR INBOX -->
+          <div class="pa-form" id="paFgSent">
+            <div class="pa-sent">
+              <span class="pa-sent__ic" aria-hidden="true"><svg class="pa-i"><use href="#pa-mail"/></svg></span>
+
+              <h2 class="pa-sent__title" id="paFgSentTitle" tabindex="-1">Check your inbox</h2>
+              <p class="pa-sent__txt">If a partner account uses this address, a reset link is on its way to it now.</p>
+
+              <p class="pa-addr">
+                <svg class="pa-i" aria-hidden="true"><use href="#pa-mail"/></svg>
+                <b id="paFgAddr">your work email</b>
+              </p>
+
+              <p class="pa-sent__txt pa-sent__txt--sm">The link works once and expires after 30 minutes. Look in your spam folder before you ask for another one.</p>
+
+              <p class="pa-resend">
+                <span>Still nothing?</span>
+                <button type="button" class="pa-swap" id="paFgResend" aria-disabled="true" aria-describedby="paFgCool">Resend the email</button>
+                <span class="pa-cool" id="paFgCool">
+                  <span class="pa-cool__ring" id="paFgCoolRing" aria-hidden="true" style="--pa-p:100"></span>
+                  <span id="paFgCoolTxt">available in 30s</span>
+                </span>
+              </p>
+
+              <p class="pa-sent__alt">
+                <button type="button" class="pa-swap" id="paFgWrong">Wrong address? Use a different one</button>
+              </p>
+
+              <a class="pa-btn pa-btn--soft" href="vfi-partner-login.html#signin">
+                <svg class="pa-i" aria-hidden="true"><use href="#pa-back"/></svg>
+                <span class="pa-btn__txt">Back to sign in</span>
+              </a>
+
+              <p class="pa-sent__alt">
+                Sent a 6-digit code instead?
+                <a class="pa-link" id="paFgCode" href="vfi-partner-verify.html">Enter it here</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <p class="pa-demo">
+          <svg class="pa-i" aria-hidden="true"><use href="#pa-info"/></svg>
+          <span>Front-end demo &mdash; there is no partner server connected to this page. No email is sent, no account is looked up, and nothing you type leaves this browser.</span>
+        </p>
+      </div>
+
+      <p class="pa-fine">
+        <a class="pa-link" href="privacy.html">Privacy</a>
+        <span aria-hidden="true">&middot;</span>
+        <a class="pa-link" href="terms.html">Terms</a>
+        <span aria-hidden="true">&middot;</span>
+        <a class="pa-link" href="contact.html">Talk to the partner team</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/partner-auth.js"></script>
+</body>
+</html>

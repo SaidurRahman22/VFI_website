@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Confirm the email address on your VFI Overseas Education student account by entering the six-digit code we sent you." />
+  <meta name="theme-color" content="#04081c" />
+  <title>Confirm Your Email | VFI Overseas Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- style.css first: it only supplies the shared font stack + reset here.
+       student-auth.css owns every visual rule on this page (sa- namespace). -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/student-auth.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="sa-body" data-sa-page="student-verify.html">
+
+  <a class="sa-skip" href="#saCard">Skip to the code entry</a>
+
+  <!-- ==================================================================
+       Local icon sprite. js/site.js (which injects the site-wide sprite)
+       is deliberately NOT loaded on this page, so every symbol used
+       below is defined right here.
+       ================================================================== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="a-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="a-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="a-back" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+    <symbol id="a-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+    <symbol id="a-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></symbol>
+    <symbol id="a-refresh" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 3.8v5.4h-5.4"/></symbol>
+    <symbol id="a-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6.8v5.5l3.4 2"/></symbol>
+    <symbol id="a-shield" viewBox="0 0 24 24"><path d="m12 3 7.5 3v5.4c0 4.6-3.1 8.4-7.5 9.6-4.4-1.2-7.5-5-7.5-9.6V6L12 3Z"/><path d="m9.2 12 2 2 3.6-3.8"/></symbol>
+    <symbol id="a-bell" viewBox="0 0 24 24"><path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5Z"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></symbol>
+    <symbol id="a-cap" viewBox="0 0 24 24"><path d="m2 8 10-4 10 4-10 4L2 8Z"/><path d="M6 10v5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5"/><path d="M22 8v5"/></symbol>
+    <symbol id="a-code" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></symbol>
+  </defs></svg>
+
+  <main class="sa-shell" id="main">
+
+    <!-- ================================================================
+         BRAND SIDE — aurora backdrop, drifting mesh, floating glass cards
+         ================================================================ -->
+    <aside class="sa-brand">
+      <div class="sa-bg" aria-hidden="true">
+        <span class="sa-orb sa-orb--a"></span>
+        <span class="sa-orb sa-orb--b"></span>
+        <span class="sa-orb sa-orb--c"></span>
+        <span class="sa-mesh"></span>
+        <span class="sa-stars"></span>
+        <span class="sa-beam"></span>
+      </div>
+
+      <a class="sa-logo" href="index.html">
+        <span class="sa-logo__mark"><span class="sa-logo__glyph">V</span></span>
+        <span class="sa-logo__txt">VFI<small>overseas education</small></span>
+      </a>
+
+      <div class="sa-pitch">
+        <p class="sa-kicker"><svg class="sa-i"><use href="#a-code"/></svg> Email confirmation</p>
+        <h2 class="sa-pitch__h">Six digits, and your inbox is <em>officially yours</em>.</h2>
+        <p class="sa-pitch__p">Offer letters, interview times and deposit deadlines all arrive by email. Confirming the address once means none of them ever land in a typo.</p>
+
+        <ul class="sa-perks">
+          <li class="sa-perk" style="--sa-i:1">
+            <span class="sa-perk__ic"><svg class="sa-i"><use href="#a-shield"/></svg></span>
+            <span class="sa-perk__txt">
+              <span class="sa-perk__t">Only you get your updates</span>
+              <span class="sa-perk__d">A confirmed address is what keeps the account yours.</span>
+            </span>
+          </li>
+          <li class="sa-perk" style="--sa-i:2">
+            <span class="sa-perk__ic"><svg class="sa-i"><use href="#a-clock"/></svg></span>
+            <span class="sa-perk__txt">
+              <span class="sa-perk__t">Codes are short-lived</span>
+              <span class="sa-perk__d">Ten minutes, then the code stops working.</span>
+            </span>
+          </li>
+          <li class="sa-perk" style="--sa-i:3">
+            <span class="sa-perk__ic"><svg class="sa-i"><use href="#a-bell"/></svg></span>
+            <span class="sa-perk__txt">
+              <span class="sa-perk__t">Deadline reminders switch on</span>
+              <span class="sa-perk__d">We can only nudge you once the address is confirmed.</span>
+            </span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- decorative preview of what the portal would show -->
+      <div class="sa-floats" aria-hidden="true">
+        <div class="sa-chip sa-chip--a">
+          <span class="sa-chip__ic"><svg class="sa-i"><use href="#a-mail"/></svg></span>
+          <span class="sa-chip__txt">
+            <span class="sa-chip__t">Code sent</span>
+            <span class="sa-chip__d">Sample preview</span>
+          </span>
+        </div>
+        <div class="sa-chip sa-chip--b">
+          <span class="sa-chip__ic"><svg class="sa-i"><use href="#a-clock"/></svg></span>
+          <span class="sa-chip__txt">
+            <span class="sa-chip__t">Valid for 10 minutes</span>
+            <span class="sa-chip__bar"><i></i></span>
+          </span>
+        </div>
+        <div class="sa-chip sa-chip--c">
+          <span class="sa-chip__ic"><svg class="sa-i"><use href="#a-check"/></svg></span>
+          <span class="sa-chip__txt">
+            <span class="sa-chip__t">Address confirmed</span>
+            <span class="sa-chip__d">Sample preview</span>
+          </span>
+        </div>
+      </div>
+
+      <p class="sa-brandfoot">Code never arrived? <a href="contact.html">Message your counsellor</a></p>
+    </aside>
+
+    <!-- ================================================================
+         FORM SIDE
+         ================================================================ -->
+    <section class="sa-panel">
+      <a class="sa-back" href="login.html"><svg class="sa-i"><use href="#a-back"/></svg><span>Back to sign in</span></a>
+
+      <div class="sa-card" id="saCard">
+
+        <header class="sa-card__head">
+          <h1 class="sa-card__title" id="saTitle">Confirm your email</h1>
+          <p class="sa-card__sub" id="saSub">One code, and this inbox is tied to your account for good.</p>
+        </header>
+
+        <!-- visible status strip -->
+        <p class="sa-note" id="saMsg"></p>
+        <!-- always-present polite live region for screen readers -->
+        <p class="sa-live" id="saLive" role="status" aria-live="polite"></p>
+
+        <!-- the address being confirmed, masked (ab•••@domain.com) -->
+        <p class="sa-to" id="saVerifyTo">Enter the six-digit code from the confirmation email we sent you.</p>
+
+        <form class="sa-form sa-on" id="saVerifyForm" novalidate>
+
+          <fieldset class="sa-otp" style="--sa-i:1" aria-describedby="saOtpHint saOtpErr">
+            <legend class="sa-otp__legend">Six-digit verification code</legend>
+
+            <div class="sa-otp__boxes">
+              <input class="sa-otp__box" id="otp-1" type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="1" autocomplete="one-time-code" data-sa-mask="digits"
+                     aria-label="Digit 1 of 6" />
+              <input class="sa-otp__box" id="otp-2" type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="1" autocomplete="off" data-sa-mask="digits"
+                     aria-label="Digit 2 of 6" />
+              <input class="sa-otp__box" id="otp-3" type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="1" autocomplete="off" data-sa-mask="digits"
+                     aria-label="Digit 3 of 6" />
+              <input class="sa-otp__box" id="otp-4" type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="1" autocomplete="off" data-sa-mask="digits"
+                     aria-label="Digit 4 of 6" />
+              <input class="sa-otp__box" id="otp-5" type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="1" autocomplete="off" data-sa-mask="digits"
+                     aria-label="Digit 5 of 6" />
+              <input class="sa-otp__box" id="otp-6" type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="1" autocomplete="off" data-sa-mask="digits"
+                     aria-label="Digit 6 of 6" />
+            </div>
+
+            <p class="sa-otp__hint" id="saOtpHint">Digits only. Paste the whole code anywhere in the row and it fills itself in.</p>
+            <p class="sa-field__err" id="saOtpErr"><svg class="sa-i"><use href="#a-warn"/></svg><span></span></p>
+          </fieldset>
+
+          <button class="sa-submit" type="submit" style="--sa-i:2">
+            <span class="sa-submit__shine" aria-hidden="true"></span>
+            <span class="sa-submit__fill" aria-hidden="true"></span>
+            <span class="sa-submit__txt">Confirm my email</span>
+            <svg class="sa-i sa-submit__ic" aria-hidden="true"><use href="#a-arrow"/></svg>
+            <span class="sa-submit__spin" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <div class="sa-resend">
+          <button class="sa-ghost" type="button" id="saResend" aria-disabled="false">
+            <svg class="sa-i"><use href="#a-refresh"/></svg>
+            <span id="saResendTxt">Send a new code</span>
+          </button>
+          <p class="sa-resend__hint" id="saResendHint"></p>
+        </div>
+
+        <p class="sa-alt">
+          Wrong email? <a class="sa-link" href="login.html#register">Go back and change it</a>
+        </p>
+
+        <!-- the honest bit, always visible -->
+        <p class="sa-demo">
+          <svg class="sa-i"><use href="#a-warn"/></svg>
+          <span><b>Front-end demo.</b> No code was ever sent and none is checked &mdash; there is no server behind this page, so <b>any</b> six digits will be accepted and no address is really confirmed.</span>
+        </p>
+
+        <p class="sa-cardfoot">Finished here? <a href="login.html">Back to sign in</a></p>
+
+        <!-- ------------------------------------------- SUCCESS OVERLAY -->
+        <div class="sa-done" id="saDone" aria-hidden="true">
+          <span class="sa-done__markwrap">
+            <svg class="sa-done__mark" viewBox="0 0 72 72" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="sa-tickgrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#4f46e5"/>
+                  <stop offset="0.55" stop-color="#2563eb"/>
+                  <stop offset="1" stop-color="#22d3ee"/>
+                </linearGradient>
+              </defs>
+              <circle class="sa-done__ring" cx="36" cy="36" r="30"/>
+              <path class="sa-done__tick" d="M22.5 37.5 32 47l17.5-19"/>
+            </svg>
+            <span class="sa-done__halo" aria-hidden="true"></span>
+          </span>
+          <h2 class="sa-done__t" id="saDoneTitle" tabindex="-1">Code accepted</h2>
+          <p class="sa-done__p" id="saDoneMsg">Any six digits get through here — there is no server to check them against, so no address has actually been confirmed.</p>
+          <div class="sa-done__row">
+            <a class="sa-done__back" id="saDoneNext" href="login.html">
+              Continue to sign in <svg class="sa-i"><use href="#a-arrow"/></svg>
+            </a>
+            <button class="sa-done__ghost" type="button" id="saDoneBack">
+              <svg class="sa-i"><use href="#a-back"/></svg> Enter a different code
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VFI Partner console — search and shortlist from over 100,000 overseas study programs, then compare universities and apply." />
+  <title>Search Programs | VFI Partner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/partner-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    /* ============================================================= page-scoped
+       Every selector is prefixed with .pg-search so nothing here can reach the
+       shared pp- component system (partner-portal.css is read-only).
+       ============================================================= */
+    .pg-search__hero { text-align: center; max-width: 720px; margin: 4px auto 26px; }
+    .pg-search__hero h1 { font-size: 30px; line-height: 1.2; }
+    .pg-search__hero p { color: var(--pp-muted); font-size: 15.5px; margin-top: 9px; }
+
+    /* prominent search card */
+    .pg-search__searchcard { border-color: #cfe7e3; }
+    .pg-search__searchrow { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+    .pg-search__searchrow .pp-field { flex: 1 1 168px; min-width: 150px; }
+    .pg-search__searchrow .pg-search__field--grow { flex: 2 1 260px; }
+    .pg-search__searchrow .pg-search__field--btn { flex: 0 0 auto; }
+    .pg-search__field--btn .pp-btn { min-width: 128px; }
+    .pg-search .pp-search-wrap { position: relative; display: block; }
+
+    /* advanced search */
+    .pg-search__advhead { position: relative; text-align: center; margin: 30px 0 16px; min-height: 26px; }
+    .pg-search__advtitle {
+      font-family: var(--pp-display); font-weight: 700; color: var(--pp-teal-dark);
+      font-size: 19px; display: inline-block; cursor: pointer;
+    }
+    .pg-search__advtitle:hover { color: var(--pp-teal); }
+    .pg-search__advtitle:focus-visible { outline: 2px solid var(--pp-teal); outline-offset: 4px; border-radius: 6px; }
+    .pg-search__clear {
+      position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      font-size: 13.5px; font-weight: 600; color: var(--pp-teal); cursor: pointer;
+    }
+    .pg-search__clear:hover { text-decoration: underline; }
+
+    .pg-search__cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+    .pg-search__col { padding: 2px 28px; min-width: 0; }
+    .pg-search__col:first-child { padding-left: 2px; }
+    .pg-search__col:last-child { padding-right: 2px; }
+    .pg-search__col + .pg-search__col { border-left: 1px solid var(--pp-line); }
+    .pg-search__coltitle { font-size: 16px; font-family: var(--pp-display); font-weight: 700; color: var(--pp-ink); margin-bottom: 12px; }
+    .pg-search__col .pp-field + .pp-field { margin-top: 14px; }
+    .pg-search__checks { display: flex; flex-direction: column; gap: 1px; }
+
+    .pg-search__closebar { display: flex; justify-content: center; margin-top: 18px; }
+
+    /* quick filters */
+    .pg-search__qftitle { display: flex; align-items: center; gap: 8px; }
+    .pg-search__qftitle .ic { color: var(--pp-teal); }
+    .pg-search__chips { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    /* the advanced panel can be collapsed by the Close button */
+    .pg-search__advwrap.is-collapsed .pg-search__adv,
+    .pg-search__advwrap.is-collapsed .pg-search__closebar { display: none; }
+
+    @media (max-width: 900px) {
+      .pg-search__cols { grid-template-columns: 1fr; }
+      .pg-search__col { padding: 20px 2px; }
+      .pg-search__col:first-child { padding-top: 2px; }
+      .pg-search__col + .pg-search__col { border-left: 0; border-top: 1px solid var(--pp-line); }
+    }
+    @media (max-width: 600px) {
+      .pg-search__hero h1 { font-size: 23px; }
+      .pg-search__clear { position: static; transform: none; display: inline-block; margin-top: 8px; }
+      .pg-search__advhead { margin-bottom: 12px; }
+    }
+    @media (max-width: 520px) {
+      .pg-search__searchrow .pg-search__field--btn { flex: 1 1 100%; }
+      .pg-search__field--btn .pp-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body class="pp" data-pp-page="search">
+  <a class="pp-skip" href="#pp-main">Skip to content</a>
+  <div id="pp-chrome"></div>
+
+  <main class="pp-main" id="pp-main">
+    <div class="pp-wrap pg-search">
+
+      <!-- hero -->
+      <div class="pg-search__hero pp-anim">
+        <h1>Explore over 100,000+ Programs</h1>
+        <p>Use VFI course search to shortlist and compare.</p>
+      </div>
+
+      <!-- search form -->
+      <div class="pp-card pg-search__searchcard pp-anim">
+        <div class="pg-search__searchrow">
+          <div class="pp-field pg-search__field--grow">
+            <label class="pp-field__label">Search Programs</label>
+            <div class="pp-search-wrap">
+              <span class="pp-search-wrap__ic"><svg class="ic ic--sm"><use href="#pi-search"/></svg></span>
+              <input class="pp-input" id="pgSearchInput" placeholder="Search Program / University" autocomplete="off">
+            </div>
+          </div>
+          <div class="pp-field">
+            <label class="pp-field__label">Intake</label>
+            <select class="pp-select" aria-label="Intake">
+              <option>All Intakes</option>
+              <option>Jan</option><option>Feb</option><option>Mar</option><option>Apr</option>
+              <option>May</option><option>Jun</option><option>Jul</option><option>Aug</option>
+              <option>Sep</option><option>Oct</option><option>Nov</option><option>Dec</option>
+            </select>
+          </div>
+          <div class="pp-field">
+            <label class="pp-field__label">Year</label>
+            <select class="pp-select" aria-label="Year">
+              <option>2026</option><option>2027</option><option>2028</option>
+            </select>
+          </div>
+          <div class="pp-field">
+            <label class="pp-field__label">Student's Nationality</label>
+            <select class="pp-select" aria-label="Student's Nationality">
+              <option selected>Bangladesh</option>
+              <option>India</option><option>Nepal</option><option>Sri Lanka</option><option>Pakistan</option>
+            </select>
+          </div>
+          <div class="pp-field">
+            <label class="pp-field__label">Student's State</label>
+            <select class="pp-select" aria-label="Student's State">
+              <option value="" disabled selected>Student's State</option>
+              <option>Dhaka</option><option>Chattogram</option><option>Khulna</option>
+              <option>Rajshahi</option><option>Sylhet</option><option>Barishal</option>
+              <option>Rangpur</option><option>Mymensingh</option>
+            </select>
+          </div>
+          <div class="pp-field pg-search__field--btn">
+            <button class="pp-btn pp-btn--primary" id="pgSearchBtn"><svg class="ic ic--sm"><use href="#pi-search"/></svg> Search</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- advanced search -->
+      <div class="pg-search__advwrap" id="pgAdvWrap">
+        <div class="pg-search__advhead">
+          <h2 class="pg-search__advtitle" id="pgAdvTitle" role="button" tabindex="0" aria-expanded="true" aria-controls="pgAdvPanel">Advanced Search</h2>
+          <a class="pg-search__clear" id="pgClearAll" role="button" tabindex="0">Clear All</a>
+        </div>
+
+        <div class="pp-card pg-search__adv pp-anim" id="pgAdvPanel">
+          <div class="pg-search__cols">
+
+            <!-- Program Level -->
+            <div class="pg-search__col">
+              <h3 class="pg-search__coltitle">Program Level</h3>
+              <div class="pg-search__checks">
+                <label class="pp-check"><input type="checkbox"> High School (11th &ndash; 12th)</label>
+                <label class="pp-check"><input type="checkbox"> UG Diploma / Certificate / Associate Degree</label>
+                <label class="pp-check"><input type="checkbox"> UG</label>
+                <label class="pp-check"><input type="checkbox"> PG Diploma / Certificate</label>
+                <label class="pp-check"><input type="checkbox"> PG</label>
+                <label class="pp-check"><input type="checkbox"> UG+PG (Accelerated) Degree</label>
+                <label class="pp-check"><input type="checkbox"> PhD</label>
+                <label class="pp-check"><input type="checkbox"> Short-term / Summer Programs</label>
+                <label class="pp-check"><input type="checkbox"> Pathway Programs (UG)</label>
+                <label class="pp-check"><input type="checkbox"> Pathway Programs (PG)</label>
+                <label class="pp-check"><input type="checkbox"> Twinning Programmes (UG)</label>
+                <label class="pp-check"><input type="checkbox"> Twinning Programmes (PG)</label>
+                <label class="pp-check"><input type="checkbox"> English Language Program</label>
+                <label class="pp-check"><input type="checkbox"> Online Programmes / Distance Learning</label>
+                <label class="pp-check"><input type="checkbox"> Hybrid</label>
+                <label class="pp-check"><input type="checkbox"> Grades Below 10th</label>
+              </div>
+            </div>
+
+            <!-- Other Filters -->
+            <div class="pg-search__col">
+              <h3 class="pg-search__coltitle">Other Filters</h3>
+              <div class="pp-field">
+                <label class="pp-field__label">Country</label>
+                <select class="pp-select">
+                  <option value="" disabled selected>Select Country</option>
+                  <option>USA</option><option>Canada</option><option>UK</option>
+                  <option>Australia</option><option>Ireland</option><option>New Zealand</option><option>Germany</option>
+                </select>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label">Province | State</label>
+                <select class="pp-select">
+                  <option value="" disabled selected>Select Province | State</option>
+                  <option>Ontario</option><option>British Columbia</option><option>Victoria</option>
+                  <option>New South Wales</option><option>England</option><option>Illinois</option>
+                </select>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label">Study Area</label>
+                <select class="pp-select">
+                  <option value="" disabled selected>Select Study Area</option>
+                  <option>Business &amp; Management</option><option>Engineering</option><option>IT &amp; Computing</option>
+                  <option>Health Sciences</option><option>Arts &amp; Design</option><option>Sciences</option><option>Law</option>
+                </select>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label">Discipline Area</label>
+                <select class="pp-select">
+                  <option value="" disabled selected>Select Discipline Area</option>
+                  <option>Accounting &amp; Finance</option><option>Computer Science</option><option>Nursing</option>
+                  <option>Mechanical Engineering</option><option>Marketing</option><option>Data Science</option>
+                </select>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label">Duration</label>
+                <select class="pp-select">
+                  <option value="" disabled selected>Select Duration</option>
+                  <option>Under 1 year</option><option>1 year</option><option>2 years</option>
+                  <option>3 years</option><option>4+ years</option>
+                </select>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label">ESL / ELP Available</label>
+                <select class="pp-select">
+                  <option value="" disabled selected>Select Available ESL / ELP</option>
+                  <option>Yes</option><option>No</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Requirements -->
+            <div class="pg-search__col">
+              <h3 class="pg-search__coltitle">Requirements</h3>
+              <div class="pg-search__checks">
+                <label class="pp-check"><input type="checkbox"> PTE</label>
+                <label class="pp-check"><input type="checkbox"> TOEFL iBT</label>
+                <label class="pp-check"><input type="checkbox"> IELTS</label>
+                <label class="pp-check"><input type="checkbox"> DET</label>
+                <label class="pp-check"><input type="checkbox"> SAT</label>
+                <label class="pp-check"><input type="checkbox"> ACT</label>
+                <label class="pp-check"><input type="checkbox"> GRE</label>
+                <label class="pp-check"><input type="checkbox"> GMAT</label>
+                <label class="pp-check"><input type="checkbox"> Without English Proficiency</label>
+                <label class="pp-check"><input type="checkbox"> Without GRE</label>
+                <label class="pp-check"><input type="checkbox"> Without GMAT</label>
+                <label class="pp-check"><input type="checkbox"> Without Maths</label>
+                <label class="pp-check"><input type="checkbox"> STEM Programs</label>
+                <label class="pp-check"><input type="checkbox"> Application Fee Waiver</label>
+                <label class="pp-check"><input type="checkbox"> Scholarship Available</label>
+                <label class="pp-check"><input type="checkbox"> Open Programs</label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="pg-search__closebar">
+          <button class="pp-btn pp-btn--ghost pp-btn--sm" id="pgAdvClose">Close <svg class="ic ic--sm"><use href="#pi-x"/></svg></button>
+        </div>
+      </div>
+
+      <!-- quick filters -->
+      <h2 class="pp-section-title pg-search__qftitle"><svg class="ic ic--sm"><use href="#pi-spark"/></svg> Quick Filters</h2>
+      <div class="pp-card pg-search__qf pp-anim">
+        <div class="pg-search__chips">
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-spark"/></svg> Faster Offer TAT</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-medal"/></svg> Scholarship Available</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-check"/></svg> High Offer Acceptance</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-book"/></svg> English Proficiency Waiver</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-cap"/></svg> Affordable University</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-users"/></svg> Co-op &amp; Built-in Internships</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-arrow"/></svg> High Job Demand</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-wallet"/></svg> No Tuition Deposit</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-globe"/></svg> Major City</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-wallet"/></svg> Low Tuition Deposit</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-interview"/></svg> No Interview Required</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-book"/></svg> MBA Programs</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-doc"/></svg> MOI Acceptable</button>
+          <button type="button" class="pp-chip"><svg class="ic ic--sm"><use href="#pi-flask"/></svg> Uni has own English Test</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/portal-render.js"></script>
+  <script>
+    /* search-page-only wiring (ES5): chip toggles, search feedback, clear all,
+       and the advanced-panel collapse. VFIToast is provided by portal.js. */
+    (function () {
+      var $ = function (s, c) { return (c || document).querySelector(s); };
+      var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+
+      /* Quick Filters — each chip toggles its own active state */
+      $$(".pg-search .pp-chip").forEach(function (chip) {
+        chip.addEventListener("click", function () { chip.classList.toggle("is-on"); });
+      });
+
+      /* main Search button */
+      var searchBtn = $("#pgSearchBtn");
+      if (searchBtn) searchBtn.addEventListener("click", function () {
+        window.VFIToast("Searching VFI's program library…");
+      });
+
+      /* Clear All — reset every filter control on the page */
+      var clearAll = $("#pgClearAll");
+      function doClear() {
+        $$(".pg-search input[type=checkbox]").forEach(function (c) { c.checked = false; });
+        $$(".pg-search select").forEach(function (s) { s.selectedIndex = 0; });
+        var si = $("#pgSearchInput"); if (si) si.value = "";
+        $$(".pg-search .pp-chip").forEach(function (c) { c.classList.remove("is-on"); });
+        window.VFIToast("Filters cleared.");
+      }
+      if (clearAll) {
+        clearAll.addEventListener("click", doClear);
+        clearAll.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doClear(); }
+        });
+      }
+
+      /* Advanced Search collapse / expand */
+      var wrap = $("#pgAdvWrap"), title = $("#pgAdvTitle"), closeBtn = $("#pgAdvClose");
+      function setOpen(open) {
+        if (!wrap) return;
+        wrap.classList.toggle("is-collapsed", !open);
+        if (title) title.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      if (title) {
+        title.addEventListener("click", function () {
+          setOpen(wrap.classList.contains("is-collapsed"));
+        });
+        title.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(wrap.classList.contains("is-collapsed")); }
+        });
+      }
+      if (closeBtn) closeBtn.addEventListener("click", function () { setOpen(false); });
+    })();
+  </script>
+</body>
+</html>

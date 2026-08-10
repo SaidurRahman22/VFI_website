@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Track your VFI application file — journey stage, university application statuses, activity timeline and the actions still waiting on you." />
+  <title>Application Tracking | VFI Overseas Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/student-portal.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body class="sp-scope" data-header="overlay">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="site-header"></div>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="container page-hero__inner">
+        <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="crumb__dot"></span><span class="sp-crumb-now">Application Tracking</span></nav>
+        <h1>Track your application</h1>
+        <p class="sp-hero__lead">Every stage of your file in one view — where each university stands, what has already happened and what is waiting on you.</p>
+      </div>
+      <svg class="page-hero__wave" viewBox="0 0 1440 130" preserveAspectRatio="none" aria-hidden="true"><path d="M0,0 Q720,150 1440,0 L1440,130 L0,130 Z"/></svg>
+    </section>
+
+    <div class="container sp-shellwrap">
+      <div class="sp-shell">
+        <aside class="sp-side" id="spSide" aria-label="Student portal navigation"></aside>
+        <div class="sp-body">
+
+    <section class="section">
+      <div class="container">
+
+        <p class="sp-note">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-shield"/></svg>
+          <span><b>Demonstration page.</b> The student, the universities listed and every date below are sample data used to show the layout. There is no backend — nothing here is a real application record.</span>
+        </p>
+
+        <!-- ============ overall journey ============ -->
+        <div class="sp-idcard">
+          <span class="sp-ava" aria-hidden="true">AR</span>
+          <div>
+            <p class="sp-id__name">Ayesha Rahman</p>
+            <div class="sp-id__meta">
+              <span class="sp-tagline"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg> File <b>VFI-2026-04871</b></span>
+              <span class="sp-tagline"><svg class="ic" aria-hidden="true"><use href="#i-cap"/></svg> MSc, September 2026 intake</span>
+              <span class="sp-tagline"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Counsellor: Gulshan desk</span>
+            </div>
+          </div>
+          <div class="sp-id__foot">
+            <div class="sp-meter__top">
+              <span class="sp-meter__label" id="spJourneyLabel">Journey 0% complete</span>
+              <span class="sp-meter__hint" id="spJourneyHint">Six stages from first counselling session to departure.</span>
+            </div>
+            <div class="sp-track" id="spJourney" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="spJourneyLabel">
+              <span class="sp-track__fill" id="spJourneyFill"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sp-card">
+          <div class="sp-card__head">
+            <div class="sp-card__titlewrap">
+              <span class="sp-card__ic sp-card__ic--blue" aria-hidden="true"><svg class="ic"><use href="#i-compass"/></svg></span>
+              <div>
+                <h2 class="sp-h2">Your journey</h2>
+                <p class="sp-card__sub">Each stage carries its own status label, so it reads the same with or without colour.</p>
+              </div>
+            </div>
+          </div>
+          <ol class="sp-steps" id="spSteps"></ol>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ applications ============ -->
+    <section class="section section--soft">
+      <div class="container">
+        <header class="sec-head sec-head--left">
+          <span class="sp-eyebrow">Universities</span>
+          <h2 class="sec-title">Your university applications</h2>
+          <p class="sec-lead">Six files were submitted for the September 2026 intake. Filter by status to narrow the list.</p>
+        </header>
+
+        <div class="sp-filters" id="spFilters" role="group" aria-label="Filter applications by status"></div>
+        <p class="sp-count" id="spCount" role="status"></p>
+
+        <ul class="sp-apps" id="spApps"></ul>
+        <p class="sp-none" id="spAppsNone" hidden>No applications carry that status right now. Choose another filter to see the rest of your list.</p>
+      </div>
+    </section>
+
+    <!-- ============ timeline + actions ============ -->
+    <section class="section">
+      <div class="container">
+        <div class="sp-two">
+
+          <div>
+            <header class="sec-head sec-head--left" style="margin-bottom:26px">
+              <span class="sp-eyebrow">Activity</span>
+              <h2 class="sec-title">What has happened so far</h2>
+            </header>
+            <div class="sp-card">
+              <ol class="sp-tl" id="spTimeline"></ol>
+            </div>
+          </div>
+
+          <div class="sp-aside">
+            <header class="sec-head sec-head--left" style="margin-bottom:26px">
+              <span class="sp-eyebrow">Over to you</span>
+              <h2 class="sec-title">Pending actions</h2>
+            </header>
+            <div class="sp-card">
+              <div class="sp-card__head">
+                <div class="sp-card__titlewrap">
+                  <span class="sp-card__ic sp-card__ic--peach" aria-hidden="true"><svg class="ic"><use href="#i-clock"/></svg></span>
+                  <div>
+                    <h3 class="sp-h2">Waiting on you</h3>
+                    <p class="sp-card__sub" id="spTodoSub">Clear these to keep the file moving.</p>
+                  </div>
+                </div>
+              </div>
+              <ul class="sp-todos" id="spTodos"></ul>
+              <div class="sp-card__foot">
+                <a class="btn btn--dark btn--sm" href="student-profile.html">Open your profile</a>
+                <a class="btn btn--ghost btn--sm" href="contact.html#contact">Message your counsellor</a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+        </div><!-- /.sp-body -->
+      </div><!-- /.sp-shell -->
+    </div><!-- /.sp-shellwrap -->
+  </main>
+
+  <div id="site-footer"></div>
+
+
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/site.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/student-portal.js"></script>
+</body>
+</html>

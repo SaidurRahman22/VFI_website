@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Admin Panel | VFI Overseas Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <!-- PHASE 1 admin lockdown: render nothing until an authenticated admin
+       session is confirmed. Hidden by default; revealed only on success. -->
+  <style id="ad-gate-style">html{visibility:hidden}</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="a-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></symbol>
+  <symbol id="a-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></symbol>
+  <symbol id="a-doc" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6M9 17h4"/></symbol>
+  <symbol id="a-news" viewBox="0 0 24 24"><path d="M4 5h13v14H5.5A1.5 1.5 0 0 1 4 17.5V5Z"/><path d="M17 8h2.5A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5H17"/><path d="M7 8h7M7 12h7M7 16h4"/></symbol>
+  <symbol id="a-img" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="1.8"/><path d="m4 17 5-4.5 4.5 4 3-2.5L20 18"/></symbol>
+  <symbol id="a-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l1.7-1.3-2-3.4-2 .8a7.6 7.6 0 0 0-2.6-1.5L14.2 3h-4l-.3 2.1a7.6 7.6 0 0 0-2.6 1.5l-2-.8-2 3.4 1.7 1.3a7.6 7.6 0 0 0 0 3l-1.7 1.3 2 3.4 2-.8a7.6 7.6 0 0 0 2.6 1.5l.3 2.1h4l.3-2.1a7.6 7.6 0 0 0 2.6-1.5l2 .8 2-3.4-1.7-1.3Z"/></symbol>
+  <symbol id="a-save" viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5V3Z"/><path d="M8 3h7v5H8zM8 13h8v8H8z"/></symbol>
+  <symbol id="a-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="a-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="M14.5 6.5 17.5 9.5"/></symbol>
+  <symbol id="a-trash" viewBox="0 0 24 24"><path d="M4 6.5h16M9 6.5V4h6v2.5M6.5 6.5 7.5 21h9l1-14.5"/><path d="M10 10.5v7M14 10.5v7"/></symbol>
+  <symbol id="a-up" viewBox="0 0 24 24"><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+  <symbol id="a-out" viewBox="0 0 24 24"><path d="M14 3h6v6M20 3l-9 9"/><path d="M18 13v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h7"/></symbol>
+  <symbol id="a-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="a-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 4 5.7 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.7-4-9s1.4-6.4 4-9Z"/></symbol>
+  <symbol id="a-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+  <symbol id="a-users" viewBox="0 0 24 24"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="10" cy="8" r="3.4"/><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.7-3.4"/><path d="M15.5 5a3.4 3.4 0 0 1 0 6.4"/></symbol>
+  <symbol id="a-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 6.5-2.5 8-2.5 8h17S18 14.5 18 8Z"/><path d="M13.5 20a2 2 0 0 1-3 0"/></symbol>
+  <symbol id="a-link" viewBox="0 0 24 24"><path d="M10 13a3.5 3.5 0 0 0 5 0l2.5-2.5a3.5 3.5 0 0 0-5-5L11 7"/><path d="M14 11a3.5 3.5 0 0 0-5 0l-2.5 2.5a3.5 3.5 0 0 0 5 5L13 17"/></symbol>
+  <symbol id="a-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></symbol>
+  <symbol id="a-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+  <symbol id="a-console" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3 9h18"/><path d="m7 13 2 2-2 2M12 17h4"/></symbol>
+  <symbol id="a-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</defs></svg>
+
+<div class="ad">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="ad__side" id="side">
+    <div class="ad__brand">
+      <span class="ad__mark"><img src="assets/img/vfi-emblem.png" alt="" /></span>
+      <span class="ad__brandtxt">VFI<small>admin panel</small></span>
+    </div>
+    <nav class="ad__nav" aria-label="Admin sections">
+      <button class="ad__navbtn ad__navbtn--solo is-on" data-view="dashboard"><svg class="ai"><use href="#a-grid"/></svg> Dashboard</button>
+
+      <div class="ad__group is-open" data-group="content">
+        <button class="ad__grouphd" type="button" aria-expanded="true"><span class="ad__grouptx">Website content</span><svg class="ai ad__chev"><use href="#a-chev"/></svg></button>
+        <div class="ad__sub">
+          <button class="ad__navbtn" data-view="events"><svg class="ai"><use href="#a-cal"/></svg> Events <span class="ad__count" data-count="events">0</span></button>
+          <button class="ad__navbtn" data-view="blogs"><svg class="ai"><use href="#a-doc"/></svg> Blogs <span class="ad__count" data-count="blogs">0</span></button>
+          <button class="ad__navbtn" data-view="news"><svg class="ai"><use href="#a-news"/></svg> News &amp; Updates <span class="ad__count" data-count="news">0</span></button>
+          <button class="ad__navbtn" data-view="photos"><svg class="ai"><use href="#a-img"/></svg> Photo Gallery <span class="ad__count" data-count="photos">0</span></button>
+          <button class="ad__navbtn" data-view="media"><svg class="ai"><use href="#a-img"/></svg> Home Page Images</button>
+        </div>
+      </div>
+
+      <div class="ad__group" data-group="pages">
+        <button class="ad__grouphd" type="button" aria-expanded="false"><span class="ad__grouptx">Website pages</span><svg class="ai ad__chev"><use href="#a-chev"/></svg></button>
+        <div class="ad__sub">
+          <button class="ad__navbtn" data-view="countries"><svg class="ai"><use href="#a-globe"/></svg> Country Pages</button>
+          <button class="ad__navbtn" data-view="regions"><svg class="ai"><use href="#a-globe"/></svg> Region Pages</button>
+          <button class="ad__navbtn" data-view="svcpage"><svg class="ai"><use href="#a-cog"/></svg> Services Page</button>
+          <button class="ad__navbtn" data-view="partner"><svg class="ai"><use href="#a-cog"/></svg> VFI Partner Page</button>
+        </div>
+      </div>
+
+      <div class="ad__group ad__group--accent" data-group="console">
+        <button class="ad__grouphd" type="button" aria-expanded="false"><svg class="ai ad__grouphd__ic"><use href="#a-console"/></svg><span class="ad__grouptx">Partner console</span><svg class="ai ad__chev"><use href="#a-chev"/></svg></button>
+        <div class="ad__sub">
+          <button class="ad__navbtn" data-view="ppManagers"><svg class="ai"><use href="#a-users"/></svg> Regional Managers <span class="ad__count" data-count="ppManagers">0</span></button>
+          <button class="ad__navbtn" data-view="ppUpdates"><svg class="ai"><use href="#a-bell"/></svg> Important Updates <span class="ad__count" data-count="ppUpdates">0</span></button>
+          <button class="ad__navbtn" data-view="ppQuicklinks"><svg class="ai"><use href="#a-link"/></svg> Quick Links <span class="ad__count" data-count="ppQuicklinks">0</span></button>
+          <button class="ad__navbtn" data-view="ppDocs"><svg class="ai"><use href="#a-folder"/></svg> Learning Documents <span class="ad__count" data-count="ppDocs">0</span></button>
+          <button class="ad__navbtn" data-view="ppEmails"><svg class="ai"><use href="#a-mail"/></svg> Email Updates <span class="ad__count" data-count="ppEmails">0</span></button>
+          <button class="ad__navbtn" data-view="ppNotifs"><svg class="ai"><use href="#a-bell"/></svg> Notifications <span class="ad__count" data-count="ppNotifs">0</span></button>
+          <button class="ad__navbtn" data-view="ppText"><svg class="ai"><use href="#a-doc"/></svg> Console Text</button>
+        </div>
+      </div>
+
+      <div class="ad__group" data-group="system">
+        <button class="ad__grouphd" type="button" aria-expanded="false"><span class="ad__grouptx">System</span><svg class="ai ad__chev"><use href="#a-chev"/></svg></button>
+        <div class="ad__sub">
+          <button class="ad__navbtn" data-view="pages"><svg class="ai"><use href="#a-doc"/></svg> Pages On/Off</button>
+          <button class="ad__navbtn" data-view="settings"><svg class="ai"><use href="#a-cog"/></svg> Site Settings</button>
+          <button class="ad__navbtn" data-view="backup"><svg class="ai"><use href="#a-save"/></svg> Backup</button>
+        </div>
+      </div>
+    </nav>
+    <a class="ad__view-site" href="index.html" target="_blank" rel="noopener"><svg class="ai"><use href="#a-out"/></svg> View website</a>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="ad__main">
+    <header class="ad__top">
+      <button class="ad__burger" id="adBurger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+      <h1 class="ad__title" id="adTitle">Dashboard</h1>
+      <div class="ad__topact" id="adTopAct"></div>
+    </header>
+
+    <div class="ad__warn" id="adWarn" hidden></div>
+
+    <div class="ad__body">
+      <!-- Dashboard -->
+      <section class="ad-view" id="view-dashboard">
+        <div class="stat-row">
+          <div class="statc"><span class="statc__ic statc__ic--blue"><svg class="ai"><use href="#a-cal"/></svg></span><b data-count="events">0</b><span>Events</span></div>
+          <div class="statc"><span class="statc__ic statc__ic--coral"><svg class="ai"><use href="#a-doc"/></svg></span><b data-count="blogs">0</b><span>Blog posts</span></div>
+          <div class="statc"><span class="statc__ic statc__ic--gold"><svg class="ai"><use href="#a-news"/></svg></span><b data-count="news">0</b><span>News items</span></div>
+          <div class="statc"><span class="statc__ic statc__ic--violet"><svg class="ai"><use href="#a-img"/></svg></span><b data-count="photos">0</b><span>Photos</span></div>
+        </div>
+        <div class="panel">
+          <h2>Quick actions</h2>
+          <p class="panel__sub">Everything you publish here shows up on the website straight away.</p>
+          <div class="quick">
+            <button class="btn btn--pri" data-quick="events"><svg class="ai"><use href="#a-plus"/></svg> New event</button>
+            <button class="btn" data-quick="blogs"><svg class="ai"><use href="#a-plus"/></svg> New blog post</button>
+            <button class="btn" data-quick="news"><svg class="ai"><use href="#a-plus"/></svg> New news item</button>
+            <button class="btn" data-quick="photos"><svg class="ai"><use href="#a-up"/></svg> Upload photos</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>How this works</h2>
+          <ul class="hintlist">
+            <li><svg class="ai"><use href="#a-check"/></svg> No login — this panel is meant to run on your own machine or a private URL.</li>
+            <li><svg class="ai"><use href="#a-check"/></svg> Content is saved in this browser. Use <b>Backup</b> to export a file and restore it on another computer.</li>
+            <li><svg class="ai"><use href="#a-check"/></svg> Images are resized automatically before saving, so the site stays fast.</li>
+            <li><svg class="ai"><use href="#a-check"/></svg> Use <b>Pages On/Off</b> to hide a page from the menus without deleting it.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Collections -->
+      <section class="ad-view" id="view-events" hidden><div class="list" id="list-events"></div></section>
+      <section class="ad-view" id="view-blogs" hidden><div class="list" id="list-blogs"></div></section>
+      <section class="ad-view" id="view-news" hidden><div class="list" id="list-news"></div></section>
+      <section class="ad-view" id="view-photos" hidden>
+        <div class="dropzone" id="galleryDrop">
+          <svg class="ai dropzone__ic"><use href="#a-up"/></svg>
+          <b>Drop photos here or click to choose</b>
+          <span>JPG or PNG — you can select several at once</span>
+          <input type="file" id="galleryInput" accept="image/*" multiple hidden />
+        </div>
+        <div class="gallery" id="list-photos"></div>
+      </section>
+
+      <!-- Home page images -->
+      <section class="ad-view" id="view-media" hidden>
+        <div class="panel">
+          <h2>Home page images</h2>
+          <p class="panel__sub">These are the fixed picture slots on the home page — the hero visual, the four round photos in the coloured “Services &amp; Offerings” bands, and the three cards in “Multi Country Advantage”. Leave a slot empty to keep the illustrated placeholder.</p>
+          <div class="slots" id="slotGrid"></div>
+        </div>
+      </section>
+
+      <!-- Country pages -->
+      <section class="ad-view" id="view-countries" hidden>
+        <div class="panel">
+          <h2>Choose a country page</h2>
+          <p class="panel__sub">Edit the text, photos and lists on each destination page. Anything you leave blank keeps whatever is already on the page.</p>
+          <div class="cpick" id="cPick"></div>
+        </div>
+        <div id="cEditor"></div>
+      </section>
+
+      <!-- Region pages -->
+      <section class="ad-view" id="view-regions" hidden>
+        <div class="panel">
+          <h2>Choose a region page</h2>
+          <p class="panel__sub">Edit the Europe and Asia hub pages — the hero text and every country block (name, description, quick facts and three photos).</p>
+          <div class="cpick" id="rPick"></div>
+        </div>
+        <div id="rEditor"></div>
+      </section>
+
+      <!-- Services page -->
+      <section class="ad-view" id="view-svcpage" hidden>
+        <div class="panel">
+          <h2>Student Services page</h2>
+          <p class="panel__sub">Edit the hero text and the nine service blocks on <a href="services.html" target="_blank" rel="noopener">services.html</a> — the page that holds Counselling, Applications &amp; Admission and Visa Processing. Leave anything blank to keep what is already on the page.</p>
+          <form id="svcTextForm">
+            <label class="f"><span>Hero heading</span><input name="heroTitle" type="text" /></label>
+            <label class="f"><span>Hero sub-heading</span><textarea name="heroSub" rows="3"></textarea></label>
+            <div class="formact"><button class="btn btn--pri" type="submit"><svg class="ai"><use href="#a-save"/></svg> Save hero text</button></div>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>Service blocks</h2>
+          <p class="panel__sub">Each block is one row on the page. <b>Anchor</b> is the link id used by the menu — keep <code>counselling</code>, <code>applications</code> and <code>visa</code> if you want those menu links to keep working. Photos look best around <b>800 × 680 px</b>.</p>
+          <div class="rep" data-list="blocks"></div>
+          <div class="formact"><button class="btn" type="button" data-addrow="blocks"><svg class="ai"><use href="#a-plus"/></svg> Add service block</button>
+          <button class="btn btn--pri" type="button" data-savelist="blocks"><svg class="ai"><use href="#a-save"/></svg> Save service blocks</button></div>
+        </div>
+      </section>
+
+      <!-- Page visibility -->
+      <section class="ad-view" id="view-pages" hidden>
+        <div class="panel">
+          <h2>Show or hide pages</h2>
+          <p class="panel__sub">Switch a page off and it disappears from the menus and footer, and anyone opening its address sees a short “not available” notice instead. The home page cannot be switched off.</p>
+          <div id="pageList"></div>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section class="ad-view" id="view-settings" hidden>
+        <form class="panel" id="settingsForm">
+          <h2>Brand</h2>
+          <div class="frow">
+            <label class="f"><span>Brand name</span><input name="brand" type="text" /></label>
+            <label class="f"><span>Tagline (under the logo)</span><input name="tagline" type="text" /></label>
+          </div>
+          <label class="f"><span>Footer about text</span><textarea name="about" rows="3"></textarea></label>
+
+          <h2>Contact</h2>
+          <div class="frow">
+            <label class="f"><span>Phone</span><input name="phone" type="text" /></label>
+            <label class="f"><span>Second phone</span><input name="phone2" type="text" /></label>
+          </div>
+          <div class="frow">
+            <label class="f"><span>Email</span><input name="email" type="email" /></label>
+            <label class="f"><span>Short address (footer)</span><input name="addressShort" type="text" /></label>
+          </div>
+          <label class="f"><span>Full address</span><input name="address" type="text" /></label>
+          <label class="f"><span>Office hours</span><input name="hours" type="text" /></label>
+
+          <h2>Social links</h2>
+          <div class="frow">
+            <label class="f"><span>Facebook</span><input name="facebook" type="text" /></label>
+            <label class="f"><span>Instagram</span><input name="instagram" type="text" /></label>
+          </div>
+          <div class="frow">
+            <label class="f"><span>LinkedIn</span><input name="linkedin" type="text" /></label>
+            <label class="f"><span>X (Twitter)</span><input name="x" type="text" /></label>
+          </div>
+          <label class="f"><span>YouTube</span><input name="youtube" type="text" /></label>
+
+          <div class="formact"><button class="btn btn--pri" type="submit"><svg class="ai"><use href="#a-save"/></svg> Save settings</button></div>
+        </form>
+      </section>
+
+      <!-- Backup -->
+      <section class="ad-view" id="view-backup" hidden>
+        <div class="panel">
+          <h2>Export</h2>
+          <p class="panel__sub">Download everything — all content plus your uploaded images — as a single JSON file.</p>
+          <button class="btn btn--pri" id="btnExport"><svg class="ai"><use href="#a-save"/></svg> Download backup</button>
+        </div>
+        <div class="panel">
+          <h2>Import</h2>
+          <p class="panel__sub">Restore from a backup file. This replaces the content currently in this browser.</p>
+          <input type="file" id="importInput" accept="application/json,.json" hidden />
+          <button class="btn" id="btnImport"><svg class="ai"><use href="#a-up"/></svg> Choose backup file</button>
+        </div>
+        <div class="panel panel--danger">
+          <h2>Reset</h2>
+          <p class="panel__sub">Restore the original demo content. Anything you added here will be removed.</p>
+          <button class="btn btn--danger" id="btnReset"><svg class="ai"><use href="#a-trash"/></svg> Reset to demo content</button>
+        </div>
+      </section>
+
+      <!-- ============ PARTNER CONSOLE ============ -->
+      <section class="ad-view" id="view-ppManagers" hidden>
+        <div class="panel panel--intro">
+          <h2>Regional Managers</h2>
+          <p class="panel__sub">The “Contact Regional Manager” cards on the partner dashboard. Add one or more to replace the built-in demo contacts — leave it empty to keep them. <a href="partner-dashboard.html" target="_blank" rel="noopener">Open the dashboard →</a></p>
+        </div>
+        <div class="list" id="list-ppManagers"></div>
+      </section>
+      <section class="ad-view" id="view-ppUpdates" hidden>
+        <div class="panel panel--intro">
+          <h2>Important Updates</h2>
+          <p class="panel__sub">The “Important Updates” feed in the dashboard right rail. Add rows to take over the feed, or leave it empty to keep the built-in samples. <a href="partner-dashboard.html" target="_blank" rel="noopener">Open the dashboard →</a></p>
+        </div>
+        <div class="list" id="list-ppUpdates"></div>
+      </section>
+      <section class="ad-view" id="view-ppQuicklinks" hidden>
+        <div class="panel panel--intro">
+          <h2>Quick Links</h2>
+          <p class="panel__sub">The “Quick Links” buttons on the partner dashboard. <a href="partner-dashboard.html" target="_blank" rel="noopener">Open the dashboard →</a></p>
+        </div>
+        <div class="list" id="list-ppQuicklinks"></div>
+      </section>
+      <section class="ad-view" id="view-ppDocs" hidden>
+        <div class="panel panel--intro">
+          <h2>Learning Documents</h2>
+          <p class="panel__sub">Documents shown on the partner “Learning Resources” page. <a href="partner-resources.html" target="_blank" rel="noopener">Open the page →</a></p>
+        </div>
+        <div class="list" id="list-ppDocs"></div>
+      </section>
+      <section class="ad-view" id="view-ppEmails" hidden>
+        <div class="panel panel--intro">
+          <h2>Email Updates</h2>
+          <p class="panel__sub">Rows in the partner “Email Updates” table. <a href="partner-email-updates.html" target="_blank" rel="noopener">Open the page →</a></p>
+        </div>
+        <div class="list" id="list-ppEmails"></div>
+      </section>
+      <section class="ad-view" id="view-ppNotifs" hidden>
+        <div class="panel panel--intro">
+          <h2>Notifications</h2>
+          <p class="panel__sub">Items shown on the partner “Notifications” page and the bell dropdown. Add one or more to replace the empty state. <a href="partner-notifications.html" target="_blank" rel="noopener">Open the page →</a></p>
+        </div>
+        <div class="list" id="list-ppNotifs"></div>
+      </section>
+      <section class="ad-view" id="view-ppText" hidden>
+        <form class="panel" id="ppTextForm">
+          <h2>Console text</h2>
+          <p class="panel__sub">Wording shown across the partner console. Leave a field blank to keep the built-in text.</p>
+          <div class="frow">
+            <label class="f"><span>Partner name (top-bar greeting)</span><input name="partnerName" type="text" placeholder="Hakim" /></label>
+            <label class="f"><span>Benefits tier name</span><input name="tierName" type="text" placeholder="STARTER" /></label>
+          </div>
+          <label class="f"><span>Dashboard welcome line</span><input name="welcome" type="text" placeholder="Welcome to your VFI Partner console." /></label>
+          <label class="f"><span>Benefits list (one per line)</span><textarea name="benefits" rows="4" placeholder="100 assistant messages per month&#10;Up to 2 counsellors&#10;20 student autofills per year"></textarea></label>
+
+          <h2 style="margin-top:6px">Allied services</h2>
+          <p class="panel__sub">Descriptions on the partner “Allied Services” page. <a href="partner-allied.html" target="_blank" rel="noopener">Open the page →</a></p>
+          <label class="f"><span>Élan Education Loans</span><textarea name="loanText" rows="2"></textarea></label>
+          <label class="f"><span>Accommodation</span><textarea name="accomText" rows="2"></textarea></label>
+          <label class="f"><span>White-Labelled Test Prep</span><textarea name="testprepText" rows="2"></textarea></label>
+
+          <div class="formact"><button class="btn btn--pri" type="submit"><svg class="ai"><use href="#a-save"/></svg> Save console text</button></div>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__scrim" data-close></div>
+  <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header class="modal__head">
+      <h2 id="modalTitle">Edit</h2>
+      <button class="modal__x" data-close aria-label="Close"><svg class="ai"><use href="#a-close"/></svg></button>
+    </header>
+    <form id="modalForm" class="modal__body"></form>
+    <footer class="modal__foot">
+      <button class="btn" type="button" data-close>Cancel</button>
+      <button class="btn btn--pri" type="submit" form="modalForm"><svg class="ai"><use href="#a-check"/></svg> Save</button>
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/api.js"></script>
+<script>
+  /* Admin lockdown gate (Phase 1, docs §3.2). The panel's own scripts
+     (store.js, admin.js) are NOT loaded until GET /api/admin/me confirms an
+     authenticated admin session. On 401/failure we redirect and render nothing
+     — no editor DOM initialised, no VFI data touched. */
+  (function () {
+    function boot() {
+      ["js/store.js", "js/admin.js"].reduce(function (p, src) {
+        return p.then(function () {
+          return new Promise(function (res, rej) {
+            var s = document.createElement("script");
+            s.src = src; s.onload = res; s.onerror = rej;
+            document.body.appendChild(s);
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        var st = document.getElementById("ad-gate-style");
+        if (st) st.parentNode.removeChild(st);   // reveal
+      });
+    }
+    window.VFIApi.get("/api/admin/me", { noRedirect: true })
+      .then(boot)
+      .catch(function () { window.location.replace("admin-login.html"); });
+  })();
+</script>
+</body>
+</html>

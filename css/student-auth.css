@@ -1,0 +1,1805 @@
+/* ==========================================================================
+   student-auth.css — the student auth screens
+     login.html            sign in / create account
+     student-forgot.html   password reset request
+     student-verify.html   email verification (6-digit code)
+
+   Loaded AFTER css/style.css, which supplies the font stack and base reset
+   only. Every selector in this file is namespaced `sa-` (student-auth) so
+   none of the older `.auth* / .afield* / .authcard` rules in style.css can
+   reach these pages.
+
+   Palette: midnight indigo ground, electric blue → cyan → violet accents.
+   Motion: aurora drift, staggered entrances, sliding tab ink, animated field
+   rings, shimmer button, stroke-drawn success mark. All of it is switched
+   off under `prefers-reduced-motion: reduce` at the bottom of this file.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- tokens */
+:root {
+  /* cool palette */
+  --sa-void: #04081c;
+  --sa-deep: #0a1138;
+  --sa-indigo: #4a3f8f;
+  --sa-blue: #2f62a8;
+  --sa-sky: #196fbb;
+  --sa-cyan: #5b86c4;
+  --sa-teal: #7a4a91;
+  --sa-violet: #8a5aa0;
+  --sa-rose: #f43f5e;         /* cool rose, used for a weak password */
+
+  /* light side */
+  --sa-ink: #0d1836;
+  --sa-muted: #56658f;
+  /* --sa-faint is the *third* text tier. It has to clear AA like the others:
+     the old #7c89ad measured 3.30:1 on the card and was failing wherever it
+     was used for real text (field hints, the strength caption, placeholders).
+     This is the same hue, measured at 4.9:1 on the bluest part of the card. */
+  --sa-faint: #5b6787;
+  --sa-line: #d9e2f6;
+  --sa-field: #f6f9ff;
+  --sa-glass: rgba(255, 255, 255, .78);
+
+  /* states */
+  --sa-bad: #e11d6f;          /* cool magenta-red, never a warm red — rings/borders */
+  --sa-bad-ink: #b31255;      /* same red, dark enough for 12px error text (6.3:1) */
+  --sa-bad-soft: #ffe8f1;
+
+  --sa-display: "Quicksand", sans-serif;
+  --sa-ease: cubic-bezier(.22, .61, .36, 1);
+  --sa-spring: cubic-bezier(.34, 1.4, .55, 1);
+  /* Decorative fills only — nothing legible sits on top of these. */
+  --sa-grad: linear-gradient(102deg, #4a3f8f 0%, #2f62a8 44%, #951245 100%);
+  /* the logo tile — the white "V" on it is large bold text, so 3:1; the old
+     #5b86c4 corner gave 2.76:1, #196fbb gives 3.7:1 for the same bright chip */
+  --sa-grad-soft: linear-gradient(102deg, #5b4a9e 0%, #3a63a8 44%, #196fbb 100%);
+  /* Anything that carries white LABEL text uses this one instead. The bright
+     cyan end of --sa-grad measures 2.5:1 against white, and a wide button puts
+     the tail of its label right on it; this ramp stays above 6:1 end to end. */
+  --sa-grad-ink: linear-gradient(102deg, #33357a 0%, #274f8c 46%, #7a1a44 100%);
+
+  --sa-r: 16px;
+  --sa-r-lg: 26px;
+}
+
+/* ------------------------------------------------------------ page frame */
+.sa-body {
+  margin: 0;
+  background: var(--sa-void);
+  color: var(--sa-ink);
+  overflow-x: hidden;
+}
+
+.sa-body :focus-visible {
+  outline: 3px solid rgba(34, 211, 238, .75);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.sa-skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 90;
+  background: #fff;
+  color: var(--sa-ink);
+  font-family: var(--sa-display);
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(6, 12, 40, .25);
+}
+.sa-skip:focus { left: 14px; top: 14px; }
+
+/* shared icon */
+.sa-i {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* visually hidden but announced (no clip region — 1px + overflow is enough) */
+.sa-live {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sa-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, .96fr);
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* ==========================================================================
+   BRAND SIDE
+   ========================================================================== */
+.sa-brand {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 34px;
+  padding: clamp(34px, 4vw, 58px) clamp(28px, 4vw, 62px);
+  color: #eaf1ff;
+  background:
+    radial-gradient(120% 90% at 8% 0%, #17246b 0%, transparent 58%),
+    radial-gradient(90% 80% at 100% 100%, #123a63 0%, transparent 62%),
+    linear-gradient(160deg, #060c26 0%, var(--sa-deep) 52%, #050a20 100%);
+}
+
+/* ---- animated backdrop ---- */
+.sa-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.sa-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: .62;
+}
+.sa-orb--a {
+  width: 46vw; height: 46vw;
+  min-width: 300px; min-height: 300px;
+  top: -14%; left: -12%;
+  background: radial-gradient(circle at 35% 35%, #4a3f8f, rgba(79, 70, 229, 0) 68%);
+  animation: sa-orb-a 19s ease-in-out infinite alternate;
+}
+.sa-orb--b {
+  width: 40vw; height: 40vw;
+  min-width: 260px; min-height: 260px;
+  bottom: -16%; right: -10%;
+  background: radial-gradient(circle at 60% 40%, #951245, rgba(6, 182, 212, 0) 68%);
+  animation: sa-orb-b 23s ease-in-out infinite alternate;
+}
+.sa-orb--c {
+  width: 30vw; height: 30vw;
+  min-width: 210px; min-height: 210px;
+  top: 42%; left: 46%;
+  background: radial-gradient(circle at 50% 50%, #8a5aa0, rgba(139, 92, 246, 0) 70%);
+  opacity: .45;
+  animation: sa-orb-c 27s ease-in-out infinite alternate;
+}
+@keyframes sa-orb-a {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(9%, 12%, 0) scale(1.16); }
+}
+@keyframes sa-orb-b {
+  0%   { transform: translate3d(0, 0, 0) scale(1.08); }
+  100% { transform: translate3d(-12%, -9%, 0) scale(.9); }
+}
+@keyframes sa-orb-c {
+  0%   { transform: translate3d(0, 0, 0) scale(.85); }
+  50%  { transform: translate3d(-16%, 8%, 0) scale(1.1); }
+  100% { transform: translate3d(6%, -14%, 0) scale(.95); }
+}
+
+/* drifting grid */
+.sa-mesh {
+  position: absolute;
+  inset: -12%;
+  background-image:
+    linear-gradient(rgba(150, 190, 255, .13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 190, 255, .13) 1px, transparent 1px);
+  background-size: 54px 54px;
+  -webkit-mask-image: radial-gradient(72% 62% at 46% 38%, #000 0%, rgba(0, 0, 0, .35) 55%, transparent 78%);
+  mask-image: radial-gradient(72% 62% at 46% 38%, #000 0%, rgba(0, 0, 0, .35) 55%, transparent 78%);
+  animation: sa-mesh-drift 24s linear infinite;
+}
+@keyframes sa-mesh-drift {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 54px 54px, 54px 54px; }
+}
+
+/* slow sweeping light beam */
+.sa-beam {
+  position: absolute;
+  top: -40%;
+  left: -35%;
+  width: 46%;
+  height: 180%;
+  background: linear-gradient(90deg, transparent 0%, rgba(140, 205, 255, .13) 45%, rgba(190, 225, 255, .18) 55%, transparent 100%);
+  transform: rotate(14deg);
+  animation: sa-beam-sweep 13s ease-in-out infinite;
+}
+@keyframes sa-beam-sweep {
+  0%, 12%  { transform: translateX(0) rotate(14deg); opacity: 0; }
+  35%      { opacity: 1; }
+  72%      { transform: translateX(320%) rotate(14deg); opacity: 0; }
+  100%     { transform: translateX(320%) rotate(14deg); opacity: 0; }
+}
+
+/* faint star field */
+.sa-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.6px 1.6px at 18% 22%, rgba(190, 225, 255, .55), transparent 60%),
+    radial-gradient(1.4px 1.4px at 72% 14%, rgba(160, 210, 255, .45), transparent 60%),
+    radial-gradient(1.8px 1.8px at 38% 68%, rgba(200, 235, 255, .40), transparent 60%),
+    radial-gradient(1.3px 1.3px at 86% 58%, rgba(170, 215, 255, .48), transparent 60%),
+    radial-gradient(1.5px 1.5px at 57% 88%, rgba(190, 230, 255, .35), transparent 60%);
+  animation: sa-twinkle 6.5s ease-in-out infinite alternate;
+}
+@keyframes sa-twinkle {
+  from { opacity: .35; }
+  to   { opacity: .9; }
+}
+
+/* ---- logo ---- */
+.sa-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  align-self: flex-start;
+  color: inherit;
+  animation: sa-rise .7s var(--sa-ease) both;
+}
+.sa-logo__mark {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  padding: 4px;
+  box-shadow: 0 10px 26px rgba(47, 98, 168, .40), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+.sa-logo__mark img { width: 100%; height: 100%; object-fit: contain; display: block; position: relative; z-index: 1; }
+.sa-logo__mark::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 20px;
+  border: 1px solid rgba(120, 190, 255, .35);
+  opacity: 0;
+  animation: sa-pulse 3.6s var(--sa-ease) infinite;
+}
+@keyframes sa-pulse {
+  0%   { opacity: .8; transform: scale(.86); }
+  70%  { opacity: 0;  transform: scale(1.12); }
+  100% { opacity: 0;  transform: scale(1.12); }
+}
+.sa-logo__glyph {
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 23px;
+  line-height: 1;
+  color: #fff;
+}
+.sa-logo__txt {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: .3px;
+}
+.sa-logo__txt small {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
+  opacity: .66;
+  margin-top: 4px;
+}
+
+/* ---- pitch ---- */
+.sa-pitch { position: relative; max-width: 28rem; }
+
+/* The pill carries its own dark ground rather than a cyan tint. At 11.5px the
+   caption needs 4.5:1, and a translucent tint let the aurora underneath drift
+   up to 3.96:1 as the orbs passed behind it. */
+.sa-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 6px 14px 6px 11px;
+  border-radius: 999px;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: .72rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #a9e7ff;
+  background: rgba(5, 12, 38, .62);
+  border: 1px solid rgba(34, 211, 238, .34);
+  animation: sa-rise .7s .08s var(--sa-ease) both;
+}
+.sa-kicker .sa-i { width: 15px; height: 15px; }
+
+.sa-pitch__h {
+  color: #fff;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: clamp(27px, 2.7vw, 42px);
+  line-height: 1.14;
+  letter-spacing: -.6px;
+  margin: 0 0 14px;
+  max-width: 17ch;
+}
+.sa-pitch__h em {
+  font-style: normal;
+  background: linear-gradient(96deg, #67e8f9, #a5b4fc 55%, #c4b5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.sa-pitch__p {
+  margin: 0 0 30px;
+  max-width: 42ch;
+  font-size: 15.5px;
+  line-height: 1.68;
+  color: rgba(230, 240, 255, .86);
+  animation: sa-rise .7s .16s var(--sa-ease) both;
+}
+
+/* ---- benefit points (staggered) ---- */
+.sa-perks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 15px;
+}
+.sa-perk {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 11px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid rgba(255, 255, 255, .09);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition: transform .4s var(--sa-ease), background .4s var(--sa-ease), border-color .4s var(--sa-ease);
+  animation: sa-slide-in .72s var(--sa-ease) both;
+  animation-delay: calc(240ms + (var(--sa-i, 1) * 130ms));
+}
+.sa-perk:hover {
+  transform: translateX(6px);
+  background: rgba(255, 255, 255, .085);
+  border-color: rgba(120, 200, 255, .28);
+}
+.sa-perk__ic {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: #bfe9ff;
+  background: linear-gradient(150deg, rgba(79, 70, 229, .5), rgba(6, 182, 212, .32));
+  border: 1px solid rgba(160, 215, 255, .24);
+}
+.sa-perk__ic .sa-i { width: 19px; height: 19px; }
+.sa-perk__txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.sa-perk__t { font-family: var(--sa-display); font-weight: 700; font-size: 15px; color: #fff; }
+/* Opaque, not a .64 tint: over the lit phase of the aurora that tint measured
+   3.10:1. Hierarchy comes from size and weight, the same call the chip
+   captions already made. */
+.sa-perk__d { font-size: 13.3px; line-height: 1.5; color: #e3edff; }
+
+/* ---- floating glass cards ----
+   These live in a reserved right-hand gutter (see the min-width:1180px rule
+   in the responsive section, which adds the matching padding-right to
+   .sa-brand) so they can never land on top of the pitch copy. */
+.sa-floats {
+  position: absolute;
+  right: 26px;
+  top: 0;
+  bottom: 0;
+  width: 214px;
+  pointer-events: none;
+  z-index: 1;
+}
+.sa-chip {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 15px;
+  border-radius: 16px;
+  /* Smoked glass, not clear glass. A .085 white pane let the aurora's lit
+     phase through at rgb(45,130,186), which drops even solid white text to
+     4.19:1. The dark ground keeps every caption above 9:1 and the blur below
+     still does the glass work. */
+  background: linear-gradient(140deg, rgba(10, 20, 52, .58), rgba(6, 14, 42, .44));
+  border: 1px solid rgba(158, 205, 255, .26);
+  box-shadow: 0 18px 42px rgba(2, 8, 30, .45);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  color: #eaf3ff;
+  min-width: 0;
+}
+.sa-chip__ic {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(34, 211, 238, .18);
+  border: 1px solid rgba(34, 211, 238, .3);
+  color: #7fe6ff;
+}
+.sa-chip__ic .sa-i { width: 17px; height: 17px; }
+.sa-chip__txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sa-chip__t { font-family: var(--sa-display); font-weight: 700; font-size: 13.2px; line-height: 1.2; }
+/* Solid white, not a translucent tint — the chip floats over a moving aurora,
+   and at .66 alpha this measured 4.02:1 against the lit part of the gradient.
+   Hierarchy comes from the size, not from fading the colour. */
+.sa-chip__d { font-size: 11.5px; letter-spacing: .2px; color: #fff; }
+
+.sa-chip--a { top: 8%;  right: 0;  animation: sa-float-a 8.5s ease-in-out infinite, sa-pop .8s .5s var(--sa-spring) both; }
+.sa-chip--b { top: 42%; right: 8%; animation: sa-float-b 10s  ease-in-out infinite, sa-pop .8s .68s var(--sa-spring) both; }
+.sa-chip--c { top: 76%; right: 2%; animation: sa-float-c 9.2s ease-in-out infinite, sa-pop .8s .86s var(--sa-spring) both; }
+
+@keyframes sa-float-a { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-13px); } }
+@keyframes sa-float-b { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(11px); } }
+@keyframes sa-float-c { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+
+.sa-chip__bar {
+  width: 74px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .18);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.sa-chip__bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5b86c4, #818cf8);
+  animation: sa-bar-fill 2.4s 1.1s var(--sa-ease) forwards;
+}
+@keyframes sa-bar-fill { to { width: 80%; } }
+
+/* ---- brand footer ---- */
+.sa-brandfoot {
+  position: relative;
+  margin: 0;
+  font-size: 13.4px;
+  color: rgba(222, 236, 255, .78);
+  animation: sa-rise .7s .5s var(--sa-ease) both;
+}
+.sa-brandfoot a {
+  color: #9fe4ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color .25s var(--sa-ease);
+}
+.sa-brandfoot a:hover { color: #fff; }
+
+/* ==========================================================================
+   FORM SIDE
+   ========================================================================== */
+.sa-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(30px, 4vw, 56px) clamp(20px, 3.4vw, 52px);
+  background:
+    radial-gradient(58% 52% at 10% 4%,  rgba(99, 102, 241, .22), transparent 62%),
+    radial-gradient(52% 48% at 96% 22%, rgba(34, 211, 238, .24), transparent 64%),
+    radial-gradient(66% 56% at 74% 104%, rgba(139, 92, 246, .20), transparent 62%),
+    linear-gradient(178deg, #f3f7ff 0%, #e9f0ff 52%, #e5f4fb 100%);
+  background-size: 165% 165%, 155% 155%, 175% 175%, 100% 100%;
+  background-repeat: no-repeat;
+  animation: sa-bloom 26s ease-in-out infinite alternate;
+}
+@keyframes sa-bloom {
+  from { background-position: 0% 0%,   100% 0%,  50% 100%, 0 0; }
+  to   { background-position: 22% 16%, 76% 22%,  30% 84%,  0 0; }
+}
+
+.sa-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 8px 15px 8px 12px;
+  border-radius: 999px;
+  font-family: var(--sa-display);
+  font-weight: 600;
+  font-size: 13.6px;
+  color: var(--sa-muted);
+  background: rgba(255, 255, 255, .6);
+  border: 1px solid rgba(214, 226, 250, .9);
+  transition: transform .3s var(--sa-ease), color .3s var(--sa-ease), background .3s var(--sa-ease), box-shadow .3s var(--sa-ease);
+  animation: sa-rise .6s .1s var(--sa-ease) both;
+}
+.sa-back .sa-i { width: 16px; height: 16px; transition: transform .3s var(--sa-ease); }
+.sa-back:hover {
+  color: var(--sa-blue);
+  background: #fff;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, .14);
+}
+.sa-back:hover .sa-i { transform: translateX(-3px); }
+
+/* ---- the card ---- */
+.sa-card {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 468px;
+  margin: 0 auto;
+  padding: clamp(24px, 3vw, 34px) clamp(20px, 2.6vw, 34px) clamp(20px, 2.4vw, 26px);
+  border-radius: var(--sa-r-lg);
+  background: var(--sa-glass);
+  border: 1px solid rgba(255, 255, 255, .75);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(1.5);
+  box-shadow:
+    0 2px 6px rgba(13, 24, 54, .04),
+    0 26px 60px -18px rgba(28, 48, 120, .28),
+    0 60px 110px -50px rgba(79, 70, 229, .45);
+  animation: sa-card-in .85s .06s var(--sa-spring) both;
+}
+/* glossy hairline along the top edge — pure gradient, no mask/clip tricks */
+.sa-card::before {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: -1px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(129, 140, 248, .95) 30%, rgba(34, 211, 238, .9) 70%, transparent);
+  pointer-events: none;
+  z-index: 3;
+}
+@keyframes sa-card-in {
+  from { opacity: 0; transform: translateY(26px) scale(.965); }
+  to   { opacity: 1; transform: none; }
+}
+
+.sa-card__head { text-align: center; margin-bottom: 20px; }
+.sa-card__title {
+  font-family: var(--sa-display);
+  font-weight: 700;
+  color: var(--sa-ink);
+  font-size: clamp(23px, 2.3vw, 28px);
+  letter-spacing: -.4px;
+  line-height: 1.2;
+  margin: 0 0 7px;
+}
+.sa-card__sub {
+  margin: 0;
+  font-size: 14.2px;
+  line-height: 1.55;
+  color: var(--sa-muted);
+}
+
+/* ---- tabs with sliding ink ---- */
+.sa-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 5px;
+  border-radius: var(--sa-r);
+  background: rgba(226, 234, 252, .72);
+  border: 1px solid rgba(255, 255, 255, .8);
+  margin-bottom: 20px;
+}
+.sa-tabs__ink {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: calc(50% - 5px);
+  height: calc(100% - 10px);
+  border-radius: 12px;
+  background: var(--sa-grad-ink);
+  box-shadow: 0 8px 20px -6px rgba(37, 99, 235, .6);
+  transition: transform .48s var(--sa-spring);
+  z-index: 0;
+}
+.sa-tabs.sa-reg .sa-tabs__ink { transform: translateX(100%); }
+.sa-tab {
+  position: relative;
+  z-index: 1;
+  padding: 11px 8px;
+  border-radius: 12px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 14.4px;
+  color: var(--sa-muted);
+  transition: color .32s var(--sa-ease);
+}
+.sa-tab.sa-on { color: #fff; }
+.sa-tab:hover:not(.sa-on) { color: var(--sa-blue); }
+
+/* ---- status note ---- */
+.sa-note {
+  display: block;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin: 0;
+  border-radius: 13px;
+  font-size: 13.4px;
+  line-height: 1.5;
+  transition: max-height .4s var(--sa-ease), opacity .32s var(--sa-ease), margin .4s var(--sa-ease), padding .4s var(--sa-ease);
+  padding: 0 14px;
+}
+.sa-note.sa-on {
+  max-height: 140px;
+  opacity: 1;
+  padding: 11px 14px;
+  margin: 0 0 16px;
+}
+.sa-note--err {
+  color: #a1004a;
+  background: var(--sa-bad-soft);
+  border: 1px solid rgba(225, 29, 111, .22);
+}
+.sa-note--ok {
+  color: #075e55;
+  background: #d8f7f2;
+  border: 1px solid rgba(47,98,168, .22);
+}
+
+/* ---- forms ---- */
+.sa-form { display: none; }
+.sa-form.sa-on { display: grid; gap: 15px; }
+.sa-form.sa-on > * {
+  animation: sa-field-in .55s var(--sa-ease) both;
+  animation-delay: calc(var(--sa-i, 0) * 65ms);
+}
+@keyframes sa-field-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.sa-grid2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 13px;
+}
+
+/* ---- one field ---- */
+.sa-field { display: block; min-width: 0; }
+
+.sa-field__wrap {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  border-radius: 15px;
+  transition: box-shadow .35s var(--sa-ease);
+}
+/* idle ring */
+.sa-field__wrap::before {
+  content: "";
+  position: absolute;
+  inset: -1.4px;
+  border-radius: 16.4px;
+  background: var(--sa-line);
+  z-index: 0;
+  transition: background .3s var(--sa-ease);
+}
+/* animated focus ring */
+.sa-field__wrap::after {
+  content: "";
+  position: absolute;
+  inset: -1.8px;
+  border-radius: 16.8px;
+  background: linear-gradient(115deg, var(--sa-cyan), var(--sa-indigo) 32%, var(--sa-violet) 56%, var(--sa-cyan) 100%);
+  background-size: 280% 100%;
+  opacity: 0;
+  z-index: 0;
+  transition: opacity .35s var(--sa-ease);
+}
+.sa-field__wrap:focus-within::after {
+  opacity: 1;
+  animation: sa-ring-flow 3.4s linear infinite;
+}
+@keyframes sa-ring-flow {
+  from { background-position: 0% 50%; }
+  to   { background-position: 280% 50%; }
+}
+.sa-field__wrap:focus-within {
+  box-shadow: 0 0 0 5px rgba(34, 211, 238, .16), 0 14px 34px -14px rgba(79, 70, 229, .8);
+}
+
+.sa-field__input {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 62px;
+  padding: 25px 15px 9px 46px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--sa-field);
+  color: var(--sa-ink);
+  font-family: inherit;
+  font-size: 15.2px;
+  line-height: 1.3;
+  transition: background .3s var(--sa-ease);
+}
+.sa-field__input:focus { outline: none; background: #fff; }
+/* full opacity, never a tint: a faded placeholder is still real text and has
+   to clear AA. The fade in/out is on opacity 0 -> 1, not 0 -> .75. */
+.sa-field__input::placeholder { color: var(--sa-faint); opacity: 0; transition: opacity .25s var(--sa-ease); }
+.sa-field__input:focus::placeholder { opacity: 1; }
+.sa-field__input--pw { padding-right: 50px; }
+
+/* keep autofill inside the glass look */
+.sa-field__input:-webkit-autofill,
+.sa-field__input:-webkit-autofill:hover,
+.sa-field__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--sa-ink);
+  -webkit-box-shadow: 0 0 0 100px #eef4ff inset;
+  caret-color: var(--sa-ink);
+}
+
+.sa-field__ic {
+  position: absolute;
+  z-index: 2;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 19px;
+  height: 19px;
+  color: var(--sa-faint);
+  pointer-events: none;
+  transition: color .3s var(--sa-ease), transform .35s var(--sa-spring);
+}
+.sa-field__wrap:focus-within .sa-field__ic {
+  color: var(--sa-blue);
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* floating label */
+.sa-field__label {
+  position: absolute;
+  z-index: 2;
+  left: 46px;
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  pointer-events: none;
+  font-size: 15px;
+  line-height: 1.2;
+  /* This label doubles as the placeholder while the field is empty, so it is
+     real text and has to clear AA. --sa-faint (#7c89ad) measured 3.30:1 on the
+     field surface; this is 5.4:1. */
+  color: #5a6685;
+  white-space: nowrap;
+  transition: transform .3s var(--sa-ease), color .3s var(--sa-ease), letter-spacing .3s var(--sa-ease);
+}
+.sa-field__input:focus ~ .sa-field__label,
+.sa-field__input:not(:placeholder-shown) ~ .sa-field__label {
+  transform: translateY(calc(-50% - 13px)) scale(.76);
+  letter-spacing: .5px;
+  color: var(--sa-muted);
+}
+.sa-field__input:focus ~ .sa-field__label { color: var(--sa-blue); }
+
+.sa-field__eye {
+  position: absolute;
+  z-index: 2;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--sa-faint);
+  cursor: pointer;
+  transition: color .25s var(--sa-ease), background .25s var(--sa-ease);
+}
+.sa-field__eye .sa-i { width: 18px; height: 18px; }
+.sa-field__eye:hover { color: var(--sa-blue); background: rgba(37, 99, 235, .09); }
+
+/* caps-lock + error + hint slots */
+.sa-field__caps,
+.sa-field__err {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12.4px;
+  line-height: 1.45;
+  margin: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height .3s var(--sa-ease), opacity .25s var(--sa-ease), margin .3s var(--sa-ease);
+}
+.sa-field__caps .sa-i,
+.sa-field__err .sa-i { width: 14px; height: 14px; flex: none; margin-top: 2px; }
+
+.sa-field__caps { color: #8a5a00; }
+.sa-field__caps.sa-on { max-height: 40px; opacity: 1; margin-top: 7px; }
+
+.sa-field__err { color: var(--sa-bad-ink); }
+.sa-field.sa-err .sa-field__err,
+.sa-otp.sa-err .sa-field__err { max-height: 48px; opacity: 1; margin-top: 7px; }
+
+.sa-field__hint {
+  display: block;
+  margin-top: 7px;
+  font-size: 12.2px;
+  line-height: 1.45;
+  color: var(--sa-faint);
+}
+
+/* error styling + gentle shake */
+.sa-field.sa-err .sa-field__wrap::before { background: var(--sa-bad); }
+.sa-field.sa-err .sa-field__wrap::after { opacity: 0; animation: none; }
+.sa-field.sa-err .sa-field__input { background: #fff6fa; }
+.sa-field.sa-err .sa-field__ic { color: var(--sa-bad); }
+.sa-field.sa-err .sa-field__wrap { animation: sa-shake .42s var(--sa-ease); }
+
+/* a character the field does not accept was typed or pasted — the same shake,
+   without flagging the field as invalid (auth.js adds/removes .sa-nudge) */
+.sa-field__wrap.sa-nudge,
+.sa-otp__box.sa-nudge { animation: sa-shake .42s var(--sa-ease); }
+
+@keyframes sa-shake {
+  0%, 100% { transform: translateX(0); }
+  18%      { transform: translateX(-5px); }
+  38%      { transform: translateX(4px); }
+  58%      { transform: translateX(-3px); }
+  78%      { transform: translateX(2px); }
+}
+
+/* ---- password strength ---- */
+.sa-pw {
+  display: block;
+  margin-top: 11px;
+  color: var(--sa-line);
+  transition: color .45s var(--sa-ease);
+}
+.sa-pw[data-lvl="1"] { color: var(--sa-rose); }
+.sa-pw[data-lvl="2"] { color: var(--sa-indigo); }
+.sa-pw[data-lvl="3"] { color: var(--sa-sky); }
+.sa-pw[data-lvl="4"] { color: var(--sa-teal); }
+
+.sa-pw__track {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sa-line);
+  overflow: hidden;
+}
+/* one continuous fill so levels glide instead of snapping */
+.sa-pw__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-radius: 999px;
+  background: currentColor;
+  transition: width .6s var(--sa-spring), background-color .45s var(--sa-ease);
+}
+.sa-pw[data-lvl="1"] .sa-pw__fill { width: 25%; }
+.sa-pw[data-lvl="2"] .sa-pw__fill { width: 50%; }
+.sa-pw[data-lvl="3"] .sa-pw__fill { width: 75%; }
+.sa-pw[data-lvl="4"] .sa-pw__fill { width: 100%; }
+
+.sa-pw__tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+}
+.sa-pw__tick:nth-of-type(2) { left: 25%; }
+.sa-pw__tick:nth-of-type(3) { left: 50%; }
+.sa-pw__tick:nth-of-type(4) { left: 75%; }
+
+.sa-pw__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 7px;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 11.6px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.sa-pw__label { color: var(--sa-faint); }
+.sa-pw__val {
+  color: currentColor;
+  min-height: 15px;
+  animation: sa-lvl-pop .42s var(--sa-spring);
+}
+.sa-pw[data-lvl="0"] .sa-pw__val { color: var(--sa-faint); }
+@keyframes sa-lvl-pop {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---- checkbox ---- */
+.sa-check {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.4px;
+  line-height: 1.5;
+  color: var(--sa-muted);
+  min-width: 0;
+}
+label.sa-check { cursor: pointer; }
+.sa-check input {
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+.sa-check__txt { margin: 0; min-width: 0; }
+.sa-check__box {
+  display: block;
+  flex: none;
+  position: relative;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  cursor: pointer;
+  border-radius: 7px;
+  background: #fff;
+  border: 1.6px solid var(--sa-line);
+  transition: background .28s var(--sa-ease), border-color .28s var(--sa-ease), transform .28s var(--sa-spring), box-shadow .28s var(--sa-ease);
+}
+.sa-check__box::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2.4px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2.2px 2.2px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform .28s var(--sa-spring);
+}
+.sa-check input:checked + .sa-check__box {
+  background: var(--sa-grad-ink);
+  border-color: transparent;
+  box-shadow: 0 6px 14px -4px rgba(37, 99, 235, .6);
+}
+.sa-check input:checked + .sa-check__box::after { transform: rotate(45deg) scale(1); }
+.sa-check input:focus-visible + .sa-check__box {
+  outline: 3px solid rgba(34, 211, 238, .75);
+  outline-offset: 3px;
+}
+.sa-check:hover .sa-check__box { transform: scale(1.06); }
+.sa-check.sa-err .sa-check__box,
+.sa-field.sa-err .sa-check__box {
+  border-color: var(--sa-bad);
+  background: #fff6fa;
+  animation: sa-shake .42s var(--sa-ease);
+}
+.sa-check a { color: var(--sa-blue); text-decoration: underline; text-underline-offset: 2px; }
+.sa-check a:hover { color: var(--sa-indigo); }
+
+.sa-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sa-link {
+  font-size: 13.4px;
+  font-weight: 600;
+  color: var(--sa-blue);
+  transition: color .25s var(--sa-ease);
+}
+.sa-link:hover { color: var(--sa-indigo); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- submit button ---- */
+.sa-submit {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 15px 22px;
+  border: 0;
+  border-radius: 15px;
+  cursor: pointer;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 15.6px;
+  letter-spacing: .2px;
+  color: #fff;
+  background: var(--sa-grad-ink);
+  box-shadow: 0 14px 30px -10px rgba(37, 99, 235, .75), inset 0 1px 0 rgba(255, 255, 255, .28);
+  transition: transform .28s var(--sa-ease), box-shadow .28s var(--sa-ease), filter .28s var(--sa-ease);
+}
+.sa-submit:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -12px rgba(37, 99, 235, .85); filter: saturate(1.12); }
+.sa-submit:active { transform: translateY(0); }
+
+/* Travelling shimmer. The highlight passes UNDER the label, so its alpha is a
+   contrast budget, not a taste call: at .42 it lifted the button ground to
+   rgb(124,153,232) and dropped white 15.6px text to 2.77:1 for the third of a
+   second it took to cross. .16 keeps the sweep visible and the worst frame
+   above 4.9:1. */
+.sa-submit__shine {
+  position: absolute;
+  top: -60%;
+  left: -40%;
+  width: 32%;
+  height: 220%;
+  background: linear-gradient(95deg, transparent, rgba(255, 255, 255, .16), transparent);
+  transform: rotate(18deg);
+  pointer-events: none;
+  animation: sa-shine 4.2s var(--sa-ease) infinite;
+}
+@keyframes sa-shine {
+  0%, 55%  { transform: translateX(0) rotate(18deg); }
+  90%, 100% { transform: translateX(520%) rotate(18deg); }
+}
+
+/* progress fill while busy */
+.sa-submit__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .16));
+  pointer-events: none;
+  transition: width 1s var(--sa-ease), opacity .3s var(--sa-ease);
+}
+.sa-submit.sa-busy .sa-submit__fill { width: 100%; }
+
+.sa-submit__txt,
+.sa-submit__ic { position: relative; z-index: 1; transition: opacity .25s var(--sa-ease), transform .3s var(--sa-ease); }
+.sa-submit__ic { width: 19px; height: 19px; }
+.sa-submit:hover .sa-submit__ic { transform: translateX(4px); }
+
+.sa-submit__spin {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 2.4px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  opacity: 0;
+  transition: opacity .25s var(--sa-ease);
+  animation: sa-spin .8s linear infinite;
+}
+@keyframes sa-spin { to { transform: rotate(360deg); } }
+.sa-submit.sa-busy { cursor: progress; transform: none; }
+.sa-submit.sa-busy .sa-submit__spin { opacity: 1; }
+.sa-submit.sa-busy .sa-submit__txt,
+.sa-submit.sa-busy .sa-submit__ic { opacity: 0; transform: translateY(-6px); }
+
+/* click ripple (injected by auth.js) */
+.sa-ripple {
+  position: absolute;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .5);
+  pointer-events: none;
+  transform: scale(0);
+  animation: sa-ripple-go .62s var(--sa-ease) forwards;
+}
+@keyframes sa-ripple-go {
+  to { transform: scale(26); opacity: 0; }
+}
+
+/* ---- honest demo disclaimer ---- */
+.sa-demo {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 18px 0 0;
+  padding: 11px 13px;
+  border-radius: 13px;
+  font-size: 12.4px;
+  line-height: 1.55;
+  color: var(--sa-muted);
+  background: rgba(233, 240, 255, .7);
+  border: 1px dashed rgba(99, 102, 241, .32);
+}
+.sa-demo .sa-i { width: 15px; height: 15px; flex: none; margin-top: 2px; color: var(--sa-indigo); }
+.sa-demo b { color: var(--sa-ink); font-weight: 700; }
+
+/* ==========================================================================
+   COUNTRY CODE + PHONE — a <select> and an <input> read as one control
+   (login.html "Create account")
+
+   The select is absolutely positioned inside the same .sa-field__wrap as the
+   input, so it sits inside the shared idle/focus ring and can never push the
+   row wider than the card. The input is simply padded clear of it.
+   ========================================================================== */
+.sa-field__wrap--tel .sa-field__input { padding-left: 172px; }
+.sa-field__wrap--tel .sa-field__label { left: 172px; }
+
+.sa-tel {
+  position: absolute;
+  z-index: 2;
+  left: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 158px;
+  display: flex;
+  align-items: center;
+  border-radius: 14px 0 0 14px;
+}
+/* the seam — one hairline is what makes two controls read as one */
+.sa-tel::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 13px;
+  bottom: 13px;
+  width: 1px;
+  background: var(--sa-line);
+  pointer-events: none;
+  transition: background .3s var(--sa-ease);
+}
+.sa-field__wrap--tel:focus-within .sa-tel::after { background: rgba(37, 99, 235, .4); }
+
+.sa-tel__cc {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0 28px 0 14px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--sa-ink);
+  font-family: inherit;
+  font-size: 12.9px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: .1px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.sa-tel__cc:focus { outline: none; }
+.sa-tel__cc:focus-visible { outline: 3px solid rgba(34, 211, 238, .75); outline-offset: -3px; border-radius: 13px; }
+/* the option list is drawn by the OS — give it a readable ground either way */
+.sa-tel__cc option { background: #fff; color: var(--sa-ink); }
+
+.sa-tel__chev {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  width: 15px;
+  height: 15px;
+  margin-top: -7.5px;
+  color: var(--sa-muted);
+  pointer-events: none;
+  transition: color .3s var(--sa-ease), transform .3s var(--sa-ease);
+}
+.sa-field__wrap--tel:focus-within .sa-tel__chev { color: var(--sa-blue); }
+
+/* ==========================================================================
+   ONE-TIME CODE — six single-character boxes (student-verify.html)
+   ========================================================================== */
+.sa-otp {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;          /* fieldsets default to min-content — this is load-bearing */
+}
+.sa-otp__legend {
+  display: block;
+  float: left;           /* a floated legend takes normal flow width in every engine */
+  width: 100%;
+  padding: 0;
+  margin: 0 0 10px;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 12.6px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--sa-muted);
+}
+.sa-otp__boxes {
+  clear: both;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+}
+.sa-otp__box {
+  width: 100%;
+  min-width: 0;
+  height: 62px;
+  padding: 0 2px;
+  border: 1.6px solid var(--sa-line);
+  border-radius: 14px;
+  background: var(--sa-field);
+  color: var(--sa-ink);
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1;
+  text-align: center;
+  caret-color: var(--sa-blue);
+  transition: border-color .28s var(--sa-ease), background .28s var(--sa-ease),
+              box-shadow .28s var(--sa-ease), transform .28s var(--sa-spring);
+}
+.sa-otp__box:focus {
+  outline: none;
+  border-color: var(--sa-blue);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, .2), 0 14px 28px -16px rgba(79, 70, 229, .95);
+  transform: translateY(-2px);
+}
+.sa-otp__box:focus-visible { outline: 3px solid rgba(34, 211, 238, .75); outline-offset: 2px; }
+.sa-otp__box.sa-has { border-color: var(--sa-indigo); background: #fff; }
+.sa-otp.sa-err .sa-otp__box { border-color: var(--sa-bad); background: #fff6fa; }
+.sa-otp.sa-err .sa-otp__boxes { animation: sa-shake .42s var(--sa-ease); }
+.sa-otp.sa-ok .sa-otp__box { border-color: var(--sa-teal); background: #effcfa; }
+.sa-otp__hint {
+  margin: 9px 0 0;
+  font-size: 12.4px;
+  line-height: 1.45;
+  color: var(--sa-faint);
+}
+
+/* ==========================================================================
+   MULTI-STEP CARD BODY (student-forgot.html)
+   ========================================================================== */
+.sa-step { display: none; }
+.sa-step.sa-on { display: grid; gap: 15px; }
+.sa-step.sa-on > * {
+  animation: sa-field-in .55s var(--sa-ease) both;
+  animation-delay: calc(var(--sa-i, 0) * 65ms);
+}
+
+/* "we sent it to …" panel */
+.sa-sent {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin: 0;
+  padding: 15px 16px;
+  border-radius: var(--sa-r);
+  background: linear-gradient(118deg, rgba(99, 102, 241, .12), rgba(34, 211, 238, .14));
+  border: 1px solid rgba(99, 102, 241, .24);
+  font-size: 13.8px;
+  line-height: 1.6;
+  color: var(--sa-muted);
+}
+.sa-sent__ic {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: #fff;
+  background: var(--sa-grad-ink);
+  box-shadow: 0 10px 22px -10px rgba(37, 99, 235, .85);
+}
+.sa-sent__txt { min-width: 0; }
+.sa-sent__addr {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--sa-ink);
+  overflow-wrap: anywhere;
+}
+
+/* short reassurance list */
+.sa-tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.sa-tips li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13.2px;
+  line-height: 1.55;
+  color: var(--sa-muted);
+  min-width: 0;
+}
+.sa-tips .sa-i { width: 15px; height: 15px; flex: none; margin-top: 3px; color: var(--sa-blue); }
+
+/* resend + cooldown */
+.sa-resend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+/* Standing on its own in the card (student-verify.html) rather than inside a
+   step grid, it needs its own clearance — sitting flush under the submit
+   button put this text inside the button's blue drop shadow. */
+.sa-card > .sa-resend { margin-top: 18px; }
+.sa-card > .sa-alt { margin-top: 13px; }
+.sa-resend__hint {
+  margin: 0;
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: 12.6px;
+  line-height: 1.5;
+  color: var(--sa-faint);
+}
+
+.sa-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 13.8px;
+  color: var(--sa-blue);
+  background: rgba(255, 255, 255, .74);
+  border: 1.5px solid rgba(37, 99, 235, .32);
+  transition: transform .26s var(--sa-ease), color .26s var(--sa-ease),
+              background .26s var(--sa-ease), border-color .26s var(--sa-ease),
+              box-shadow .26s var(--sa-ease);
+}
+.sa-ghost .sa-i { width: 16px; height: 16px; transition: transform .5s var(--sa-ease); }
+.sa-ghost:hover:not([aria-disabled="true"]) {
+  transform: translateY(-1px);
+  color: var(--sa-indigo);
+  background: #fff;
+  border-color: rgba(79, 70, 229, .5);
+  box-shadow: 0 12px 24px -12px rgba(37, 99, 235, .7);
+}
+/* Cooling down. aria-disabled rather than [disabled] on purpose: the button is
+   disabled *by its own click*, and a real disabled attribute would throw the
+   keyboard user's focus back to <body> mid-flow. The handler ignores the
+   click; the button keeps its place in the tab order and stays announceable. */
+.sa-ghost[aria-disabled="true"] {
+  cursor: default;
+  color: var(--sa-muted);
+  background: rgba(238, 243, 255, .85);
+  border-color: var(--sa-line);
+}
+.sa-ghost[aria-disabled="true"] .sa-i { transform: rotate(-45deg); }
+
+/* a button that has to look like a link (it performs an action, so it is not an <a>) */
+.sa-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  color: var(--sa-blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color .25s var(--sa-ease);
+}
+.sa-linkbtn:hover { color: var(--sa-indigo); }
+
+.sa-alt {
+  margin: 0;
+  text-align: center;
+  font-size: 13.4px;
+  line-height: 1.55;
+  color: var(--sa-muted);
+}
+.sa-to {
+  margin: 0;
+  text-align: center;
+  font-size: 13.6px;
+  line-height: 1.6;
+  color: var(--sa-muted);
+}
+.sa-to b { color: var(--sa-ink); font-weight: 700; overflow-wrap: anywhere; }
+.sa-card > .sa-to { margin: 2px 0 17px; }
+
+.sa-cardfoot {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 13.6px;
+  color: var(--sa-muted);
+}
+.sa-cardfoot a { color: var(--sa-blue); font-weight: 600; }
+.sa-cardfoot a:hover { color: var(--sa-indigo); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ==========================================================================
+   SUCCESS STATE
+   ========================================================================== */
+.sa-done {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 28px 26px;
+  border-radius: var(--sa-r-lg);
+  background: rgba(255, 255, 255, .965);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(.97);
+  transition: opacity .4s var(--sa-ease), transform .5s var(--sa-spring), visibility 0s .5s;
+}
+.sa-done.sa-on {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity .4s var(--sa-ease), transform .5s var(--sa-spring), visibility 0s 0s;
+}
+
+/* the mark and its expanding halo share one positioned box, so the halo
+   always rings the tick rather than falling to the grid's static origin */
+.sa-done__markwrap {
+  position: relative;
+  display: block;
+  width: 76px;
+  height: 76px;
+  margin: 0 0 14px;
+}
+.sa-done__mark { width: 100%; height: 100%; display: block; }
+.sa-done__ring {
+  fill: none;
+  stroke: url(#sa-tickgrad);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 189;
+  stroke-dashoffset: 189;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+.sa-done__tick {
+  fill: none;
+  stroke: url(#sa-tickgrad);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 42;
+  stroke-dashoffset: 42;
+}
+.sa-done.sa-on .sa-done__ring { animation: sa-draw 780ms var(--sa-ease) forwards; }
+.sa-done.sa-on .sa-done__tick { animation: sa-draw 460ms 460ms var(--sa-ease) forwards; }
+@keyframes sa-draw { to { stroke-dashoffset: 0; } }
+
+.sa-done__halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(34, 211, 238, .6);
+  opacity: 0;
+  pointer-events: none;
+}
+.sa-done.sa-on .sa-done__halo { animation: sa-halo 1.1s .78s var(--sa-ease) forwards; }
+@keyframes sa-halo {
+  from { opacity: .85; transform: scale(1); }
+  to   { opacity: 0;   transform: scale(1.85); }
+}
+
+.sa-done__t {
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--sa-ink);
+  margin: 0 0 8px;
+  letter-spacing: -.3px;
+}
+.sa-done__t:focus-visible { outline: 3px solid rgba(34, 211, 238, .75); outline-offset: 4px; }
+.sa-done__p {
+  margin: 0 0 18px;
+  max-width: 34ch;
+  font-size: 13.8px;
+  line-height: 1.6;
+  color: var(--sa-muted);
+}
+.sa-done.sa-on .sa-done__t { animation: sa-rise .5s .6s var(--sa-ease) both; }
+.sa-done.sa-on .sa-done__p { animation: sa-rise .5s .7s var(--sa-ease) both; }
+.sa-done.sa-on .sa-done__back,
+.sa-done.sa-on .sa-done__row { animation: sa-rise .5s .8s var(--sa-ease) both; }
+
+/* one or two actions, side by side, wrapping on a narrow card */
+.sa-done__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.sa-done__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  background: var(--sa-grad-ink);
+  box-shadow: 0 12px 26px -10px rgba(37, 99, 235, .8);
+  transition: transform .25s var(--sa-ease), box-shadow .25s var(--sa-ease);
+}
+.sa-done__back:hover { transform: translateY(-2px); box-shadow: 0 18px 34px -12px rgba(37, 99, 235, .9); }
+.sa-done__back .sa-i { width: 16px; height: 16px; }
+/* [hidden] loses to the display above unless it is said again */
+.sa-done__back[hidden],
+.sa-done__ghost[hidden] { display: none; }
+
+/* the quieter of the two success actions */
+.sa-done__ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 1.5px solid rgba(37, 99, 235, .3);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  font-size: 13.6px;
+  color: var(--sa-blue);
+  background: #fff;
+  transition: transform .25s var(--sa-ease), color .25s var(--sa-ease),
+              border-color .25s var(--sa-ease), box-shadow .25s var(--sa-ease);
+}
+.sa-done__ghost:hover {
+  transform: translateY(-2px);
+  color: var(--sa-indigo);
+  border-color: rgba(79, 70, 229, .5);
+  box-shadow: 0 12px 24px -12px rgba(37, 99, 235, .6);
+}
+.sa-done__ghost .sa-i { width: 16px; height: 16px; }
+
+/* the primary success action: the way into the portal, so it reads solid
+   rather than as a second quiet outline. White on the indigo->blue gradient
+   (the same pair as the success tick) measures ~5.8:1 at this weight — AA. */
+.sa-done__ghost--go {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--sa-indigo), var(--sa-blue));
+  box-shadow: 0 14px 30px -14px rgba(37, 99, 235, .85);
+}
+.sa-done__ghost--go:hover {
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 18px 36px -14px rgba(37, 99, 235, .95);
+}
+
+/* ==========================================================================
+   "PAGE SWITCHED OFF" NOTICE (rendered by auth.js)
+   ========================================================================== */
+.sa-off {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 40px 24px;
+  color: #eaf1ff;
+  background: linear-gradient(160deg, #060c26 0%, var(--sa-deep) 52%, #050a20 100%);
+}
+.sa-off h1 { color: #fff; font-family: var(--sa-display); font-size: clamp(22px, 4vw, 32px); margin: 0 0 6px; }
+.sa-off p { margin: 0 0 22px; max-width: 46ch; color: rgba(222, 236, 255, .7); }
+.sa-off a {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-family: var(--sa-display);
+  font-weight: 700;
+  color: #fff;
+  background: var(--sa-grad-ink);
+  box-shadow: 0 14px 30px -10px rgba(37, 99, 235, .8);
+}
+
+/* ==========================================================================
+   SHARED ENTRANCE KEYFRAMES
+   ========================================================================== */
+@keyframes sa-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes sa-slide-in {
+  from { opacity: 0; transform: translateX(-22px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes sa-pop {
+  from { opacity: 0; transform: translateY(18px) scale(.9); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+/* Wide enough for the floating cards: reserve a gutter for them so the
+   pitch column stops short of it instead of running underneath. */
+@media (min-width: 1180px) {
+  .sa-brand { padding-right: 268px; }
+}
+
+@media (max-width: 1179px) {
+  .sa-floats { display: none; }
+  .sa-shell { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .sa-shell { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+
+  /* brand side collapses into a compact banner */
+  .sa-brand {
+    gap: 18px;
+    padding: 22px 22px 26px;
+  }
+  .sa-pitch { max-width: none; }
+  .sa-pitch__h { font-size: 24px; max-width: none; margin-bottom: 8px; }
+  .sa-pitch__p { font-size: 14px; margin-bottom: 0; max-width: none; }
+  .sa-kicker { margin-bottom: 12px; }
+  .sa-perks { display: none; }
+  .sa-brandfoot { display: none; }
+  .sa-orb--c { display: none; }
+  .sa-beam { display: none; }
+
+  .sa-panel {
+    justify-content: flex-start;
+    padding: 20px 18px 36px;
+  }
+  .sa-back { margin-bottom: 16px; }
+  .sa-card { max-width: 520px; }
+}
+
+@media (max-width: 560px) {
+  .sa-brand { padding: 18px 16px 22px; }
+  .sa-logo__mark { width: 40px; height: 40px; border-radius: 12px; }
+  .sa-logo__glyph { font-size: 20px; }
+  .sa-logo__txt { font-size: 19px; }
+  .sa-pitch__h { font-size: 21px; }
+  .sa-pitch__p { font-size: 13.4px; }
+
+  .sa-panel { padding: 16px 14px 32px; }
+  .sa-card {
+    max-width: none;
+    padding: 22px 16px 18px;
+    border-radius: 22px;
+  }
+  .sa-card__title { font-size: 22px; }
+  .sa-grid2 { grid-template-columns: minmax(0, 1fr); gap: 15px; }
+  .sa-field__input { font-size: 16px; }   /* stops iOS zooming on focus */
+  .sa-row { gap: 10px; }
+  .sa-done { padding: 24px 18px; }
+  .sa-done__markwrap { width: 64px; height: 64px; }
+  .sa-done__t { font-size: 19px; }
+
+  /* the code boxes have to fit six across a 320px card without overflowing */
+  .sa-otp__boxes { gap: 7px; }
+  .sa-otp__box { height: 56px; font-size: 21px; border-radius: 12px; }
+  .sa-ghost { flex: 1 1 100%; }
+  .sa-resend__hint { flex-basis: 100%; }
+}
+
+@media (max-width: 420px) {
+  /* keep the country name readable and still leave room for the number */
+  .sa-tel { width: 142px; }
+  .sa-tel__cc { font-size: 12.2px; padding: 0 25px 0 12px; }
+  .sa-field__wrap--tel .sa-field__input { padding-left: 154px; }
+  .sa-field__wrap--tel .sa-field__label { left: 154px; }
+}
+
+@media (max-width: 380px) {
+  .sa-tab { font-size: 13.2px; padding: 10px 4px; }
+  .sa-back span { display: none; }
+  .sa-back { padding: 9px 12px; }
+  .sa-otp__boxes { gap: 5px; }
+  .sa-otp__box { height: 52px; font-size: 19px; }
+}
+
+/* short viewports: let the split screen scroll instead of squashing */
+@media (min-width: 901px) and (max-height: 720px) {
+  .sa-shell { min-height: 0; }
+  .sa-brand { padding-top: 34px; padding-bottom: 34px; }
+}
+
+/* ==========================================================================
+   REDUCED MOTION — switches off every animation and transition above
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .sa-body *,
+  .sa-body *::before,
+  .sa-body *::after {
+    animation-duration: .001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    transition-delay: 0ms !important;
+  }
+  /* purely decorative loops have a perfectly good resting state */
+  .sa-orb,
+  .sa-mesh,
+  .sa-beam,
+  .sa-stars,
+  .sa-panel,
+  .sa-logo__mark::after,
+  .sa-submit__shine,
+  .sa-chip--a,
+  .sa-chip--b,
+  .sa-chip--c,
+  .sa-done__halo,
+  .sa-field__wrap:focus-within::after,
+  .sa-field.sa-err .sa-field__wrap,
+  .sa-field__wrap.sa-nudge,
+  .sa-otp__box.sa-nudge,
+  .sa-otp.sa-err .sa-otp__boxes,
+  .sa-check.sa-err .sa-check__box { animation: none !important; }
+
+  .sa-beam,
+  .sa-submit__shine { opacity: 0; }
+  .sa-chip__bar i { width: 80%; animation: none !important; }
+  .sa-done.sa-on .sa-done__ring,
+  .sa-done.sa-on .sa-done__tick { stroke-dashoffset: 0; animation: none !important; }
+  .sa-submit.sa-busy .sa-submit__fill { width: 100%; }
+  .sa-ghost[aria-disabled="true"] .sa-i { transform: none; }
+
+  /* A busy spinner is the one exception: frozen, it reads as a hung page.
+     It is slowed to a gentle turn instead of stopped. This rule comes after
+     the blanket one above, so its !important shorthand wins on source order. */
+  .sa-submit__spin { animation: sa-spin 2.6s linear infinite !important; }
+}
