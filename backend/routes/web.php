@@ -86,5 +86,8 @@ Route::prefix('api')->group(function () {
         Route::put('me/qualifications', [$profile, 'qualifications']);
         Route::put('me/test_scores', [$profile, 'testScores']);
         Route::put('me/preferences', [$profile, 'preferences']);
+
+        // Phase 5C — document checklist (read). Upload/download/delete: P5-D.
+        Route::get('me/documents', [\App\Http\Controllers\Me\DocumentController::class, 'index']);
     });
 });
