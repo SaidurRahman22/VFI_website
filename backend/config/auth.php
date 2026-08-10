@@ -17,6 +17,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Breach-list password check (Phase 4 §5.4)
+    |--------------------------------------------------------------------------
+    | Reject known-breached passwords on register + reset via the HIBP
+    | k-anonymity API. Fails open (never blocks on a network error). Disabled in
+    | the test env to avoid an outbound call.
+    */
+    'breach_check' => env('AUTH_BREACH_CHECK', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Authentication Defaults
     |--------------------------------------------------------------------------
     |

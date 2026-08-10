@@ -25,6 +25,8 @@
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="ADMIN_REQUIRE_TOTP" value="true"/>
+        <env name="AUTH_BREACH_CHECK" value="false"/>
+        <env name="TURNSTILE_ENABLED" value="false"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>

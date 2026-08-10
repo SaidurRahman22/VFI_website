@@ -13,10 +13,12 @@ use App\Models\EmailVerificationCode;
 use App\Models\TermsAcceptance;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Rules\NotBreachedPassword;
 use App\Services\OtpService;
 use App\Services\PasswordResetService;
 use App\Support\DummyHash;
 use App\Support\EmailMask;
+use App\Support\Turnstile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,12 +46,16 @@ class StudentAuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
+        if ($blocked = $this->turnstileGate($request)) {
+            return $blocked;
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'string', 'email:rfc', 'max:255'],
-            // Advisory strength meter never gates server-side; we require length only
-            // (+ breach-list check added in P4-E). No composition rules.
-            'password' => ['required', 'string', Password::min(8), 'max:1024'],
+            // Advisory strength meter never gates server-side; length + breach-list
+            // only. No composition rules.
+            'password' => ['required', 'string', Password::min(8), new NotBreachedPassword, 'max:1024'],
             'cc' => ['required', 'string', 'max:8'],
             'phone' => ['required', 'string', 'max:20'],
             'agree' => ['accepted'],
@@ -213,6 +219,10 @@ class StudentAuthController extends Controller
     /** POST /api/verify/resend — rotate the code on an existing flow. */
     public function resend(Request $request): JsonResponse
     {
+        if ($blocked = $this->turnstileGate($request)) {
+            return $blocked;
+        }
+
         $data = $request->validate(['flow_id' => ['required', 'uuid']]);
         $rec = EmailVerificationCode::where('flow_id', $data['flow_id'])->first();
 
@@ -241,6 +251,10 @@ class StudentAuthController extends Controller
      */
     public function forgotRequest(Request $request, PasswordResetService $resets): JsonResponse
     {
+        if ($blocked = $this->turnstileGate($request)) {
+            return $blocked;
+        }
+
         $data = $request->validate(['email' => ['required', 'string', 'email', 'max:255']]);
         $email = mb_strtolower(trim($data['email']));
         $user = User::where('email', $email)->first();
@@ -269,7 +283,7 @@ class StudentAuthController extends Controller
     {
         $data = $request->validate([
             'token' => ['required', 'string', 'max:128'],
-            'password' => ['required', 'string', 'confirmed', Password::min(8), 'max:1024'],
+            'password' => ['required', 'string', 'confirmed', Password::min(8), new NotBreachedPassword, 'max:1024'],
         ]);
 
         $result = $resets->consume($data['token'], $data['password'], $request->ip());
@@ -298,6 +312,17 @@ class StudentAuthController extends Controller
             'email_masked' => EmailMask::mask($rec->email),
             'purpose' => $rec->purpose,
         ])->header('Cache-Control', 'no-store');
+    }
+
+    /** Bot gate for unauthenticated writes — a 422 response, or null to proceed. */
+    private function turnstileGate(Request $request): ?JsonResponse
+    {
+        if (Turnstile::passes($request)) {
+            return null;
+        }
+
+        return response()->json(['message' => 'Verification failed. Please try again.'], 422)
+            ->header('Cache-Control', 'no-store');
     }
 
     /** Safe public projection of a student user (never the password/mfa fields). */
