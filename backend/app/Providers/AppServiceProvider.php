@@ -108,6 +108,12 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Phase 7 — public QR-referral resolver: per-slug + per-IP cap.
+        RateLimiter::for('referral-resolve', fn (Request $request) => [
+            Limit::perMinute(30)->by('ip:'.$request->ip()),
+            Limit::perMinute(20)->by('slug:'.$request->route('slug')),
+        ]);
+
         // Phase 3E — content policy on all 10 collection models (Filament enforces it).
         foreach ([
             \App\Models\Content\Event::class, \App\Models\Content\Blog::class,

@@ -146,7 +146,15 @@ Route::prefix('api')->group(function () {
         Route::get('partner/enquiries', [$enq, 'index']);
         Route::post('partner/enquiries', [$enq, 'store']);
         Route::get('partner/enquiries/documents/{doc}/download', [$enq, 'download']);
+
+        $ref = \App\Http\Controllers\Partner\PartnerReferralController::class;
+        Route::get('partner/referral-link', [$ref, 'show']);
+        Route::post('partner/referral-link/regenerate', [$ref, 'regenerate']);
     });
+
+    // PUBLIC referral resolver for the QR-registration landing (rate-limited).
+    Route::get('referral/{slug}', [\App\Http\Controllers\Partner\PublicReferralController::class, 'resolve'])
+        ->middleware('throttle:referral-resolve');
 
     // PUBLIC single-use enquiry-doc stream (opaque token = capability). Throttled.
     Route::get('partner/documents/dl/{token}', [\App\Http\Controllers\Partner\PartnerEnquiryController::class, 'stream'])

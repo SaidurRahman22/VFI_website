@@ -13,9 +13,11 @@ use App\Models\EmailVerificationCode;
 use App\Models\TermsAcceptance;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Models\Student\Student;
 use App\Rules\NotBreachedPassword;
 use App\Services\OtpService;
 use App\Services\PasswordResetService;
+use App\Services\ReferralAttribution;
 use App\Support\DummyHash;
 use App\Support\EmailMask;
 use App\Support\Turnstile;
@@ -36,8 +38,10 @@ class StudentAuthController extends Controller
     /** Version of the terms recorded against each acceptance. */
     private const TERMS_VERSION = '2026-08';
 
-    public function __construct(private readonly OtpService $otp)
-    {
+    public function __construct(
+        private readonly OtpService $otp,
+        private readonly ReferralAttribution $attribution,
+    ) {
     }
 
     /**
@@ -64,6 +68,9 @@ class StudentAuthController extends Controller
         $email = mb_strtolower(trim($data['email']));
         $phone = $this->composePhone($data['cc'], $data['phone']);
         $existing = User::where('email', $email)->first();
+        // A QR ref (optional) attributes a signup to an agency — only ever counted
+        // after email verification (docs §6). Invalid/revoked slugs are ignored.
+        $link = $this->attribution->resolveLink($request->input('ref'));
 
         if (! $existing) {
             $user = new User;
@@ -83,6 +90,7 @@ class StudentAuthController extends Controller
                 'user_id' => $user->id, 'document' => 'terms', 'version' => self::TERMS_VERSION,
                 'accepted_at' => now(), 'ip' => $request->ip(), 'user_agent' => $request->userAgent(),
             ]);
+            $this->attribution->capture($link, Student::resolveFor($user));
 
             $issued = $this->otp->issue($email, $user->id, 'signup_student', $request->ip());
             Mail::to($email)->send(new OtpMail($issued['code'], OtpService::TTL_MINUTES));
@@ -90,12 +98,22 @@ class StudentAuthController extends Controller
             $flow = $issued['record'];
         } elseif ($existing->status === UserStatus::PendingVerification) {
             // Same person, not yet verified → resume: re-issue the signup code.
+            $this->attribution->capture($link, Student::resolveFor($existing));
             $issued = $this->otp->issue($email, $existing->id, 'signup_student', $request->ip());
             Mail::to($email)->send(new OtpMail($issued['code'], OtpService::TTL_MINUTES));
             $flow = $issued['record'];
+        } elseif ($link && ($student = Student::resolveFor($existing))->agency_id === null
+            && $existing->status !== UserStatus::Suspended) {
+            // QR-only claim of an UNOWNED self-signup: send a real code so they
+            // re-prove email control, then attribution + ownership on verify.
+            $this->attribution->capture($link, $student);
+            $issued = $this->otp->issue($email, $existing->id, 'signup_student', $request->ip());
+            Mail::to($email)->send(new OtpMail($issued['code'], OtpService::TTL_MINUTES));
+            AuthEvent::record('student_qr_claim_started', ['user_id' => $existing->id, 'email' => $email, 'ip' => $request->ip()]);
+            $flow = $issued['record'];
         } else {
-            // Already a real account → decoy: identical response, but the owner
-            // gets a "you already have an account" note, not a usable code.
+            // Already a real account (owned or no valid ref) → decoy: identical
+            // response, but the owner gets a "you already have an account" note.
             $issued = $this->otp->issue($email, $existing->id, 'signup_student', $request->ip());
             Mail::to($email)->send(new AccountExistsMail);
             AuthEvent::record('register_existing_email', ['user_id' => $existing->id, 'email' => $email, 'ip' => $request->ip()]);
@@ -203,6 +221,11 @@ class StudentAuthController extends Controller
         ]);
 
         if ($result['status'] === 'ok') {
+            // Email verified → a pending QR referral now COUNTS (docs §6).
+            if ($rec?->user_id && ($user = User::find($rec->user_id))) {
+                $this->attribution->convertForUser($user);
+            }
+
             return response()->json(['ok' => true])->header('Cache-Control', 'no-store');
         }
 

@@ -106,15 +106,27 @@ class Student extends Model
     /** Resolve-or-create the portal student row for a user. Never takes a client id. */
     public static function resolveFor(User $user): self
     {
-        $student = static::firstOrNew(['user_id' => $user->id]);
-        if (! $student->exists) {
-            // A self-signup portal student is unowned; email is the collision key.
-            $student->forceFill(['email' => $user->email, 'source' => StudentSource::SelfSignup->value]);
-            $student->student_ref = 'VFI-PENDING-'.Str::random(12);   // unique placeholder
-            $student->save();
-            // Sequential display ref derived from the id (guessable by design; not an access key).
-            $student->forceFill(['student_ref' => sprintf('VFI-%d-%05d', now()->year, $student->id + 4870)])->save();
+        if ($student = static::where('user_id', $user->id)->first()) {
+            return $student;
         }
+
+        // Adopt an agency-registered lead with the same email (no login yet) so
+        // there is ONE row per person — the owning agency + any referral
+        // attribution survive the student later self-signing-up.
+        $email = mb_strtolower((string) $user->email);
+        if ($student = static::whereNull('user_id')->where('email', $email)->first()) {
+            $student->forceFill(['user_id' => $user->id])->save();
+
+            return $student;
+        }
+
+        $student = new Student;
+        $student->forceFill([
+            'user_id' => $user->id, 'email' => $email,
+            'source' => StudentSource::SelfSignup->value,     // unowned self-signup
+            'student_ref' => 'VFI-PENDING-'.Str::random(12),
+        ])->save();
+        $student->forceFill(['student_ref' => sprintf('VFI-%d-%05d', now()->year, $student->id + 4870)])->save();
 
         return $student;
     }
