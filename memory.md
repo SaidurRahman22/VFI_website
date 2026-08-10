@@ -19,7 +19,7 @@ Read this **before** exploring. It replaces a repo-wide scan. `README.md` is for
 
 ---
 
-## Backend integration (Phases 0–4 — LIVE)
+## Backend integration (Phases 0–5 — LIVE)
 
 A Laravel 13 backend (in `backend/`, PHP 8.4 + PostgreSQL 16 + Redis) is deployed and running at **http://103.14.23.151** (Ubuntu VPS, nginx same-origin). Git-sync: push to GitHub (`SaidurRahman22/VFI_website`) → the VPS auto-pulls + redeploys within ~1 min. Full backend docs in `docs/`.
 
@@ -50,7 +50,14 @@ A Laravel 13 backend (in `backend/`, PHP 8.4 + PostgreSQL 16 + Redis) is deploye
 - **Email delivery is DEFERRED** (no domain/Postmark yet): mail uses the `log` driver, so OTP/reset codes land in `storage/logs/laravel.log`. Flip to Postmark with `MAIL_MAILER=postmark`+token once a domain + DKIM exist. **Also set `APP_URL`** (empty on the VPS) then — it's the host in reset links.
 - Student auth routes live in `routes/web.php` (web group: session+CSRF always), like admin auth — NOT `routes/api.php` (which only sessions Origin-matched requests).
 
-**Security (mandatory, enforced at the model layer so any write path is covered):** blog body = plain text (`strip_tags`); `ppQuicklinks`/`ppDocs` URLs scheme-allow-listed (`App\Support\UrlGuard`); tenancy scope + RLS (Postgres); argon2id; append-only audit/auth logs; uploads validated by magic-bytes not extension; backup restore is snapshotted + owner-gated; OTP/reset tokens hashed at rest + single-use; enumeration-safe register/login/forgot; server-side rate limits. 119 backend tests passing.
+**Student portal (Phase 5 — LIVE):** `student-profile.html` + `student-tracking.html` now fetch real self-scoped data via `js/student-portal.js` → `window.VFIApi`. The pages **render nothing until `/api/me` resolves and redirect on 401**; profile is **no longer persisted to localStorage** (`readSaved`/`writeSaved` are inert); both pages carry `noindex`; Log out revokes the session server-side.
+- **Implicit-self, no IDOR:** every endpoint resolves the student from the session (`Student::resolveFor`), never a client id or `student_ref`. All under the `EnsureStudent` group in `routes/web.php`.
+- `GET /api/me` (guard identity) · `GET /api/me/profile` (one aggregate for the 7 cards, shaped to the frontend state) · `GET /api/me/completeness` (the exact 26-item scoring, server-side) · `PUT me/profile/personal|address`, `me/qualifications`, `me/test_scores`, `me/preferences` — whole-collection replace for the two lists, per-section optimistic concurrency (stale save → 409), every client FILTER rule re-run server-side. Intake options served by the backend. Profile email is a contact field — it never rewrites the sign-in identity.
+- **Documents (§3, the big one):** `document_types` (12, server-driven) + `student_documents` (adds `rejected`) + `document_files` + append-only `document_access_log`. `POST /api/me/documents/{type}` (must_verify-gated) = size cap + content-based mimetypes + magic-byte sniff → **server-UUID key on the private `documents` disk** (never the client filename) → **scan-gate** (`DocumentScanner`: built-in EICAR detection now, ClamAV INSTREAM via `DOCUMENTS_SCANNER=clamav` later) — unreadable until `scan_status=clean`; infected is quarantined + bytes dropped. `GET …/{type}/download` mints a **single-use, short-TTL opaque token**; `GET /api/documents/dl/{token}` streams once then 404s; every presign/download is logged. `DELETE` soft-deletes (blob+audit kept); verified docs are locked. sha256 idempotency avoids duplicate blobs. **Upload = commit** (no draft/save dance).
+- **Tracking (read-only; write side = Phase 9):** `GET /api/me/tracking` — journey + applications + timeline + actions; server-computes journey % `(done+0.5·now)/total`, per-status counts, and `late` from a real `due_at`. Empty students get the fixed 6-stage template. `StudentTrackingSeeder::seedFor($student)` for demo data.
+- **Deferrals honoured:** R2/S3 → private local `documents` disk (swap the disk to s3 via env, app code unchanged); ClamAV → built-in EICAR scanner (env-swap to clamd). Separate upload FPM pool not set up (single pool).
+
+**Security (mandatory, enforced at the model layer so any write path is covered):** blog body = plain text (`strip_tags`); `ppQuicklinks`/`ppDocs` URLs scheme-allow-listed (`App\Support\UrlGuard`); tenancy scope + RLS (Postgres); argon2id; append-only audit/auth logs; uploads validated by magic-bytes not extension; backup restore is snapshotted + owner-gated; OTP/reset tokens hashed at rest + single-use; enumeration-safe register/login/forgot; server-side rate limits; student endpoints implicit-self (no IDOR); documents scan-gated on a private disk with single-use signed downloads + append-only access log. 151 backend tests passing.
 
 **Local dev seed:** `php artisan content:import backend/database/content/demo.json` (the current marketing content, captured from the `store.js` SEED). Idempotent (upsert on `legacy_id`).
 
