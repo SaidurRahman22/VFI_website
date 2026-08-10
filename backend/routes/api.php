@@ -54,6 +54,8 @@ Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'store'
 | GET /api/content/bundle  → the full content object for window.VFI_BOOTSTRAP.
 */
 Route::get('/content/bundle', [\App\Http\Controllers\ContentBundleController::class, 'bundle']);
+// Classic-script bootstrap: sets window.VFI_BOOTSTRAP before store.js.
+Route::get('/content/bootstrap.js', [\App\Http\Controllers\ContentBundleController::class, 'bootstrap']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();
