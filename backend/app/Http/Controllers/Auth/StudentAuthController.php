@@ -7,12 +7,14 @@ use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Mail\AccountExistsMail;
 use App\Mail\OtpMail;
+use App\Mail\ResetMail;
 use App\Models\AuthEvent;
 use App\Models\EmailVerificationCode;
 use App\Models\TermsAcceptance;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\OtpService;
+use App\Services\PasswordResetService;
 use App\Support\DummyHash;
 use App\Support\EmailMask;
 use Illuminate\Http\JsonResponse;
@@ -230,6 +232,58 @@ class StudentAuthController extends Controller
 
         return response()->json(['ok' => true, 'email_masked' => EmailMask::mask($rec->email)])
             ->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * POST /api/password/reset — request (and resend). Fire-and-forget and
+     * enumeration-safe: ALWAYS 202 with the same body whether or not the address
+     * is on file. A real student gets a link; anyone else gets silence.
+     */
+    public function forgotRequest(Request $request, PasswordResetService $resets): JsonResponse
+    {
+        $data = $request->validate(['email' => ['required', 'string', 'email', 'max:255']]);
+        $email = mb_strtolower(trim($data['email']));
+        $user = User::where('email', $email)->first();
+
+        if ($user && $user->hasRole(Role::Student) && $user->status->canStudentSignIn()) {
+            $issued = $resets->request($user, $request->ip());
+            $url = rtrim((string) config('app.url'), '/').'/student-reset.html?token='.$issued['token'];
+            Mail::to($email)->send(new ResetMail($url, PasswordResetService::TTL_MINUTES));
+            AuthEvent::record('password_reset_requested', ['user_id' => $user->id, 'email' => $email, 'ip' => $request->ip()]);
+        } else {
+            // Comparable work on the empty branch (blunts timing enumeration).
+            hash('sha256', random_bytes(32));
+            AuthEvent::record('password_reset_no_account', ['email' => $email, 'ip' => $request->ip()]);
+        }
+
+        return response()->json(
+            ['message' => 'If an account exists for that address, a reset link is on its way.'], 202
+        )->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * POST /api/password/reset/submit — consume {token, password}. Enforces the
+     * password policy server-side; a successful reset revokes every session.
+     */
+    public function resetSubmit(Request $request, PasswordResetService $resets): JsonResponse
+    {
+        $data = $request->validate([
+            'token' => ['required', 'string', 'max:128'],
+            'password' => ['required', 'string', 'confirmed', Password::min(8), 'max:1024'],
+        ]);
+
+        $result = $resets->consume($data['token'], $data['password'], $request->ip());
+
+        if ($result['status'] === 'ok') {
+            return response()->json(['ok' => true, 'message' => 'Your password has been reset. Please sign in.'])
+                ->header('Cache-Control', 'no-store');
+        }
+
+        $message = $result['status'] === 'expired'
+            ? 'This reset link has expired. Request a new one.'
+            : 'This reset link is invalid or has already been used.';
+
+        return response()->json(['ok' => false, 'message' => $message], 422)->header('Cache-Control', 'no-store');
     }
 
     /** GET /api/verify/context?flow_id= — masked email for display (no PII in URL). */

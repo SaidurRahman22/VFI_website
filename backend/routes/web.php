@@ -67,6 +67,11 @@ Route::prefix('api')->group(function () {
 
     Route::post('login', [$sa, 'login'])->middleware('throttle:student-login');
 
+    // Password reset (P4-D): request is enumeration-safe + throttled; submit
+    // consumes the single-use token and revokes all sessions.
+    Route::post('password/reset', [$sa, 'forgotRequest'])->middleware('throttle:password-forgot');
+    Route::post('password/reset/submit', [$sa, 'resetSubmit'])->middleware('throttle:otp-verify');
+
     Route::middleware(['auth:web', \App\Http\Middleware\EnsureStudent::class])->group(function () use ($sa) {
         Route::get('student/me', [$sa, 'me']);
         Route::post('student/logout', [$sa, 'logout']);
