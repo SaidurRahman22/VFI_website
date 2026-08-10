@@ -13,8 +13,31 @@ Read this **before** exploring. It replaces a repo-wide scan. `README.md` is for
 | **Vanilla HTML/CSS/JS only** | User requirement, stated repeatedly. No React/Tailwind/Bootstrap/jQuery. |
 | **No build step, no npm, no CDN** | Open `index.html` and it works. Never add `package.json` to the repo root. |
 | **ES5 style in `js/`** | `var`, `function`, string concat. No `const`/`let`, arrow functions, or template literals. Match surrounding code. |
-| **No backend** | Content lives in `localStorage` + `IndexedDB`. Forms never submit anywhere. |
-| **Serve over HTTP to test** | `python -m http.server 8777`. Browsers block storage on `file://`. |
+| **Frontend stays vanilla / no-build** | The 52 pages remain plain HTML/CSS/ES5 — no framework, no npm, no build. Still a hard rule. |
+| **Backend is a SEPARATE Laravel app** | A real backend now exists in `backend/` (Phases 0–3, deployed & live) — but it never changes the frontend's nature; pages get data via an injected script seam only. |
+| **Serve over HTTP to test** | Frontend-only: `python -m http.server 8777`. Full stack (same-origin API): the VPS, or XAMPP :8080 proxy locally. |
+
+---
+
+## Backend integration (Phases 0–3 — LIVE)
+
+A Laravel 13 backend (in `backend/`, PHP 8.4 + PostgreSQL 16 + Redis) is deployed and running at **http://103.14.23.151** (Ubuntu VPS, nginx same-origin). Git-sync: push to GitHub (`SaidurRahman22/VFI_website`) → the VPS auto-pulls + redeploys within ~1 min. Full backend docs in `docs/`.
+
+**How the frontend now gets data (the seam — minimal page changes):**
+- `js/api.js` (new, ES5) — the single HTTP helper (`window.VFIApi`): same-origin, `credentials:include`, CSRF double-submit, 401 redirect.
+- `js/store.js` — unchanged API (~36 names) but now reads `window.VFI_BOOTSTRAP` first, then localStorage, then the baked SEED (graceful fallback if the API is down).
+- **`<script src="/api/content/bootstrap.js">`** is injected before `store.js` on the 51 content pages. It sets `window.VFI_BOOTSTRAP = {…}` (the DB content) synchronously, so `store.js`'s sync accessors serve real DB data. Pages stay static/CDN-cacheable.
+- **Contact form** (`contact.html` → `js/main.js`): now POSTs to `/api/contact` (persists to a staff inbox); no longer discards leads.
+
+**Backend surfaces:**
+- `GET /api/content/bundle` (+ `/bootstrap.js`) — public content, faithful `""`/`[]` fall-through, ETag-cached.
+- `POST /api/contact` — rate-limited, validated, URL-sanitised lead intake.
+- **Admin CMS = Filament at `/manage`** (NOT the legacy `admin.html`, which is now auth-gated/superseded). Behind session auth + **mandatory TOTP** (P1). Edits the same content the bundle serves. Every write hits an append-only `content_audit_log`.
+- Superadmin: `superadmin@vfi-fc.com` (password seeded via env; enroll TOTP on first login).
+
+**Security (mandatory, enforced at the model layer so any write path is covered):** blog body = plain text (`strip_tags`); `ppQuicklinks`/`ppDocs` URLs scheme-allow-listed (`App\Support\UrlGuard`); tenancy scope + RLS (Postgres); argon2id; append-only audit/auth logs. 52+ backend tests.
+
+**Local dev seed:** `php artisan content:import backend/database/content/demo.json` (the current marketing content, captured from the `store.js` SEED). Idempotent (upsert on `legacy_id`).
 
 ---
 
