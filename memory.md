@@ -19,7 +19,7 @@ Read this **before** exploring. It replaces a repo-wide scan. `README.md` is for
 
 ---
 
-## Backend integration (Phases 0–3 — LIVE)
+## Backend integration (Phases 0–4 — LIVE)
 
 A Laravel 13 backend (in `backend/`, PHP 8.4 + PostgreSQL 16 + Redis) is deployed and running at **http://103.14.23.151** (Ubuntu VPS, nginx same-origin). Git-sync: push to GitHub (`SaidurRahman22/VFI_website`) → the VPS auto-pulls + redeploys within ~1 min. Full backend docs in `docs/`.
 
@@ -41,7 +41,16 @@ A Laravel 13 backend (in `backend/`, PHP 8.4 + PostgreSQL 16 + Redis) is deploye
 - Role split: `content_editor` edits content/media; `owner` (=superadmin) also does page-visibility, backup, hard-delete. `ContentPolicy` on all 10 collections.
 - Superadmin: `superadmin@vfi-fc.com` (password seeded via env; enroll TOTP on first login).
 
-**Security (mandatory, enforced at the model layer so any write path is covered):** blog body = plain text (`strip_tags`); `ppQuicklinks`/`ppDocs` URLs scheme-allow-listed (`App\Support\UrlGuard`); tenancy scope + RLS (Postgres); argon2id; append-only audit/auth logs; uploads validated by magic-bytes not extension; backup restore is snapshotted + owner-gated. 79 backend tests passing.
+**Student auth (Phase 4 — LIVE):** the student pages (`login.html`, `student-verify.html`, `student-forgot.html`, and the NEW `student-reset.html`) now post to the backend through `window.VFIApi` (same-origin cookie session + CSRF). No more demo/fake flows.
+- `POST /api/register` (name/email/password/cc+phone/agree) → creates a `pending` student, records `terms_acceptances`, returns an opaque **`flow_id`** (the email never rides in a URL). Enumeration-safe: identical response for new / unverified-resume / existing accounts.
+- `POST /api/verify {flow_id,code}` + `/api/verify/resend {flow_id}` + `GET /api/verify/context` (masked email for display). OTP = CSPRNG 6-digit, argon2id-hashed, 10-min TTL, single-use, 5-attempt cap then destroyed, resend supersedes. A wrong code is rejected (killed the old "any six digits pass").
+- `POST /api/login {email,password,remember}` → student session cookie; ONE generic `Invalid credentials.` for every failure (constant-time). Unverified may sign in but is flagged `must_verify` (upload/submit gating lands in P5). `GET /api/student/me`, `POST /api/student/logout` (scope-gated by `EnsureStudent`).
+- `POST /api/password/reset {email}` (always 202, enumeration-safe) + `POST /api/password/reset/submit {token,password}`. Token = 32-byte CSPRNG, sha256-hashed, 45-min, single-use, supersede-on-new; a successful reset REVOKES ALL sessions.
+- Hardening: per-email+per-IP rate limits on every auth write; HIBP breach-list check on register+reset (fail-open, `AUTH_BREACH_CHECK`); Cloudflare Turnstile on register/forgot/resend (`TURNSTILE_ENABLED`, off until keys exist).
+- **Email delivery is DEFERRED** (no domain/Postmark yet): mail uses the `log` driver, so OTP/reset codes land in `storage/logs/laravel.log`. Flip to Postmark with `MAIL_MAILER=postmark`+token once a domain + DKIM exist. **Also set `APP_URL`** (empty on the VPS) then — it's the host in reset links.
+- Student auth routes live in `routes/web.php` (web group: session+CSRF always), like admin auth — NOT `routes/api.php` (which only sessions Origin-matched requests).
+
+**Security (mandatory, enforced at the model layer so any write path is covered):** blog body = plain text (`strip_tags`); `ppQuicklinks`/`ppDocs` URLs scheme-allow-listed (`App\Support\UrlGuard`); tenancy scope + RLS (Postgres); argon2id; append-only audit/auth logs; uploads validated by magic-bytes not extension; backup restore is snapshotted + owner-gated; OTP/reset tokens hashed at rest + single-use; enumeration-safe register/login/forgot; server-side rate limits. 119 backend tests passing.
 
 **Local dev seed:** `php artisan content:import backend/database/content/demo.json` (the current marketing content, captured from the `store.js` SEED). Idempotent (upsert on `legacy_id`).
 
