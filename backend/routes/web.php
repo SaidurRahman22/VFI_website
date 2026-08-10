@@ -37,5 +37,9 @@ Route::prefix('api/admin')->group(function () {
         // Phase 3D — page-visibility (owner-only, allow-listed, audited).
         Route::get('pages', [\App\Http\Controllers\Admin\AdminPageController::class, 'index']);
         Route::put('pages/{file}', [\App\Http\Controllers\Admin\AdminPageController::class, 'toggle']);
+
+        // Phase 3F — image upload + media-slot registry (content_editor/owner).
+        Route::post('media', [\App\Http\Controllers\Admin\AdminMediaController::class, 'upload']);
+        Route::put('media/slot/{key}', [\App\Http\Controllers\Admin\AdminMediaController::class, 'setSlot']);
     });
 });
