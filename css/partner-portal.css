@@ -1,45 +1,45 @@
 /* ==========================================================================
    partner-portal.css — the VFI Partner console (post-login area)
 
-   A self-contained app shell: fixed teal top bar, collapsible white sidebar,
-   light work surface. EVERY class here is prefixed `pp-`, so no rule in the
-   public site's style.css can reach these pages and vice-versa — the same
-   deliberate isolation the sa-/pa- auth pages use.
+   A self-contained app shell: fixed navy/blue top bar, collapsible white
+   sidebar, light work surface. EVERY class here is prefixed `pp-`, so no rule
+   in the public site's style.css can reach these pages and vice-versa — the
+   same deliberate isolation the sa-/pa- auth pages use.
 
-   Palette continues the VFI Partner sign-in identity (teal + emerald), so a
-   partner moves from vfi-partner-login.html into this console without the
-   brand changing under them. Light theme only: this is an application surface,
-   not a marketing page.
+   Palette continues the VFI Partner sign-in identity (the logo's royal blue +
+   crimson), so a partner moves from vfi-partner-login.html into this console
+   without the brand changing under them. Light theme only: this is an
+   application surface, not a marketing page.
    ========================================================================== */
 
 :root {
   /* ---- brand (shared with the partner sign-in) ---- */
-  --pp-navy: #1a2f5c;          /* deep teal ground for the top bar */
-  --pp-navy-deep: #12224a;
-  --pp-teal: #2f62a8;          /* primary */
+  --pp-navy: #152440;          /* deep navy ground for the top bar (logo anchor) */
+  --pp-navy-deep: #101d33;
+  --pp-teal: #2f62a8;          /* primary, logo royal blue */
   --pp-teal-dark: #234f88;
   --pp-teal-soft: #eaf1fb;
-  --pp-emerald: #a51e46;
-  --pp-emerald-lit: #e0668a;   /* accent */
-  --pp-aqua: #196fbb;          /* tertiary */
+  --pp-emerald: #b81e4e;       /* accent, logo crimson */
+  --pp-emerald-lit: #e2779a;   /* accent (light) */
+  --pp-aqua: #5b4a9e;          /* tertiary, logo blue-violet mid */
 
   /* ---- ink & surfaces ---- */
-  --pp-ink: #0f2a2e;           /* headings, 12:1+ on white */
-  --pp-slate: #33454b;         /* body text */
-  --pp-muted: #5a6f75;         /* secondary — 4.9:1 on white */
-  --pp-faint: #8aa0a6;         /* hints only, never load-bearing text */
-  --pp-line: #e4edef;
-  --pp-line-2: #eef3f4;
-  --pp-app: #eef3f5;           /* work surface behind cards */
+  --pp-ink: #141c26;           /* headings, 13:1+ on white */
+  --pp-slate: #35404f;         /* body text */
+  --pp-muted: #64647a;         /* secondary — 5.1:1 on white */
+  --pp-faint: #8a8a9b;         /* hints only, never load-bearing text */
+  --pp-line: #e7e9f0;
+  --pp-line-2: #eef0f6;
+  --pp-app: #f6f7fb;           /* work surface behind cards */
   --pp-card: #ffffff;
-  --pp-card-2: #f7fafb;
+  --pp-card-2: #f7f8fc;
 
-  /* ---- status ---- */
+  /* ---- status (semantic, not brand) ---- */
   --pp-ok: #047857;
   --pp-warn: #b45309;
   --pp-danger: #dc2626;
   --pp-info: #2f62a8;
-  --pp-gold: #d4a017;
+  --pp-gold: #f5a623;
 
   /* ---- metrics ---- */
   --pp-side-w: 244px;
@@ -128,7 +128,7 @@ body.pp button { font-family: inherit; }
 .pp-iconbtn:active { transform: scale(.94); }
 .pp-iconbtn__dot {
   position: absolute; top: 8px; right: 9px; min-width: 16px; height: 16px; padding: 0 4px;
-  border-radius: 8px; background: var(--pp-emerald-lit); color: #06312a; font-size: 10px; font-weight: 700;
+  border-radius: 8px; background: var(--pp-emerald); color: #fff; font-size: 10px; font-weight: 700;
   display: grid; place-items: center; border: 2px solid var(--pp-teal-dark);
 }
 
@@ -140,7 +140,7 @@ body.pp button { font-family: inherit; }
 .pp-user:hover { background: rgba(255,255,255,.22); }
 .pp-user__av {
   width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex: none;
-  background: linear-gradient(140deg, var(--pp-emerald-lit), var(--pp-teal)); color: #04312a; font-weight: 700; font-size: 13px;
+  background: linear-gradient(140deg, var(--pp-emerald), var(--pp-teal)); color: #fff; font-weight: 700; font-size: 13px;
 }
 .pp-user__name { font-family: var(--pp-display); font-weight: 600; font-size: 14.5px; }
 .pp-user .ic { transition: transform .2s var(--pp-ease); }
@@ -274,7 +274,7 @@ body.pp-collapsed .pp-nav__sub { display: none; }
 .pp-btn--ghost { background: #fff; border-color: var(--pp-line); color: var(--pp-ink); box-shadow: var(--pp-shadow-sm); }
 .pp-btn--ghost:hover { border-color: var(--pp-teal); color: var(--pp-teal-dark); }
 .pp-btn--soft { background: var(--pp-teal-soft); color: var(--pp-teal-dark); }
-.pp-btn--soft:hover { background: #d3f5ee; color: var(--pp-teal-dark); }
+.pp-btn--soft:hover { background: #dce9fb; color: var(--pp-teal-dark); }
 .pp-btn--wa { background: #fff; border-color: #cfeede; color: #128c4a; }
 .pp-btn--wa:hover { border-color: #25d366; color: #0e7a3f; }
 .pp-btn--wa .ic { color: #25d366; }

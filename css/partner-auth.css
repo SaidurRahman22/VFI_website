@@ -7,10 +7,9 @@
    with anything in the main stylesheet. Nothing here restyles a
    pre-existing class.
 
-   Palette: a deep teal ground (#1a2f5c) over a teal-600 primary
-   (#2f62a8), with an emerald accent (#e0668a) carrying the highlights.
-   Deliberately its own cool family — the student sign-in page owns the
-   indigo/blue/cyan range, and these two must not read as one design.
+   Palette: the VFI logo — a royal-blue primary (#2f62a8) over a deep
+   navy ground (#152440), with the logo's crimson (#b81e4e) carrying the
+   accents. Blue → violet → crimson is the logo's own gradient.
 
    Motion: everything animated below is switched off wholesale in the
    prefers-reduced-motion block at the bottom of the file.
@@ -20,26 +19,26 @@
    1. TOKENS
    --------------------------------------------------------------------- */
 .pa-body {
-  --pa-navy: #1a2f5c;          /* deep teal ground */
-  --pa-navy-deep: #12224a;
-  --pa-navy-ink: #0c1836;
-  --pa-blue: #2f62a8;          /* primary, teal-600 */
+  --pa-navy: #152440;          /* deep navy ground (logo anchor) */
+  --pa-navy-deep: #101d33;
+  --pa-navy-ink: #0a1526;
+  --pa-blue: #2f62a8;          /* primary, logo royal blue */
   /* The text-safe interactive colour. Deepened from #0b7d73, which was
      exactly 5.0:1 on white and left no headroom at all: link text in
-     .pa-alt sits inside the primary button's teal drop shadow, where the
+     .pa-alt sits inside the primary button's blue drop shadow, where the
      old value measured 3.3:1. #234f88 is 7.0:1 on white and still clears
      4.5:1 at the darkest point of that wash. */
   --pa-blue-dark: #234f88;
   --pa-blue-soft: #eaf1fb;
-  --pa-cyan: #e0668a;          /* accent, emerald */
-  --pa-cyan-lit: #eba7bd;
-  --pa-violet: #196fbb;        /* tertiary, deep aqua */
+  --pa-cyan: #b81e4e;          /* accent, logo crimson */
+  --pa-cyan-lit: #e2779a;
+  --pa-violet: #5b4a9e;        /* tertiary, logo blue-violet mid */
 
-  --pa-ink: #0f2a2e;
-  --pa-text: #35555a;
-  --pa-muted: #4f7075;         /* 4.7:1 on --pa-page, 5.4:1 on white */
-  --pa-faint: #74949a;         /* icons and rules only, 3.1:1 — never text */
-  --pa-line: #d9e4f4;
+  --pa-ink: #141c26;
+  --pa-text: #35404f;
+  --pa-muted: #64647a;         /* 5.0:1 on --pa-page, 5.8:1 on white */
+  --pa-faint: #8a8a9b;         /* icons and rules only — never text */
+  --pa-line: #e1e6f1;
   --pa-fill: #f5f8fe;
   --pa-page: #eef3fb;
   --pa-card: #ffffff;
@@ -192,7 +191,7 @@
   display: block;
   background: linear-gradient(100deg,
     transparent 0%, rgba(255, 255, 255, .09) 40%,
-    rgba(110, 231, 183, .18) 52%, rgba(255, 255, 255, .05) 62%, transparent 100%);
+    rgba(226, 119, 154, .18) 52%, rgba(255, 255, 255, .05) 62%, transparent 100%);
   animation: pa-beam 13s ease-in-out infinite;
 }
 @keyframes pa-beam {
@@ -231,7 +230,7 @@
   width: 3px; height: 3px;
   border-radius: 50%;
   background: rgba(206, 248, 231, .5);
-  box-shadow: 0 0 8px rgba(110, 231, 183, .38);
+  box-shadow: 0 0 8px rgba(226, 119, 154, .38);
   opacity: 0;
   animation: pa-dust 17s linear infinite;
 }
@@ -307,10 +306,10 @@
   width: max-content;
   font-family: var(--pa-display);
   font-size: 11.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
-  color: #a7f3d0;
+  color: #f3b6c8;
   padding: 7px 15px 7px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(110, 231, 183, .34);
+  border: 1px solid rgba(226, 119, 154, .34);
   background: rgba(6, 33, 42, .62);
 }
 .pa-eyebrow__dot {
@@ -466,7 +465,7 @@
   transition: transform .3s var(--pa-ease-back), border-color .3s var(--pa-ease);
 }
 .pa-perk__ic .pa-i { width: 18px; height: 18px; }
-.pa-perk:hover .pa-perk__ic { transform: translateY(-3px) scale(1.06); border-color: rgba(110, 231, 183, .5); }
+.pa-perk:hover .pa-perk__ic { transform: translateY(-3px) scale(1.06); border-color: rgba(226, 119, 154, .5); }
 .pa-perk__txt { display: flex; flex-direction: column; gap: 2px; }
 .pa-perk__txt b { font-size: 14.5px; font-weight: 600; color: #fff; }
 /* .62 left this line dependent on a near-perfect background: it has no
@@ -500,7 +499,7 @@
 }
 
 .pa-brand__help { font-size: 13px; color: rgba(255, 255, 255, .85); }
-.pa-brand__help a { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(110, 231, 183, .6); }
+.pa-brand__help a { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(226, 119, 154, .6); }
 .pa-brand__help a:hover { color: var(--pa-cyan-lit); }
 
 /* ---------------------------------------------------------------------
@@ -723,7 +722,7 @@
   appearance: none;
   transition: border-color .22s var(--pa-ease), background .22s var(--pa-ease), box-shadow .28s var(--pa-ease);
 }
-.pa-field__input:hover { border-color: #b9d5d1; }
+.pa-field__input:hover { border-color: #c3d3ea; }
 .pa-field__input:focus {
   border-color: var(--pa-blue);
   background: #fff;
@@ -889,7 +888,7 @@
   background: var(--pa-fill);
   transition: border-color .22s var(--pa-ease), background .22s var(--pa-ease);
 }
-.pa-field--check:hover { border-color: #b9d5d1; }
+.pa-field--check:hover { border-color: #c3d3ea; }
 .pa-field--check:focus-within { border-color: var(--pa-blue); background: #fff; }
 .pa-field--check.pa-bad { border-color: var(--pa-danger); background: var(--pa-danger-bg); }
 
@@ -954,7 +953,7 @@
   border: 1.5px solid var(--pa-line);
   padding: 13.5px 18px;
 }
-.pa-btn--ghost:hover { background: var(--pa-fill); border-color: #b9d5d1; transform: translateY(-2px); }
+.pa-btn--ghost:hover { background: var(--pa-fill); border-color: #c3d3ea; transform: translateY(-2px); }
 .pa-btn--ghost .pa-i { width: 17px; height: 17px; transition: transform .25s var(--pa-ease); }
 .pa-btn--ghost:hover .pa-i { transform: translateX(-3px); }
 
@@ -1243,7 +1242,7 @@
   background: var(--pa-fill);
   transition: border-color .22s var(--pa-ease), background .22s var(--pa-ease), box-shadow .28s var(--pa-ease);
 }
-.pa-tel:hover { border-color: #b9d5d1; }
+.pa-tel:hover { border-color: #c3d3ea; }
 .pa-tel:focus-within {
   border-color: var(--pa-blue);
   background: #fff;
@@ -1348,7 +1347,7 @@
   transition: border-color .2s var(--pa-ease), background .2s var(--pa-ease),
               box-shadow .26s var(--pa-ease), transform .26s var(--pa-ease-back);
 }
-.pa-otp__in:hover { border-color: #b9d5d1; }
+.pa-otp__in:hover { border-color: #c3d3ea; }
 .pa-otp__in.pa-filled { border-color: rgba(47,98,168, .55); background: #fff; }
 .pa-otp__in:focus {
   border-color: var(--pa-blue);
