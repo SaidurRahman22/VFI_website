@@ -2,10 +2,11 @@
    VFI — student portal behaviour
    Powers student-profile.html and student-tracking.html.
 
-   Front-end demo only: there is no backend. Profile edits live in
-   localStorage under "vfi_student_profile" (this file never touches the
-   VFI content store's keys). File inputs record a filename and nothing
-   else — no bytes are read, stored or uploaded.
+   LIVE (Phase 5): all data is self-scoped and comes from the Laravel backend
+   through window.VFIApi (same-origin cookie session + CSRF). The pages fetch on
+   load and redirect on 401 — they render nothing until authenticated. Documents
+   are uploaded as real bytes to private, virus-scanned storage; profile data is
+   NEVER written to localStorage. Endpoints are implicit-self (no id in any URL).
 
    ES5 only: var / function / string concat, to match the rest of js/.
    ===================================================================== */
@@ -162,17 +163,11 @@
   /* =================================================================
      3. Storage — our own key, never the VFI content store's
      ================================================================= */
-  function readSaved() {
-    var raw = null;
-    try { raw = window.localStorage.getItem(STORE_KEY); } catch (e) { return null; }
-    if (!raw) return null;
-    try { return JSON.parse(raw); } catch (e2) { return null; }
-  }
-
-  function writeSaved(obj) {
-    try { window.localStorage.setItem(STORE_KEY, JSON.stringify(obj)); return true; }
-    catch (e) { return false; }
-  }
+  /* Phase 5: profile data now comes from the API per session and is NEVER
+     written to disk (clear-text profile on a shared machine was a real risk).
+     These are kept as inert no-ops so any stray call is harmless. */
+  function readSaved() { return null; }
+  function writeSaved() { return false; }
 
   /* =================================================================
      4. Sample data (fictional student, no backend behind any of it)
@@ -316,18 +311,25 @@
   /* =================================================================
      7. PROFILE PAGE
      ================================================================= */
-  function initProfile() {
-    var state = mergeInto(clone(SEED), readSaved());
-    /* a hand-edited localStorage value must never be able to throw */
-    if (!state.personal) state.personal = clone(SEED.personal);
-    if (!state.address) state.address = clone(SEED.address);
-    if (Object.prototype.toString.call(state.academic) !== "[object Array]") state.academic = [];
-    if (Object.prototype.toString.call(state.tests) !== "[object Array]") state.tests = [];
-    if (!state.prefs) state.prefs = clone(SEED.prefs);
+  function initProfile(BOOT) {
+    /* State comes straight from GET /api/me/profile (already shaped to match). */
+    var state = {
+      student: {
+        name: BOOT.student.name,
+        sid: BOOT.student.student_ref,
+        initials: BOOT.student.initials
+      },
+      personal: BOOT.personal || {},
+      address: BOOT.address || {},
+      academic: BOOT.academic || [],
+      tests: BOOT.tests || [],
+      prefs: BOOT.prefs || { countries: [] },
+      documents: BOOT.documents || {},
+      visaDocuments: BOOT.visaDocuments || {}
+    };
     if (Object.prototype.toString.call(state.prefs.countries) !== "[object Array]") state.prefs.countries = [];
-    if (!state.documents) state.documents = clone(SEED.documents);
-    if (!state.visaDocuments) state.visaDocuments = clone(SEED.visaDocuments);
-    if (!state.student) state.student = clone(SEED.student);
+    /* per-section optimistic-concurrency tokens (sent back on save) */
+    var versions = BOOT.versions || {};
 
     var docDraft = clone(state.documents);
     var visaDraft = clone(state.visaDocuments);
@@ -559,9 +561,12 @@
         '<div class="sp-doc__file">' +
           '<label for="spDoc-' + def.id + '">Attach ' + esc(def.name.toLowerCase()) + '</label>' +
           '<div class="sp-filerow">' +
-            '<input class="sp-file" type="file" id="spDoc-' + def.id + '" data-sp-doc="' + def.id + '" />' +
+            '<input class="sp-file" type="file" id="spDoc-' + def.id + '" data-sp-doc="' + def.id + '" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" />' +
             (filled(rec.file)
-              ? '<button class="sp-iconbtn" type="button" data-sp-docclear="' + def.id + '">' + icon("i-x", "ic ic--sm") + ' Clear</button>'
+              ? '<button class="sp-iconbtn" type="button" data-sp-docdl="' + def.id + '">' + icon("i-doc", "ic ic--sm") + ' Download</button>' +
+                (rec.status === "verified"
+                  ? ''
+                  : '<button class="sp-iconbtn" type="button" data-sp-docclear="' + def.id + '">' + icon("i-x", "ic ic--sm") + ' Clear</button>')
               : '') +
           '</div>' +
         '</div>' +
@@ -594,9 +599,30 @@
     function paintDocs() { paintPack(PACK_DOCS); }
     function paintVisa() { paintPack(PACK_VISA); }
 
+    /* Convert the server checklist arrays back into the {key:{status,file}} maps
+       the UI renders from, then repaint both packs + the meter. */
+    function mapChecklist(arr) {
+      var m = {};
+      (arr || []).forEach(function (it) {
+        m[it.key] = { status: it.status, file: it.file ? it.file.name : "" };
+      });
+      return m;
+    }
+    function applyChecklist(fresh) {
+      state.documents = mapChecklist(fresh.application);
+      state.visaDocuments = mapChecklist(fresh.visa);
+      docDraft = clone(state.documents);
+      visaDraft = clone(state.visaDocuments);
+      paintDocs();
+      paintVisa();
+      paintMeter();   /* application docs feed the completeness meter */
+    }
+
     function wirePack(g) {
       var list = $("#" + g.listId);
       if (!list) return;
+
+      /* real multipart upload — the file IS the commit (docs §3.1–3.5) */
       list.addEventListener("change", function (e) {
         var el = e.target;
         if (!el || !el.getAttribute) return;
@@ -604,16 +630,51 @@
         if (!id) return;
         var f = el.files && el.files[0];
         if (!f) return;
-        /* filename only — the file itself is never read or sent anywhere */
-        g.draft()[id] = { status: "uploaded", file: String(f.name).slice(0, 120) };
-        paintPack(g);
-        toast("Attached " + f.name + " — remember to save.");
+
+        var fd = new FormData();
+        fd.append("file", f);
+        el.disabled = true;
+        toast("Uploading " + f.name + "…");
+
+        window.VFIApi.post("/api/me/documents/" + encodeURIComponent(id), fd, {}).then(function (fresh) {
+          applyChecklist(fresh);
+          toast(f.name + " uploaded and scanned.");
+        }).catch(function (err) {
+          el.disabled = false; el.value = "";
+          var msg = (err && err.body && err.body.message) ||
+            (err && err.status === 403 ? "Please verify your email address before uploading." :
+             "We couldn't upload that file. Please try again.");
+          if (!err || err.status !== 401) toast(msg);
+        });
       });
+
       list.addEventListener("click", function (e) {
-        var btn = e.target && e.target.closest ? e.target.closest("[data-sp-docclear]") : null;
-        if (!btn) return;
-        g.draft()[btn.getAttribute("data-sp-docclear")] = { status: "missing", file: "" };
-        paintPack(g);
+        var t = e.target && e.target.closest ? e.target : null;
+        if (!t) return;
+
+        var clr = t.closest("[data-sp-docclear]");
+        if (clr) {
+          var cid = clr.getAttribute("data-sp-docclear");
+          window.VFIApi.del("/api/me/documents/" + encodeURIComponent(cid), {}).then(function (fresh) {
+            applyChecklist(fresh);
+            toast("Removed.");
+          }).catch(function (err) {
+            if (!err || err.status !== 401) toast((err && err.body && err.body.message) || "We couldn't remove that. Please try again.");
+          });
+          return;
+        }
+
+        var dl = t.closest("[data-sp-docdl]");
+        if (dl) {
+          var did = dl.getAttribute("data-sp-docdl");
+          window.VFIApi.get("/api/me/documents/" + encodeURIComponent(did) + "/download", {}).then(function (data) {
+            var a = document.createElement("a");
+            a.href = data.url; a.rel = "noopener";
+            document.body.appendChild(a); a.click(); a.remove();
+          }).catch(function (err) {
+            if (!err || err.status !== 401) toast("That document isn't available to download right now.");
+          });
+        }
       });
     }
     wirePack(PACK_DOCS);
@@ -691,13 +752,90 @@
       return bad;
     }
 
-    /* ---------- save / cancel ---------- */
-    function persist(form, message) {
-      var ok = writeSaved(state);
+    /* ---------- save (per-section PUT to the API) ---------- */
+
+    /* Adopt a fresh aggregate from the server (authoritative) without clobbering
+       unsaved edits in the OTHER cards: update state + versions, repaint the
+       global meter/identity + doc packs, and only repaint an input section when
+       explicitly asked (used on a 409 conflict). */
+    function applyAggregate(p, repaintKey) {
+      state.student = { name: p.student.name, sid: p.student.student_ref, initials: p.student.initials };
+      state.personal = p.personal || state.personal;
+      state.address = p.address || state.address;
+      state.academic = p.academic || state.academic;
+      state.tests = p.tests || state.tests;
+      state.prefs = p.prefs || state.prefs;
+      state.documents = p.documents || state.documents;
+      state.visaDocuments = p.visaDocuments || state.visaDocuments;
+      versions = p.versions || versions;
+      docDraft = clone(state.documents);
+      visaDraft = clone(state.visaDocuments);
       paintIdentity();
       paintMeter();
-      flashSaved(form, ok ? "Saved" : "Not saved");
-      toast(ok ? message : "This browser is blocking local storage, so nothing was kept.");
+      paintDocs();
+      paintVisa();
+      if (repaintKey) repaintSection(repaintKey);
+    }
+
+    function repaintSection(key) {
+      if (key === "personal") paintPersonal();
+      else if (key === "address") paintAddress();
+      else if (key === "academic") paintAcademic();
+      else if (key === "tests") paintTests();
+      else if (key === "prefs") paintPrefs();
+    }
+
+    /* Map a card key → {endpoint, body}. Documents commit at upload time, so
+       their "Save" button degrades to a confirmation (docs §3.5). */
+    function sectionRequest(key) {
+      if (key === "personal") {
+        var pn = state.personal;
+        return { ep: "/api/me/profile/personal", body: {
+          version: versions.personal, first: pn.first, middle: pn.middle || "", last: pn.last,
+          dob: pn.dob, nationality: pn.nationality, cc: pn.cc, phone: pn.phone, email: pn.email } };
+      }
+      if (key === "address") {
+        var ad = state.address;
+        return { ep: "/api/me/profile/address", body: {
+          version: versions.address, line1: ad.line1, line2: ad.line2, city: ad.city,
+          district: ad.district, postcode: ad.postcode, country: ad.country } };
+      }
+      if (key === "academic") return { ep: "/api/me/qualifications", body: { version: versions.academic, rows: state.academic } };
+      if (key === "tests") return { ep: "/api/me/test_scores", body: { version: versions.tests, rows: state.tests } };
+      if (key === "prefs") return { ep: "/api/me/preferences", body: {
+        version: versions.prefs, countries: state.prefs.countries, intake: state.prefs.intake,
+        budget: state.prefs.budget, field: state.prefs.field } };
+      return null;
+    }
+
+    function persist(form, message) {
+      var key = form.getAttribute("data-sp-form");
+
+      /* the checklist commits on upload; Save is just a confirmation now */
+      if (key === "documents" || key === "visadocs") {
+        paintMeter();
+        flashSaved(form, "Saved");
+        toast("Your document checklist is up to date.");
+        return;
+      }
+
+      var req = sectionRequest(key);
+      if (!req) return;
+
+      window.VFIApi.put(req.ep, req.body, {}).then(function (fresh) {
+        applyAggregate(fresh);
+        flashSaved(form, "Saved");
+        toast(message);
+      }).catch(function (err) {
+        if (err && err.status === 409 && err.body) {
+          applyAggregate(err.body, key);   // adopt latest + repaint the conflicted card
+          toast("This section was updated on another device — the latest is shown. Review and save again.");
+        } else if (err && err.status === 422) {
+          toast("Some details need another look — please check them and try again.");
+        } else if (!err || err.status !== 401) {   // 401 → api.js already redirected
+          toast("We couldn't save that just now. Please try again in a moment.");
+        }
+      });
     }
 
     var SAVERS = {
@@ -713,7 +851,7 @@
           phone: $("#spPhone").value.trim(),
           email: $("#spEmail").value.trim()
         };
-        persist(form, "Personal details saved to this browser.");
+        persist(form, "Personal details saved.");
       },
       address: function (form) {
         state.address = {
@@ -724,7 +862,7 @@
           postcode: $("#spPost").value.trim(),
           country: $("#spCountry").value
         };
-        persist(form, "Address saved to this browser.");
+        persist(form, "Address saved.");
       },
       academic: function (form) {
         var bad = validateAcademic();
@@ -733,7 +871,7 @@
           return filled(r.qualification) || filled(r.institution) || filled(r.year) || filled(r.grade);
         });
         paintAcademic();
-        persist(form, "Academic background saved to this browser.");
+        persist(form, "Academic background saved.");
       },
       tests: function (form) {
         var bad = validateTests();
@@ -742,7 +880,7 @@
           return filled(r.test) || filled(r.score) || filled(r.date);
         });
         paintTests();
-        persist(form, "Test scores saved to this browser.");
+        persist(form, "Test scores saved.");
       },
       prefs: function (form) {
         var picked = [];
@@ -753,17 +891,17 @@
           budget: $("#spBudget").value,
           field: $("#spFieldStudy").value
         };
-        persist(form, "Study preferences saved to this browser.");
+        persist(form, "Study preferences saved.");
       },
       documents: function (form) {
         state.documents = clone(docDraft);
         paintDocs();
-        persist(form, "Document checklist saved to this browser.");
+        persist(form, "Document checklist saved.");
       },
       visadocs: function (form) {
         state.visaDocuments = clone(visaDraft);
         paintVisa();
-        persist(form, "Visa documents saved to this browser.");
+        persist(form, "Visa documents saved.");
       }
     };
 
@@ -792,6 +930,19 @@
         });
       }
     });
+
+    /* intake options are served by the backend so they never go stale (§1.6) */
+    (function fillIntakeOptions() {
+      var sel = $("#spIntake");
+      if (!sel) return;
+      var opts = BOOT.intakeOptions || [];
+      var current = state.prefs.intake || "";
+      var html = '<option value="">Choose an intake…</option>';
+      var seen = false;
+      opts.forEach(function (o) { html += '<option value="' + esc(o) + '">' + esc(o) + "</option>"; if (o === current) seen = true; });
+      if (current && !seen) html += '<option value="' + esc(current) + '">' + esc(current) + "</option>";
+      sel.innerHTML = html;
+    })();
 
     /* ---------- first paint ---------- */
     paintIdentity();
@@ -917,7 +1068,15 @@
       due: "Opens after the deposit", late: false }
   ];
 
-  function initTracking() {
+  function initTracking(T) {
+    /* Live data from GET /api/me/tracking — same shapes the demo constants had,
+       so the rendering below is unchanged. These locals shadow the constants. */
+    var STAGES = (T && T.journey && T.journey.stages) || [];
+    var APPS = (T && T.applications) || [];
+    var EVENTS = (T && T.timeline) || [];
+    var TODOS = (T && T.actions) || [];
+    var SERVER_PCT = (T && T.journey && typeof T.journey.pct === "number") ? T.journey.pct : null;
+
     /* ---------- stepper ---------- */
     var doneCount = 0, nowCount = 0;
     STAGES.forEach(function (s) {
@@ -937,7 +1096,9 @@
       '</li>';
     }).join("");
 
-    var jpct = Math.round(((doneCount + (nowCount ? 0.5 : 0)) / STAGES.length) * 100);
+    var jpct = SERVER_PCT != null
+      ? SERVER_PCT
+      : (STAGES.length ? Math.round(((doneCount + (nowCount ? 0.5 : 0)) / STAGES.length) * 100) : 0);
     var jfill = $("#spJourneyFill");
     var jbar = $("#spJourney");
     jfill.style.width = jpct + "%";
@@ -1048,24 +1209,26 @@
      signed-in student can move around easily (profile, documents, visa
      documents, application tracking) and sign out.
      ================================================================= */
-  function renderSideNav() {
+  function renderSideNav(student) {
     var host = $("#spSide");
     if (!host) return;
-    var saved = readSaved() || {};
-    var st = (saved && saved.student) ? saved.student : SEED.student;
+    var st = student || {};
+    var name = st.name || "Student";
+    var sid = st.sid || st.student_ref || "";
+    var initials = st.initials || ((name.charAt(0) || "S").toUpperCase());
     var onProfile = !!document.getElementById("spFormPersonal");
     var onTracking = !!document.getElementById("spSteps");
 
-    function item(href, ic, label, active, extra) {
+    function item(href, ic, label, active, extra, attrs) {
       return '<a class="sp-nav__item' + (active ? " is-active" : "") + (extra || "") + '" href="' + href + '"' +
-        (active ? ' aria-current="page"' : "") + ">" + icon(ic) + "<span>" + esc(label) + "</span></a>";
+        (attrs || "") + (active ? ' aria-current="page"' : "") + ">" + icon(ic) + "<span>" + esc(label) + "</span></a>";
     }
 
     host.innerHTML =
       '<div class="sp-side__inner">' +
         '<div class="sp-side__me">' +
-          '<span class="sp-side__ava">' + esc(st.initials || "S") + "</span>" +
-          '<span class="sp-side__id"><b>' + esc(st.name || "Student") + "</b><span>" + esc(st.sid || "") + "</span></span>" +
+          '<span class="sp-side__ava">' + esc(initials) + "</span>" +
+          '<span class="sp-side__id"><b>' + esc(name) + "</b><span>" + esc(sid) + "</span></span>" +
         "</div>" +
         '<nav class="sp-nav" aria-label="Student portal">' +
           item("student-profile.html", "i-users", "My Profile", onProfile) +
@@ -1074,15 +1237,48 @@
           item("student-tracking.html", "i-checks", "Application Tracking", onTracking) +
           '<span class="sp-nav__div" role="separator"></span>' +
           item("index.html", "i-home", "Back to website", false) +
-          item("login.html", "i-arrow", "Log out", false, " sp-nav__item--out") +
+          item("login.html", "i-arrow", "Log out", false, " sp-nav__item--out", ' data-sp-logout') +
         "</nav>" +
       "</div>";
+
+    /* real logout — revoke the session server-side, then leave */
+    var out = $("[data-sp-logout]", host);
+    if (out) {
+      out.addEventListener("click", function (e) {
+        e.preventDefault();
+        window.VFIApi.post("/api/student/logout", {}, { noRedirect: true }).then(function () {
+          location.href = "login.html";
+        }).catch(function () {
+          location.href = "login.html";   /* leave regardless */
+        });
+      });
+    }
   }
 
   /* =================================================================
      10. Boot
      ================================================================= */
-  renderSideNav();
-  if (document.getElementById("spFormPersonal")) initProfile();
-  if (document.getElementById("spSteps")) initTracking();
+  /* The portal pages are static files and cannot protect themselves — the API
+     is the guard. We fetch FIRST and render nothing until it resolves; a 401
+     makes js/api.js redirect to the sign-in page (docs §5.1). */
+  function guardCatch(err) {
+    if (err && err.status === 401) return;   /* api.js already redirected */
+    /* transient failure: leave the shell blank rather than show anything stale */
+  }
+
+  if (document.getElementById("spFormPersonal")) {
+    window.VFIApi.get("/api/me/profile", {}).then(function (payload) {
+      renderSideNav(payload.student);
+      initProfile(payload);
+    }).catch(guardCatch);
+  } else if (document.getElementById("spSteps")) {
+    window.VFIApi.get("/api/me", {}).then(function (me) {
+      renderSideNav(me);
+      return window.VFIApi.get("/api/me/tracking", {});
+    }).then(function (t) {
+      if (t) initTracking(t);
+    }).catch(guardCatch);
+  } else {
+    window.VFIApi.get("/api/me", {}).then(renderSideNav).catch(guardCatch);
+  }
 })();
