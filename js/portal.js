@@ -315,6 +315,9 @@
   }
   var menuLogout = $("#ppMenuLogout");
   if (menuLogout) menuLogout.addEventListener("click", logout);
+  /* the sidebar link was a bare <a> that navigated without revoking — wire it */
+  var sideLogout = $("#ppLogout");
+  if (sideLogout) sideLogout.addEventListener("click", function (e) { e.preventDefault(); logout(); });
 
   /* =================================================== per-field char rules */
   /* Strip disallowed characters as the user types while keeping the caret in
@@ -419,27 +422,87 @@
     });
     return ok;
   }
-  function wireModalForm(formId, msgId, okText) {
-    var form = document.getElementById(formId);
+  /* The two global modals were driven by ONE shared handler. They are now split
+     per form (docs §2 "split first"): a failure in one cannot break the other. */
+
+  /* Register New Student (#ppRegForm) → POST /api/partner/students */
+  (function wireStudentForm() {
+    var form = document.getElementById("ppRegForm");
     if (!form) return;
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!simpleValidate(form)) { window.VFIToast("Please complete the required fields.", "bad"); return; }
-      /* >>> REAL REQUEST GOES HERE <<< — POST the collected fields to the
-         partner API. This demo just confirms and closes. */
-      var msg = document.getElementById(msgId);
-      if (msg) { msg.textContent = okText; msg.hidden = false; }
-      window.VFIToast(okText, "ok");
-      setTimeout(function () {
-        closeModal(form.closest(".pp-modal"));
-        if (msg) msg.hidden = true;
-        form.reset();
-        var fl = $("#ppProgFileList"); if (fl) fl.textContent = "";
-      }, 1100);
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      var el = form.elements;
+      var body = {
+        first_name: el.first.value.trim(),
+        middle_name: el.middle ? el.middle.value.trim() : "",
+        last_name: el.last.value.trim(),
+        dial: el.code.value,
+        mobile: el.mobile.value.trim(),
+        email: el.email.value.trim()
+      };
+      window.VFIApi.post("/api/partner/students", body, { noRedirect: true }).then(function () {
+        if (btn) btn.disabled = false;
+        window.VFIToast("Student registered.", "ok");
+        closeModal(form.closest(".pp-modal")); form.reset();
+        document.dispatchEvent(new CustomEvent("vfi:student-created"));
+      })["catch"](function (err) {
+        if (btn) btn.disabled = false;
+        var msg = (err && err.body && err.body.message) ||
+          (err && err.status === 409 ? "That email is already registered." :
+           "We couldn't register that student. Please try again.");
+        var box = document.getElementById("ppRegMsg");
+        if (box) { box.textContent = msg; box.hidden = false; box.className = "pp-form-msg pp-form-msg--bad"; }
+        if (!err || err.status !== 401) window.VFIToast(msg, "bad");
+      });
     });
+  })();
+
+  /* Request Program Options (#ppProgForm) → POST /api/partner/enquiries (multipart) */
+  (function wireEnquiryForm() {
+    var form = document.getElementById("ppProgForm");
+    if (!form) return;
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!simpleValidate(form)) { window.VFIToast("Please complete the required fields.", "bad"); return; }
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      var sels = Array.prototype.slice.call(form.querySelectorAll("select"));
+      var fd = new FormData();
+      /* the modal collects a NEW lead's details; the existing-student picker is
+         later product surface, so this always submits a `new` enquiry */
+      fd.append("enquiry_type", "new");
+      fd.append("first_name", form.elements.pfirst ? form.elements.pfirst.value.trim() : "");
+      fd.append("last_name", form.elements.plast ? form.elements.plast.value.trim() : "");
+      var keys = ["country_of_education", "highest_education_level", "destination", "preferred_study_area", "preferred_study_level", "program_label"];
+      keys.forEach(function (k, i) { if (sels[i] && sels[i].value) fd.append(k, sels[i].value); });
+      var ta = form.querySelector("textarea");
+      if (ta && ta.value.trim()) fd.append("additional_info", ta.value.trim());
+      var files = document.getElementById("ppProgFiles");
+      if (files && files.files) { for (var i = 0; i < files.files.length; i++) fd.append("files[]", files.files[i]); }
+
+      window.VFIApi.post("/api/partner/enquiries", fd, { noRedirect: true }).then(function (data) {
+        if (btn) btn.disabled = false;
+        var extra = data && data.files_rejected ? " (" + data.files_rejected + " file(s) failed the security scan)" : "";
+        window.VFIToast("Program request submitted." + extra, "ok");
+        closeModal(form.closest(".pp-modal")); form.reset();
+        var fl = $("#ppProgFileList"); if (fl) fl.textContent = "";
+        document.dispatchEvent(new CustomEvent("vfi:enquiry-created"));
+      })["catch"](function (err) {
+        if (btn) btn.disabled = false;
+        var msg = (err && err.body && err.body.message) || "We couldn't submit that request. Please try again.";
+        if (!err || err.status !== 401) window.VFIToast(msg, "bad");
+      });
+    });
+  })();
+
+  /* Console guard: these are static files — the API is the only protection.
+     A 401 makes js/api.js redirect to vfi-partner-login.html (docs §1). */
+  if (window.VFIApi) {
+    window.VFIApi.get("/api/partner/me", {})["catch"](function () { /* 401 → api.js redirected */ });
   }
-  wireModalForm("ppRegForm", "ppRegMsg", "Student registered — a real console would now create their profile.");
-  wireModalForm("ppProgForm", "ppProgMsg", "Program request submitted — our team would follow up with options.");
 
   /* --------------------------------------------------------- reveal on scroll */
   (function () {

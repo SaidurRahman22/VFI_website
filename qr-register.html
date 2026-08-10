@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="You've been referred to VFI Overseas Education — create your student account to get started." />
+  <meta name="theme-color" content="#04081c" />
+  <title>You're invited | VFI Overseas Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    .qr-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+      background:radial-gradient(1200px 600px at 50% -10%, #12204a 0%, #04081c 60%);font-family:'DM Sans',system-ui,sans-serif;color:#e8ecf6}
+    .qr-card{width:100%;max-width:460px;background:#0b1330;border:1px solid rgba(255,255,255,.08);border-radius:20px;
+      padding:36px 32px;box-shadow:0 30px 80px -30px rgba(0,0,0,.7);text-align:center}
+    .qr-mark{width:56px;height:56px;border-radius:16px;display:inline-grid;place-items:center;font-family:'Quicksand',sans-serif;
+      font-weight:700;font-size:26px;color:#fff;background:linear-gradient(135deg,#2563eb,#1a2340);margin-bottom:18px}
+    .qr-card h1{font-family:'Quicksand',sans-serif;font-size:24px;margin:0 0 8px;color:#fff}
+    .qr-card p{font-size:15px;line-height:1.6;color:#aeb8d4;margin:0 0 8px}
+    .qr-agency{font-weight:700;color:#fff}
+    .qr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:22px;
+      padding:14px 22px;border-radius:12px;border:0;cursor:pointer;font-weight:700;font-size:15px;color:#fff;
+      background:linear-gradient(135deg,#2563eb,#1e3a8a);text-decoration:none}
+    .qr-alt{margin-top:16px;font-size:13px}
+    .qr-alt a{color:#9db4ff}
+    .qr-muted{font-size:12px;color:#7c88a8;margin-top:20px}
+    .qr-hide{display:none}
+  </style>
+</head>
+<body>
+  <main class="qr-wrap">
+    <div class="qr-card">
+      <span class="qr-mark">V</span>
+
+      <div id="qrOk" class="qr-hide">
+        <h1>You've been invited</h1>
+        <p><span class="qr-agency" id="qrAgency">Your partner</span> has referred you to VFI Overseas Education.</p>
+        <p>Create your free student account to track applications, upload documents and get guidance — end to end.</p>
+        <a class="qr-btn" id="qrContinue" href="login.html#register">Create my student account</a>
+        <p class="qr-muted">Already have an account? <a href="login.html" style="color:#9db4ff">Sign in</a></p>
+      </div>
+
+      <div id="qrBad" class="qr-hide">
+        <h1>This link isn't valid</h1>
+        <p id="qrBadTxt">This referral link is invalid or has expired. You can still register directly.</p>
+        <a class="qr-btn" href="login.html#register">Register with VFI</a>
+      </div>
+
+      <div id="qrLoading">
+        <h1>One moment…</h1>
+        <p>Checking your invitation.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      function q(name) {
+        var m = new RegExp("[?&]" + name + "=([^&#]*)").exec(location.search || "");
+        if (!m) return "";
+        try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+      }
+      var show = function (id) {
+        ["qrOk", "qrBad", "qrLoading"].forEach(function (x) {
+          var el = document.getElementById(x); if (el) el.className = x === id ? "" : "qr-hide";
+        });
+      };
+      var ref = q("ref");
+      var bad = function (msg) {
+        if (msg) { var t = document.getElementById("qrBadTxt"); if (t) t.textContent = msg; }
+        show("qrBad");
+      };
+      if (!ref || !window.VFIApi) { bad(); return; }
+
+      window.VFIApi.get("/api/referral/" + encodeURIComponent(ref), { noRedirect: true }).then(function (data) {
+        var name = (data && data.agency_name) || "Your partner";
+        var el = document.getElementById("qrAgency"); if (el) el.textContent = name;
+        /* stash the ref so the registration form attributes the signup */
+        try { if (window.sessionStorage) sessionStorage.setItem("vfi_ref", ref); } catch (e) {}
+        var cont = document.getElementById("qrContinue");
+        if (cont) cont.href = "login.html?ref=" + encodeURIComponent(ref) + "#register";
+        show("qrOk");
+      })["catch"](function () {
+        bad("This referral link is invalid or has expired. You can still register directly.");
+      });
+    })();
+  </script>
+</body>
+</html>

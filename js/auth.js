@@ -740,6 +740,11 @@
         body.cc = form.elements.cc.value;
         body.phone = (form.elements.phone.value || "").trim();
         body.agree = form.elements.agree ? !!form.elements.agree.checked : false;
+        /* QR referral attribution (Phase 7): pass the ref slug from the URL or
+           the value stashed by the qr-register landing (counted after verify) */
+        var ref = query("ref");
+        if (!ref) { try { ref = window.sessionStorage ? sessionStorage.getItem("vfi_ref") : ""; } catch (e) { ref = ""; } }
+        if (ref) body.ref = ref;
       } else if (form.elements.remember) {
         body.remember = !!form.elements.remember.checked;
       }

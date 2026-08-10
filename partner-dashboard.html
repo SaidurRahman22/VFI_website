@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
   <meta name="description" content="VFI Partner console — manage your students, applications and enquiries in one place." />
   <title>Dashboard | VFI Partner</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -85,14 +86,14 @@
 
           <!-- stat cards -->
           <div class="pp-stats pp-anim">
-            <div class="pp-stat pp-stat--all"><div class="pp-stat__top"><span class="pp-stat__label">All Applications</span><svg class="ic ic--sm pp-stat__caret"><use href="#pi-chev-down"/></svg></div><div class="pp-stat__value">0</div></div>
-            <div class="pp-stat pp-stat--offer"><div class="pp-stat__top"><span class="pp-stat__label">Offers</span><svg class="ic ic--sm pp-stat__caret"><use href="#pi-chev-down"/></svg></div><div class="pp-stat__value">0</div></div>
-            <div class="pp-stat pp-stat--pay"><div class="pp-stat__top"><span class="pp-stat__label">Payments</span></div><div class="pp-stat__value">0</div></div>
-            <div class="pp-stat pp-stat--visa"><div class="pp-stat__top"><span class="pp-stat__label">Visa Received</span></div><div class="pp-stat__value">0</div></div>
-            <div class="pp-stat pp-stat--rej"><div class="pp-stat__top"><span class="pp-stat__label">Visa Rejected</span></div><div class="pp-stat__value">0</div></div>
-            <div class="pp-stat pp-stat--none"><div class="pp-stat__top"><span class="pp-stat__label">Non-Enrolment</span></div><div class="pp-stat__value">0</div></div>
-            <div class="pp-stat pp-stat--def"><div class="pp-stat__top"><span class="pp-stat__label">Deferrals</span></div><div class="pp-stat__value">0</div></div>
-            <div class="pp-stat pp-stat--pend"><div class="pp-stat__top"><span class="pp-stat__label">Pending from Partner</span></div><div class="pp-stat__value">0</div></div>
+            <div class="pp-stat pp-stat--all"><div class="pp-stat__top"><span class="pp-stat__label">All Applications</span><svg class="ic ic--sm pp-stat__caret"><use href="#pi-chev-down"/></svg></div><div class="pp-stat__value" data-pp-kpi="total">0</div></div>
+            <div class="pp-stat pp-stat--offer"><div class="pp-stat__top"><span class="pp-stat__label">Offers</span><svg class="ic ic--sm pp-stat__caret"><use href="#pi-chev-down"/></svg></div><div class="pp-stat__value" data-pp-kpi="offer">0</div></div>
+            <div class="pp-stat pp-stat--pay"><div class="pp-stat__top"><span class="pp-stat__label">Payments</span></div><div class="pp-stat__value" data-pp-kpi="payment">0</div></div>
+            <div class="pp-stat pp-stat--visa"><div class="pp-stat__top"><span class="pp-stat__label">Visa Received</span></div><div class="pp-stat__value" data-pp-kpi="visa_received">0</div></div>
+            <div class="pp-stat pp-stat--rej"><div class="pp-stat__top"><span class="pp-stat__label">Visa Rejected</span></div><div class="pp-stat__value" data-pp-kpi="visa_rejected">0</div></div>
+            <div class="pp-stat pp-stat--none"><div class="pp-stat__top"><span class="pp-stat__label">Non-Enrolment</span></div><div class="pp-stat__value" data-pp-kpi="non_enrolment">0</div></div>
+            <div class="pp-stat pp-stat--def"><div class="pp-stat__top"><span class="pp-stat__label">Deferrals</span></div><div class="pp-stat__value" data-pp-kpi="deferral">0</div></div>
+            <div class="pp-stat pp-stat--pend"><div class="pp-stat__top"><span class="pp-stat__label">Pending from Partner</span></div><div class="pp-stat__value" data-pp-kpi="pending_from_partner">0</div></div>
           </div>
 
           <!-- assistant -->
@@ -238,6 +239,7 @@
   <script src="js/store.js"></script>
   <script src="js/portal.js"></script>
   <script src="js/portal-render.js"></script>
+  <script src="js/portal-data.js"></script>
   <script>
     /* tiny dashboard-only wiring: tab panels, copy link, apply/ask feedback */
     (function () {
@@ -250,14 +252,59 @@
           $$(".pp-tabpanel").forEach(function (p) { p.classList.toggle("is-on", p.id === id); });
         });
       });
+      /* ---- referral link + REAL QR (Phase 7) ----
+         The old code drew a decorative QR encoding nothing and pointed the copy
+         button at the partner LOGIN page. Both are now server-driven: an opaque
+         revocable slug and a real scannable QR of the student landing page. */
+      var refUrl = "";
+      if (window.VFIApi) {
+        window.VFIApi.get("/api/partner/referral-link", { noRedirect: true }).then(function (data) {
+          refUrl = data.url || "";
+          var holder = $(".pp-qr__code");
+          if (holder && data.qr_svg) {
+            var span = document.createElement("span");
+            span.className = "pp-qr__code";
+            span.innerHTML = data.qr_svg;                 /* server-generated SVG */
+            var svg = span.querySelector("svg");
+            if (svg) { svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "Student registration QR code"); }
+            holder.parentNode.replaceChild(span, holder);
+          }
+        })["catch"](function () { /* not signed in — guard redirects */ });
+      }
       var copy = $("#ppCopyLink");
       if (copy) copy.addEventListener("click", function () {
-        var link = location.origin + "/vfi-partner-login.html?ref=hakim";
-        if (navigator.clipboard) navigator.clipboard.writeText(link).then(function () { window.VFIToast("Registration link copied."); }, function () { window.VFIToast("Registration link ready: " + link); });
-        else window.VFIToast("Registration link ready.");
+        if (!refUrl) { window.VFIToast("Your registration link isn't ready yet.", "bad"); return; }
+        if (navigator.clipboard) navigator.clipboard.writeText(refUrl).then(function () { window.VFIToast("Registration link copied."); }, function () { window.VFIToast("Registration link: " + refUrl); });
+        else window.VFIToast("Registration link: " + refUrl);
       });
+
+      /* ---- the 8 KPI cards + deadline buckets, computed SERVER-side ---- */
+      function loadKpis() {
+        if (!window.VFIApi) return;
+        var qs = [];
+        ["year", "intake", "from", "to"].forEach(function (k) {
+          var el = document.querySelector('[data-pp-filter="' + k + '"]');
+          if (el && el.value) qs.push(k + "=" + encodeURIComponent(el.value));
+        });
+        window.VFIApi.get("/api/partner/dashboard/kpis" + (qs.length ? "?" + qs.join("&") : ""), { noRedirect: true })
+          .then(function (data) {
+            $$("[data-pp-kpi]").forEach(function (el) {
+              var key = el.getAttribute("data-pp-kpi");
+              if (data.counts && typeof data.counts[key] === "number") el.textContent = String(data.counts[key]);
+            });
+          })["catch"](function () {});
+        window.VFIApi.get("/api/partner/dashboard/deadlines", { noRedirect: true }).then(function (d) {
+          $$("[data-pp-deadline]").forEach(function (el) {
+            var key = el.getAttribute("data-pp-deadline");
+            if (typeof d[key] === "number") el.textContent = String(d[key]);
+          });
+        })["catch"](function () {});
+      }
+      loadKpis();
+      document.addEventListener("vfi:student-created", loadKpis);
+
       var apply = $("#ppApplyFilters");
-      if (apply) apply.addEventListener("click", function () { window.VFIToast("Filters applied — no matching records yet."); });
+      if (apply) apply.addEventListener("click", loadKpis);
       var ask = $("#ppAskSend"), askIn = $("#ppAsk");
       function sendAsk() { if (askIn && askIn.value.trim()) { window.VFIToast("Thanks! The assistant would reply here."); askIn.value = ""; } }
       if (ask) ask.addEventListener("click", sendAsk);
