@@ -19,12 +19,38 @@ and data feeds — that the code cannot create by itself. Each item says:
 >    and rotate/regenerate the key afterwards.
 >
 > **The one file that holds all server settings** is `/var/www/vfi/backend/.env`.
-> To edit it on the server (SSH: `ssh vfi@103.14.23.151`, password `vfi`):
+> To edit it on the server (`ssh vfi@103.14.23.151`, then your server password —
+> which you should rotate now, see **Priority 0**):
 > ```bash
-> sudo nano /var/www/vfi/backend/.env        # edit the file (password: vfi)
+> sudo nano /var/www/vfi/backend/.env        # edit the file
 > # …make your changes, save with Ctrl-O Enter, exit with Ctrl-X…
 > sudo -u www-data php /var/www/vfi/backend/artisan config:clear   # apply changes
 > ```
+
+---
+
+## PRIORITY 0 — Security actions (do these first) 🔴 URGENT
+
+A security review in **August 2026** fixed some issues on the server and flagged
+others only you can close:
+
+1. **Rotate the server SSH password now.** The server password was previously
+   written in this file — which the web server was serving **publicly** at
+   `http://103.14.23.151/Developer_requier.md` — and it also lives in the Git
+   history. The public exposure has been **closed** (see below), but because the
+   value was public and remains in history, **change it**: SSH in, run `passwd`,
+   choose a strong password, and keep it only in a password manager. Rotate it
+   anywhere it was reused.
+2. **Replace the temporary admin password.** The super-admin uses a weak
+   placeholder (`VFI@123`). Pick a strong password and set it (see Priority 5).
+3. **Enable admin 2FA on the live server.** Set `ADMIN_REQUIRE_TOTP=true` in
+   `.env` (it is `false` only for local development), then run `config:clear`, so
+   admin sign-in requires Google Authenticator.
+
+**Already fixed for you (no action needed):** the web server was serving the
+application's PHP **source code**, `composer.json`, and these `.md` documents as
+plaintext to anyone. That has been locked down — only the public site and the
+`/api` endpoints are reachable now; source, config, and docs return “403 Forbidden”.
 
 ---
 
@@ -189,6 +215,39 @@ To get **real** programs for those countries, choose one:
 per-university spreadsheets, per destination country. Until then, UK/CA/AU/IE/NZ
 search results are seeded placeholders (clearly flagged).
 
+### About real-time feeds, webhooks, and scraping (answering your question)
+
+- **Webhooks:** universities do **not** publish webhooks for their programme
+  catalogues — there is no push feed to subscribe to. "Real-time" program data
+  realistically comes only from (a) the open government/agency APIs we already
+  use (US College Scorecard, Germany's DAAD), or (b) a licensed commercial
+  aggregator's API (Option A above), which we can poll on a schedule.
+- **Custom scraper:** we *can* build one, but the "100% legitimate source"
+  requirement is the deciding factor. Scraping a university's website is only
+  safe where **their Terms of Service and robots.txt allow it**, or where VFI has
+  **written permission**. Many prohibit automated collection, and scraped page
+  layouts change often (constant breakage/maintenance). So a scraper is viable
+  only for specific sites that permit it — not as a blanket solution.
+- **Recommended path:** launch with the real US+DE feeds plus the clearly-flagged
+  seed placeholders, and in parallel ask your partner universities for a
+  programme list (spreadsheet or feed — Option B). **Tell us which universities
+  have given written permission** to pull from their site, and we'll wire a
+  compliant importer for exactly those, always taking the latest published data.
+
+### Countries with NO real data yet (so you know the gaps)
+
+Only **US and Germany** have real programs today. In the search filters:
+- **Seed placeholder** (clearly flagged, swaps out with a feed): UK, Canada,
+  Australia, Ireland, New Zealand.
+- **No data at all** (selectable, but returns nothing until a feed is supplied):
+  Netherlands, France, Italy, Sweden, Finland, Malaysia, Singapore, UAE.
+
+### How often the catalogue refreshes
+
+The catalogue is rebuilt by running an import command; today that is **manual**.
+Decide how often you want it refreshed (e.g. nightly) and we'll schedule it to run
+automatically.
+
 ---
 
 ## PRIORITY 5 — Small settings the developer needs from you 🟢 QUICK
@@ -228,6 +287,7 @@ These are deferred by choice and only matter as volume grows:
 
 | # | Item | Blocks | What to deliver |
 |---|------|--------|-----------------|
+| 0 | **Rotate SSH password, set strong admin password, enable admin 2FA** | security 🔒 | do it on the server; nothing to send |
 | 1 | **Email (SMTP or Postmark)** | OTP/reset emails ❌ | SMTP host/port/user/pass **or** Postmark token + from-address |
 | 2 | **Domain + point DNS to the IP** | HTTPS, links, deliverability | the domain name (A record → `103.14.23.151`) |
 | 3 | **Turnstile keys** | bot protection | site key + secret key |

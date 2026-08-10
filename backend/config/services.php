@@ -15,7 +15,8 @@ return [
     */
 
     'postmark' => [
-        'key' => env('POSTMARK_API_KEY'),
+        // Laravel's Postmark transport reads `token`; accept the legacy env name too.
+        'token' => env('POSTMARK_TOKEN', env('POSTMARK_API_KEY')),
     ],
 
     'resend' => [
