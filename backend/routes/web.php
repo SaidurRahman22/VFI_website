@@ -41,5 +41,9 @@ Route::prefix('api/admin')->group(function () {
         // Phase 3F — image upload + media-slot registry (content_editor/owner).
         Route::post('media', [\App\Http\Controllers\Admin\AdminMediaController::class, 'upload']);
         Route::put('media/slot/{key}', [\App\Http\Controllers\Admin\AdminMediaController::class, 'setSlot']);
+
+        // Phase 3G — backup export / guarded restore (owner-only, snapshotted).
+        Route::get('backup/export', [\App\Http\Controllers\Admin\AdminBackupController::class, 'export']);
+        Route::post('backup/import', [\App\Http\Controllers\Admin\AdminBackupController::class, 'import']);
     });
 });
