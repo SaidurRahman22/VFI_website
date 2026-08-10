@@ -95,6 +95,9 @@ Route::prefix('api')->group(function () {
         // Upload is gated on email verification (must_verify, docs §5.5).
         Route::post('me/documents/{type}', [$docs, 'store'])
             ->middleware(\App\Http\Middleware\EnsureVerifiedStudent::class);
+
+        // Phase 5E — read-only application tracking.
+        Route::get('me/tracking', [\App\Http\Controllers\Me\TrackingController::class, 'index']);
     });
 
     // PUBLIC single-use blob stream — the opaque token IS the capability (no
