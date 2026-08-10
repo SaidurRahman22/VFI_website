@@ -104,4 +104,15 @@ Route::prefix('api')->group(function () {
     // session needed), so it lives outside the student-scoped group. Throttled.
     Route::get('documents/dl/{token}', [\App\Http\Controllers\Me\DocumentController::class, 'stream'])
         ->middleware('throttle:otp-verify');
+
+    /*
+    | Partner console (Phase 6) — session-cookie + tenant-bound. EnsurePartner
+    | resolves the agency from the SESSION only and pushes it into both the
+    | Eloquent scope and Postgres RLS. Sign-in / register land in P6-C..E.
+    */
+    Route::middleware(['auth:web', \App\Http\Middleware\EnsurePartner::class])->group(function () {
+        $console = \App\Http\Controllers\Partner\PartnerConsoleController::class;
+        Route::get('partner/me', [$console, 'me']);
+        Route::get('partner/members', [$console, 'members']);
+    });
 });
