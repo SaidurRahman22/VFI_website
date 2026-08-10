@@ -1,0 +1,206 @@
+<?php
+
+namespace App\Http\Controllers\Partner;
+
+use App\Http\Controllers\Controller;
+use App\Models\Catalogue\Program;
+use App\Models\Catalogue\ProgramSearchRow;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+/**
+ * Phase 8D — program search + detail over the flat `program_search` table
+ * (docs §4). PUBLIC reference data (no PII, no tenant scope) but console-only,
+ * so it lives behind auth:web + EnsurePartner and a per-partner rate limit.
+ *
+ * Security: free text is a single bound LIKE on the lowercased blob; every facet
+ * is validated against a fixed token allow-list and bound as '% token %' (a feed
+ * value can never reach SQL); every scalar filter is a bound where; sort/order
+ * come only from a fixed map (no user string ever touches an ORDER BY). Stale
+ * (past-deadline/closed) intakes are hidden unless explicitly requested.
+ */
+class PartnerProgramController extends Controller
+{
+    /** The ~32 boolean facet tokens (mirror of SearchIndexer::flagsFor). */
+    private const FACETS = [
+        // program
+        'stem', 'coop', 'scholarship', 'fee_waiver', 'moi', 'esl', 'open', 'no_app_fee',
+        // institution
+        'major_city', 'own_english', 'vfi', 'interview_required', 'no_interview',
+        'fast_offer', 'high_acceptance', 'affordable', 'low_deposit',
+        // required tests / maths
+        'req_ielts', 'req_toefl', 'req_pte', 'req_duolingo', 'req_gre', 'req_gmat', 'req_maths',
+        // waivers (the negative filters)
+        'waive_ielts', 'waive_toefl', 'waive_pte', 'waive_duolingo', 'waive_gre',
+        'waive_gmat', 'waive_english', 'waive_maths',
+    ];
+
+    /** sort key => [column, direction]. Applied nulls-last; id is the tiebreaker. */
+    private const SORTS = [
+        'deadline' => ['application_deadline_at', 'asc'],
+        'tuition_asc' => ['tuition_fee_minor', 'asc'],
+        'tuition_desc' => ['tuition_fee_minor', 'desc'],
+        'fastest_offer' => ['offer_tat_days', 'asc'],
+        'newest' => ['id', 'desc'],
+    ];
+
+    /** GET /api/partner/programs/search */
+    public function search(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'country' => ['nullable', 'string', 'max:90'],
+            'level' => ['nullable', 'string', 'max:60'],
+            'study_area' => ['nullable', 'string', 'max:60'],
+            'duration_band' => ['nullable', 'string', 'max:30'],
+            'intake' => ['nullable', 'string', 'max:20'],
+            'year' => ['nullable', 'integer', 'min:2020', 'max:2100'],
+            'tuition_max' => ['nullable', 'integer', 'min:0', 'max:100000000'],
+            'offer_tat_max' => ['nullable', 'integer', 'min:0', 'max:400'],
+            'facets' => ['nullable', 'array', 'max:40'],
+            'facets.*' => ['string', Rule::in(self::FACETS)],
+            'sort' => ['nullable', Rule::in(array_keys(self::SORTS))],
+            'include_stale' => ['nullable', 'boolean'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        $query = ProgramSearchRow::query();
+
+        if (empty($data['include_stale'])) {
+            $query->where('is_stale', false);
+        }
+
+        if (($kw = trim((string) ($data['q'] ?? ''))) !== '') {
+            $query->where('search_blob', 'like', '%'.mb_strtolower($kw).'%');
+        }
+
+        foreach (['country' => 'country', 'level' => 'level', 'study_area' => 'study_area', 'duration_band' => 'duration_band'] as $param => $col) {
+            if (! empty($data[$param])) {
+                $query->where($col, $data[$param]);
+            }
+        }
+        if (! empty($data['intake'])) {
+            $query->where('season_label', $data['intake']);
+        }
+        if (! empty($data['year'])) {
+            $query->where('intake_year', (int) $data['year']);
+        }
+        if (isset($data['tuition_max'])) {
+            $query->whereNotNull('tuition_fee_minor')->where('tuition_fee_minor', '<=', (int) $data['tuition_max']);
+        }
+        if (isset($data['offer_tat_max'])) {
+            $query->whereNotNull('offer_tat_days')->where('offer_tat_days', '<=', (int) $data['offer_tat_max']);
+        }
+
+        // Facets: allow-listed tokens only, each a bound '% token %' match.
+        foreach (array_unique($data['facets'] ?? []) as $token) {
+            $query->where('flags', 'like', '% '.$token.' %');
+        }
+
+        [$col, $dir] = self::SORTS[$data['sort'] ?? 'deadline'];
+        if ($col !== 'id') {
+            // nulls-last (portable: the boolean sorts false<true), then value, then id
+            $query->orderByRaw($col.' is null')->orderBy($col, $dir);
+        }
+        $query->orderBy('id', 'desc');
+
+        $page = $query->paginate($data['per_page'] ?? 24)->withQueryString();
+
+        return response()->json([
+            'data' => collect($page->items())->map(fn (ProgramSearchRow $r) => $this->presentRow($r)),
+            'meta' => [
+                'total' => $page->total(),
+                'page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(),
+            ],
+        ])->header('Cache-Control', 'no-store');
+    }
+
+    /** GET /api/partner/programs/{program} — full detail (public reference data). */
+    public function show(int $program): JsonResponse
+    {
+        $p = Program::with(['institution', 'intakes', 'requirements', 'labels'])->find($program);
+        if (! $p || ! $p->institution) {
+            return response()->json(['message' => 'Program not found.'], 404)->header('Cache-Control', 'no-store');
+        }
+
+        return response()->json(['program' => [
+            'id' => $p->id,
+            'title' => $p->title,
+            'level' => $p->level,
+            'study_area' => $p->study_area,
+            'discipline_area' => $p->discipline_area,
+            'duration_band' => $p->duration_band,
+            'tuition' => $p->tuition_fee_minor !== null
+                ? ['minor' => $p->tuition_fee_minor, 'currency' => $p->tuition_currency]
+                : null,
+            'application_fee' => $p->application_fee_minor !== null
+                ? ['minor' => $p->application_fee_minor, 'currency' => $p->application_fee_currency]
+                : null,
+            'is_stem' => $p->is_stem,
+            'has_coop_internship' => $p->has_coop_internship,
+            'scholarship_available' => $p->scholarship_available,
+            'application_fee_waiver' => $p->application_fee_waiver,
+            'moi_acceptable' => $p->moi_acceptable,
+            'esl_elp_available' => $p->esl_elp_available,
+            'is_open' => $p->is_open,
+            'source' => $p->source,
+            'institution' => [
+                'id' => $p->institution->id,
+                'name' => $p->institution->name,
+                'country' => $p->institution->country,
+                'province_state' => $p->institution->province_state,
+                'city' => $p->institution->city,
+                'is_major_city' => $p->institution->is_major_city,
+                'has_own_english_test' => $p->institution->has_own_english_test,
+                'offer_tat_band' => $p->institution->offer_tat_band,
+                'offer_acceptance_band' => $p->institution->offer_acceptance_band,
+                'affordability_band' => $p->institution->affordability_band,
+                'interview_required' => $p->institution->interview_required,
+                'vfi_represented' => $p->institution->vfi_represented,
+            ],
+            'intakes' => $p->intakes->map(fn ($i) => [
+                'month' => $i->intake_month,
+                'year' => $i->intake_year,
+                'season' => $i->season_label,
+                'deadline' => optional($i->application_deadline_at)->toDateString(),
+                'status' => $i->status,
+            ])->values(),
+            'requirements' => $p->requirements->map(fn ($r) => [
+                'test' => $r->test,
+                'min_overall' => $r->min_overall,
+                'is_required' => $r->is_required,
+                'waiver_available' => $r->waiver_available,
+                'maths_required' => $r->maths_required,
+            ])->values(),
+            'labels' => $p->labels->map(fn ($l) => ['code' => $l->code, 'label' => $l->label])->values(),
+        ]])->header('Cache-Control', 'no-store');
+    }
+
+    private function presentRow(ProgramSearchRow $r): array
+    {
+        return [
+            'id' => $r->id,
+            'program_id' => $r->program_id,
+            'title' => $r->title,
+            'university' => $r->university_name,
+            'country' => $r->country,
+            'province_state' => $r->province_state,
+            'level' => $r->level,
+            'study_area' => $r->study_area,
+            'discipline_area' => $r->discipline_area,
+            'duration_band' => $r->duration_band,
+            'tuition' => $r->tuition_fee_minor !== null
+                ? ['minor' => $r->tuition_fee_minor, 'currency' => $r->tuition_currency]
+                : null,
+            'intake' => ['month' => $r->intake_month, 'year' => $r->intake_year, 'season' => $r->season_label],
+            'deadline' => optional($r->application_deadline_at)->toDateString(),
+            'offer_tat_days' => $r->offer_tat_days,
+            'badges' => array_values(array_filter(explode(' ', trim((string) $r->flags)))),
+            'source' => $r->source,
+            'is_stale' => $r->is_stale,
+        ];
+    }
+}

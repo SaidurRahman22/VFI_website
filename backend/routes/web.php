@@ -156,6 +156,12 @@ Route::prefix('api')->group(function () {
         Route::post('partner/notifications/read', [$notif, 'read']);
 
         Route::get('partner/resources', [\App\Http\Controllers\Partner\PartnerResourceController::class, 'index']);
+
+        // Phase 8 — program search + detail over the flat catalogue index
+        // (public reference data, but console-only + per-partner rate-limited).
+        $programs = \App\Http\Controllers\Partner\PartnerProgramController::class;
+        Route::get('partner/programs/search', [$programs, 'search'])->middleware('throttle:program-search');
+        Route::get('partner/programs/{program}', [$programs, 'show'])->whereNumber('program')->middleware('throttle:program-search');
     });
 
     // PUBLIC referral resolver for the QR-registration landing (rate-limited).

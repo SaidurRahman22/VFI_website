@@ -2,6 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\Content\Blog;
+use App\Models\Content\Event;
+use App\Models\Content\NewsItem;
+use App\Models\Content\Photo;
+use App\Models\Content\PpDoc;
+use App\Models\Content\PpEmail;
+use App\Models\Content\PpManager;
+use App\Models\Content\PpNotif;
+use App\Models\Content\PpQuicklink;
+use App\Models\Content\PpUpdate;
 use App\Policies\ContentPolicy;
 use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -114,13 +124,19 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(20)->by('slug:'.$request->route('slug')),
         ]);
 
+        // Phase 8 — program search: per-signed-in-partner cap (infra limiter; the
+        // commercial quota is separate). Falls back to IP for safety.
+        RateLimiter::for('program-search', fn (Request $request) => Limit::perMinute(
+            (int) config('catalogue.search_rate_per_minute', 40)
+        )->by($request->user()?->getAuthIdentifier() ? 'u:'.$request->user()->getAuthIdentifier() : 'ip:'.$request->ip()));
+
         // Phase 3E — content policy on all 10 collection models (Filament enforces it).
         foreach ([
-            \App\Models\Content\Event::class, \App\Models\Content\Blog::class,
-            \App\Models\Content\NewsItem::class, \App\Models\Content\Photo::class,
-            \App\Models\Content\PpManager::class, \App\Models\Content\PpUpdate::class,
-            \App\Models\Content\PpQuicklink::class, \App\Models\Content\PpDoc::class,
-            \App\Models\Content\PpEmail::class, \App\Models\Content\PpNotif::class,
+            Event::class, Blog::class,
+            NewsItem::class, Photo::class,
+            PpManager::class, PpUpdate::class,
+            PpQuicklink::class, PpDoc::class,
+            PpEmail::class, PpNotif::class,
         ] as $model) {
             Gate::policy($model, ContentPolicy::class);
         }
