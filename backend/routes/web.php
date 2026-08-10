@@ -75,5 +75,16 @@ Route::prefix('api')->group(function () {
     Route::middleware(['auth:web', \App\Http\Middleware\EnsureStudent::class])->group(function () use ($sa) {
         Route::get('student/me', [$sa, 'me']);
         Route::post('student/logout', [$sa, 'logout']);
+
+        // Phase 5 — student portal, all IMPLICIT-SELF (no id in any path/query).
+        $profile = \App\Http\Controllers\Me\ProfileController::class;
+        Route::get('me', [$profile, 'me']);
+        Route::get('me/profile', [$profile, 'show']);
+        Route::get('me/completeness', [$profile, 'completeness']);
+        Route::put('me/profile/personal', [$profile, 'personal']);
+        Route::put('me/profile/address', [$profile, 'address']);
+        Route::put('me/qualifications', [$profile, 'qualifications']);
+        Route::put('me/test_scores', [$profile, 'testScores']);
+        Route::put('me/preferences', [$profile, 'preferences']);
     });
 });
