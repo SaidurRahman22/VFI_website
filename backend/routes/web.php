@@ -119,6 +119,13 @@ Route::prefix('api')->group(function () {
     Route::post('partner/email/change', [$pa, 'emailChange'])->middleware('throttle:otp-send');
     Route::get('partner/verify/context', [$pa, 'verifyContext'])->middleware('throttle:otp-verify');
 
+    // Partner sign-in + password reset (public, throttled). A successful reset
+    // revokes every session the user holds across all agencies.
+    Route::post('partner/signin', [$pa, 'signin'])->middleware('throttle:partner-login');
+    Route::post('partner/password/forgot', [$pa, 'forgotRequest'])->middleware('throttle:password-forgot');
+    Route::post('partner/password/reset/submit', [$pa, 'resetSubmit'])->middleware('throttle:otp-verify');
+    Route::post('partner/logout', [$pa, 'logout'])->middleware('auth:web');
+
     Route::middleware(['auth:web', \App\Http\Middleware\EnsurePartner::class])->group(function () {
         $console = \App\Http\Controllers\Partner\PartnerConsoleController::class;
         Route::get('partner/me', [$console, 'me']);

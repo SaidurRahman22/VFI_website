@@ -7,17 +7,26 @@ use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Mail\AccountExistsMail;
 use App\Mail\OtpMail;
+use App\Enums\MemberStatus;
+use App\Enums\Role;
+use App\Mail\ResetMail;
 use App\Models\AuthEvent;
+use App\Models\Concerns\BelongsToAgencyScope;
 use App\Models\EmailVerificationCode;
 use App\Models\Partner\PartnerAgency;
+use App\Models\Partner\PartnerAgencyMember;
 use App\Models\Partner\PartnerApplication;
 use App\Models\User;
 use App\Rules\NotBreachedPassword;
 use App\Services\OtpService;
+use App\Services\PasswordResetService;
+use App\Support\DummyHash;
 use App\Support\EmailMask;
 use App\Support\Turnstile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -102,6 +111,127 @@ class PartnerAuthController extends Controller
             'flow_id' => $flow->flow_id,
             'email_masked' => EmailMask::mask($email),
         ], 201)->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * POST /api/partner/signin — resolve the agency + seat from an ACTIVE
+     * membership of an APPROVED agency, and bind them to the session. Wrong
+     * password is a generic 401; a correct login against a not-yet-active agency
+     * gets the review-gate message (post-auth, so no enumeration leak).
+     */
+    public function signin(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:1024'],
+            'remember' => ['sometimes', 'boolean'],
+        ]);
+
+        $email = mb_strtolower(trim($data['email']));
+        $user = User::where('email', $email)->first();
+        $passwordOk = $user ? Hash::check($data['password'], $user->password) : DummyHash::verifyAbsent($data['password']);
+
+        $reject = fn (string $why) => tap(
+            response()->json(['message' => 'Invalid credentials.'], 401)->header('Cache-Control', 'no-store'),
+            fn () => AuthEvent::record('partner_signin_'.$why, ['user_id' => $user?->id, 'email' => $email, 'ip' => $request->ip()]),
+        );
+
+        if (! $user || ! $passwordOk) {
+            $user?->registerFailedLogin();
+
+            return $reject('failed');
+        }
+        if ($user->isLocked()) {
+            return $reject('locked');
+        }
+
+        // Resolve an ACTIVE seat whose agency is APPROVED (status gate). Bypass
+        // the tenant scope — there is no bound tenant yet at sign-in.
+        $membership = PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)
+            ->where('user_id', $user->id)->where('status', MemberStatus::Active->value)
+            ->get()
+            ->first(fn (PartnerAgencyMember $m) => PartnerAgency::find($m->agency_id)?->status->canOperate());
+
+        if (! $membership) {
+            // Correct credentials but no live tenant → review-gate copy.
+            AuthEvent::record('partner_signin_not_active', ['user_id' => $user->id, 'email' => $email, 'ip' => $request->ip()]);
+
+            return response()->json([
+                'message' => "This account isn't active yet. Our partner team reviews every application before an account goes live.",
+            ], 403)->header('Cache-Control', 'no-store');
+        }
+
+        $request->session()->regenerate();
+        Auth::guard('web')->login($user, (bool) ($data['remember'] ?? false));
+        $request->session()->put('active_scope', 'partner');
+        $request->session()->put('active_partner_agency_id', $membership->agency_id);
+        $request->session()->put('active_seat_role', $membership->seat_role->value);
+        $user->markLoginSuccess();
+        AuthEvent::record('partner_signin_success', ['user_id' => $user->id, 'email' => $email, 'ip' => $request->ip()]);
+
+        return response()->json(['ok' => true, 'agency' => ['id' => $membership->agency_id]])->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /api/partner/logout — end the partner session. */
+    public function logout(Request $request): JsonResponse
+    {
+        $id = $request->user()?->id;
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        AuthEvent::record('partner_logout', ['user_id' => $id, 'ip' => $request->ip()]);
+
+        return response()->json(['ok' => true])->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /api/partner/password/forgot — enumeration-safe, always 202. */
+    public function forgotRequest(Request $request, PasswordResetService $resets): JsonResponse
+    {
+        if ($blocked = $this->turnstileGate($request)) {
+            return $blocked;
+        }
+
+        $data = $request->validate(['email' => ['required', 'string', 'email', 'max:255']]);
+        $email = mb_strtolower(trim($data['email']));
+        $user = User::where('email', $email)->first();
+
+        $isPartner = $user && ($user->hasRole(Role::PartnerOwner) || $user->hasRole(Role::PartnerCounsellor)
+            || PartnerApplication::where('user_id', $user->id)->exists());
+
+        if ($user && $isPartner && $user->status !== \App\Enums\UserStatus::Suspended) {
+            $issued = $resets->request($user, $request->ip());
+            $url = rtrim((string) config('app.url'), '/').'/vfi-partner-reset.html?token='.$issued['token'];
+            Mail::to($email)->send(new ResetMail($url, PasswordResetService::TTL_MINUTES));
+            AuthEvent::record('partner_reset_requested', ['user_id' => $user->id, 'email' => $email, 'ip' => $request->ip()]);
+        } else {
+            hash('sha256', random_bytes(32));   // comparable work on the empty branch
+            AuthEvent::record('partner_reset_no_account', ['email' => $email, 'ip' => $request->ip()]);
+        }
+
+        return response()->json(['message' => 'If an account exists for that address, a reset link is on its way.'], 202)
+            ->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /api/partner/password/reset/submit — consume; revokes ALL sessions. */
+    public function resetSubmit(Request $request, PasswordResetService $resets): JsonResponse
+    {
+        $data = $request->validate([
+            'token' => ['required', 'string', 'max:128'],
+            'password' => ['required', 'string', 'confirmed', Password::min(8), new NotBreachedPassword, 'max:1024'],
+        ]);
+
+        $result = $resets->consume($data['token'], $data['password'], $request->ip());
+
+        if ($result['status'] === 'ok') {
+            return response()->json(['ok' => true, 'message' => 'Your password has been reset. Please sign in.'])
+                ->header('Cache-Control', 'no-store');
+        }
+
+        $message = $result['status'] === 'expired'
+            ? 'This reset link has expired. Request a new one.'
+            : 'This reset link is invalid or has already been used.';
+
+        return response()->json(['ok' => false, 'message' => $message], 422)->header('Cache-Control', 'no-store');
     }
 
     /** POST /api/partner/email/verify — {flow_id, code}. */
