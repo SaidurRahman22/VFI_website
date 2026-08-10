@@ -33,5 +33,9 @@ Route::prefix('api/admin')->group(function () {
         // Phase 3C — override-singleton editor (optimistic concurrency).
         Route::get('content/singleton/{key}', [\App\Http\Controllers\Admin\AdminContentController::class, 'show']);
         Route::put('content/singleton/{key}', [\App\Http\Controllers\Admin\AdminContentController::class, 'update']);
+
+        // Phase 3D — page-visibility (owner-only, allow-listed, audited).
+        Route::get('pages', [\App\Http\Controllers\Admin\AdminPageController::class, 'index']);
+        Route::put('pages/{file}', [\App\Http\Controllers\Admin\AdminPageController::class, 'toggle']);
     });
 });
