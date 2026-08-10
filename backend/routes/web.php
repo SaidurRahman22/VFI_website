@@ -29,5 +29,9 @@ Route::prefix('api/admin')->group(function () {
     Route::middleware(['auth:web', EnsureAdmin::class])->group(function () {
         Route::get('me', [AdminAuthController::class, 'me']);
         Route::post('logout', [AdminAuthController::class, 'logout']);
+
+        // Phase 3C — override-singleton editor (optimistic concurrency).
+        Route::get('content/singleton/{key}', [\App\Http\Controllers\Admin\AdminContentController::class, 'show']);
+        Route::put('content/singleton/{key}', [\App\Http\Controllers\Admin\AdminContentController::class, 'update']);
     });
 });
