@@ -26,6 +26,7 @@ use App\Support\Turnstile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
@@ -145,12 +146,17 @@ class PartnerAuthController extends Controller
             return $reject('locked');
         }
 
-        // Resolve an ACTIVE seat whose agency is APPROVED (status gate). Bypass
-        // the tenant scope — there is no bound tenant yet at sign-in.
-        $membership = PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)
+        // Resolve an ACTIVE seat whose agency is APPROVED (status gate).
+        //
+        // This is the ONE query that must run before a tenant exists, so both
+        // nets have to be stood down for it: the Eloquent scope explicitly, and
+        // — on Postgres — RLS, which would otherwise hide every row because
+        // app.agency_id is still unset (that silently refused every partner
+        // sign-in in production while SQLite tests passed).
+        $membership = $this->withRlsBypass(fn () => PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)
             ->where('user_id', $user->id)->where('status', MemberStatus::Active->value)
             ->get()
-            ->first(fn (PartnerAgencyMember $m) => PartnerAgency::find($m->agency_id)?->status->canOperate());
+            ->first(fn (PartnerAgencyMember $m) => PartnerAgency::find($m->agency_id)?->status->canOperate()));
 
         if (! $membership) {
             // Correct credentials but no live tenant → review-gate copy.
@@ -339,6 +345,31 @@ class PartnerAuthController extends Controller
     }
 
     // ---- helpers ----
+
+    /**
+     * Run one bootstrap query with the Postgres RLS tenant policy stood down.
+     *
+     * Used ONLY by sign-in, which must find a user's seat BEFORE any tenant is
+     * known. Both nets have to stand down for that one lookup: the Eloquent
+     * scope explicitly, and RLS here — otherwise the policy hides every row
+     * (app.agency_id is still unset) and every partner sign-in is refused with
+     * the review-gate. The bypass wraps a single closure and is reset in
+     * `finally`; EnsurePartner rebinds app.agency_id on every console request.
+     * No-op on SQLite/MySQL.
+     */
+    private function withRlsBypass(callable $fn): mixed
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return $fn();
+        }
+
+        DB::statement("SET app.rls_bypass = 'on'");
+        try {
+            return $fn();
+        } finally {
+            DB::statement("SET app.rls_bypass = ''");
+        }
+    }
 
     private function looksDuplicate(string $agency, string $country, int $exceptAppId): bool
     {
