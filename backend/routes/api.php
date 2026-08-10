@@ -42,6 +42,13 @@ Route::get('/health', function () {
 /* Admin scope (/api/admin/*) lives in routes/web.php — it is session-based and
    needs the web group's session + CSRF middleware. See there. */
 
+/*
+| Public contact-form intake (Phase 2 §7) — anonymous, stateless, rate-limited.
+| POST /api/contact
+*/
+Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'store'])
+    ->middleware('throttle:contact');
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');

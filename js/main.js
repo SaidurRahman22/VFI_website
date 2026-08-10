@@ -435,12 +435,32 @@
       var done = $("#cformDone");
       var btn = $("button[type=submit]", cform);
       if (btn) { btn.disabled = true; btn.style.opacity = ".7"; }
-      setTimeout(function () {
-        if (done) done.hidden = false;
+
+      // REAL REQUEST — persist the lead (Phase 2). Falls back gracefully if the
+      // API is unreachable so the visitor is never left with a dead button.
+      var payload = {
+        fname: $("#fname").value.trim(),
+        phone: $("#phone").value.trim(),
+        email: $("#email").value.trim(),
+        dest: ($("#dest") && $("#dest").value) || "",
+        msg: ($("#msg") && $("#msg").value.trim()) || "",
+        source_page: (window.VFI && VFI.baseName ? VFI.baseName(location.pathname) : location.pathname)
+      };
+      function finish(okState) {
+        if (done) {
+          done.hidden = false;
+          if (!okState) done.textContent = "Thanks! We received your details — if you don't hear back, please call us.";
+          done.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+        }
         cform.reset();
         if (btn) { btn.disabled = false; btn.style.opacity = ""; }
-        if (done) done.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
-      }, 600);
+      }
+      var base = (typeof window.VFI_API_BASE === "string") ? window.VFI_API_BASE : "";
+      fetch(base + "/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function (r) { finish(r.ok); }).catch(function () { finish(false); });
     });
     // clear invalid state on input
     $$("input,textarea", cform).forEach(function (el) {

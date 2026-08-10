@@ -31,5 +31,15 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(5)->by('email:'.$email),
             ];
         });
+
+        // Public contact form (Phase 2 §7.2): per-IP and per-email caps.
+        RateLimiter::for('contact', function (Request $request) {
+            $email = mb_strtolower((string) $request->input('email'));
+
+            return [
+                Limit::perMinute(5)->by('ip:'.$request->ip()),
+                Limit::perMinutes(10, 3)->by('email:'.$email),
+            ];
+        });
     }
 }
