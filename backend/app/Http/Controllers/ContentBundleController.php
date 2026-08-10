@@ -13,6 +13,7 @@ use App\Models\Content\PpNotif;
 use App\Models\Content\PpQuicklink;
 use App\Models\Content\PpUpdate;
 use App\Models\SiteContent;
+use App\Support\UrlGuard;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -87,13 +88,14 @@ class ContentBundleController extends Controller
                 ->map(fn ($row) => $row->toBundle())->all();
         }
 
-        // URL-scheme allow-list on the link-bearing collection fields (security).
+        // URL-scheme allow-list on the link-bearing collection fields (defense in
+        // depth — also enforced at write time on the models).
         foreach ($bundle['ppQuicklinks'] as &$q) {
-            $q['url'] = $this->safeUrl($q['url'] ?? null);
+            $q['url'] = UrlGuard::safe($q['url'] ?? null);
         }
         unset($q);
         foreach ($bundle['ppDocs'] as &$d) {
-            $d['url'] = $this->safeUrl($d['url'] ?? null);
+            $d['url'] = UrlGuard::safe($d['url'] ?? null);
         }
         unset($d);
 
@@ -105,27 +107,6 @@ class ContentBundleController extends Controller
         $json = json_encode($bundle, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         return [$json, '"'.md5($json).'"'];
-    }
-
-    /**
-     * Allow only http/https/mailto and relative URLs; reject javascript:/data:/etc.
-     * Returns '' for a rejected/empty value (store.js/render.js then skip it).
-     */
-    private function safeUrl(?string $url): string
-    {
-        $url = trim((string) $url);
-        if ($url === '') {
-            return '';
-        }
-        // relative (path, anchor, query) — no scheme, no protocol-relative
-        if (! preg_match('#^[a-zA-Z][a-zA-Z0-9+.-]*:#', $url) && ! str_starts_with($url, '//')) {
-            return $url;
-        }
-        if (preg_match('#^(https?|mailto):#i', $url)) {
-            return $url;
-        }
-
-        return '';   // javascript:, data:, vbscript:, protocol-relative → dropped
     }
 
     private function notModified(Request $request, string $etag): bool

@@ -21,8 +21,13 @@ abstract class ContentItem extends Model
     protected static function booted(): void
     {
         static::creating(function (ContentItem $m) {
+            // Auto-mint an immutable legacy_id so admins never type one
+            // (blogs: this is the public URL key — never edit it later).
+            if (blank($m->getAttribute('legacy_id'))) {
+                $m->legacy_id = substr(class_basename($m), 0, 1).'_'.\Illuminate\Support\Str::random(10);
+            }
             // New item defaults to the front (lowest position), mirroring
-            // VFI.put()'s unshift — only when position was not set explicitly
+            // VFI.put()'s unshift — unless position was set explicitly
             // (the importer sets it from array index, so it is respected).
             if ($m->getAttribute('position') === null) {
                 $min = static::query()->min('position');

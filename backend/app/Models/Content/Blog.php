@@ -13,4 +13,16 @@ class Blog extends ContentItem
         'excerpt' => 'excerpt', 'color' => 'color', 'img_id' => 'imgId',
         'author' => 'author', 'read_time' => 'readTime', 'body' => 'body',
     ];
+
+    protected static function booted(): void
+    {
+        parent::booted();
+        // Anti-stored-XSS contract: blog body is PLAIN TEXT end-to-end. Strip any
+        // HTML on save; the "## / - / >" markers are plain text and survive.
+        static::saving(function (Blog $b) {
+            if ($b->body !== null) {
+                $b->body = strip_tags((string) $b->body);
+            }
+        });
+    }
 }
