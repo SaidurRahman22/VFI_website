@@ -41,14 +41,17 @@ class CollegeScorecardSource implements IngestSource
     public function records(): iterable
     {
         $cfg = config('catalogue.scorecard');
-        $perPage = 100;
+        // The programs-of-study field is heavy per school, so keep pages SMALL —
+        // 100/page overran the 30s network limit on the VPS. 25/page + a longer
+        // timeout completes reliably.
+        $perPage = 25;
         $maxInst = (int) $cfg['max_institutions'];
         $pages = (int) ceil($maxInst / $perPage);
         $baseYear = (int) config('catalogue.seed.base_year', 2026);
         $seen = 0;
 
         for ($page = 0; $page < $pages; $page++) {
-            $resp = Http::retry(2, 500)->timeout(30)->get($cfg['base'], [
+            $resp = Http::retry(2, 800)->connectTimeout(15)->timeout(90)->get($cfg['base'], [
                 'api_key' => $cfg['key'],
                 'fields' => 'id,school.name,school.city,school.state,latest.cost.tuition.out_of_state,latest.programs.cip_4_digit',
                 'per_page' => $perPage,
