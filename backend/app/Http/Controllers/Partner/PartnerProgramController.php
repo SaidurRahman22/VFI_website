@@ -28,7 +28,7 @@ class PartnerProgramController extends Controller
         'stem', 'coop', 'scholarship', 'fee_waiver', 'moi', 'esl', 'open', 'no_app_fee',
         // institution
         'major_city', 'own_english', 'vfi', 'interview_required', 'no_interview',
-        'fast_offer', 'high_acceptance', 'affordable', 'low_deposit',
+        'fast_offer', 'high_acceptance', 'high_job_demand', 'affordable', 'low_deposit',
         // required tests / maths
         'req_ielts', 'req_toefl', 'req_pte', 'req_duolingo', 'req_gre', 'req_gmat', 'req_maths',
         // waivers (the negative filters)
@@ -52,6 +52,8 @@ class PartnerProgramController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'country' => ['nullable', 'string', 'max:90'],
             'level' => ['nullable', 'string', 'max:60'],
+            'levels' => ['nullable', 'array', 'max:20'],
+            'levels.*' => ['string', 'max:60'],
             'study_area' => ['nullable', 'string', 'max:60'],
             'duration_band' => ['nullable', 'string', 'max:30'],
             'intake' => ['nullable', 'string', 'max:20'],
@@ -75,10 +77,18 @@ class PartnerProgramController extends Controller
             $query->where('search_blob', 'like', '%'.mb_strtolower($kw).'%');
         }
 
-        foreach (['country' => 'country', 'level' => 'level', 'study_area' => 'study_area', 'duration_band' => 'duration_band'] as $param => $col) {
+        foreach (['country' => 'country', 'study_area' => 'study_area', 'duration_band' => 'duration_band'] as $param => $col) {
             if (! empty($data[$param])) {
                 $query->where($col, $data[$param]);
             }
+        }
+        // level accepts a single value or a set (the UI's level checkboxes)
+        $levels = array_values(array_unique(array_filter(array_merge(
+            ! empty($data['level']) ? [$data['level']] : [],
+            $data['levels'] ?? []
+        ))));
+        if ($levels !== []) {
+            $query->whereIn('level', $levels);
         }
         if (! empty($data['intake'])) {
             $query->where('season_label', $data['intake']);

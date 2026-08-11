@@ -98,6 +98,7 @@ class SearchIndexer
         $t[] = $i->interview_required ? 'interview_required' : 'no_interview';
         $i->offer_tat_band === 'fast' && $t[] = 'fast_offer';
         $i->offer_acceptance_band === 'high' && $t[] = 'high_acceptance';
+        $p->job_demand_band === 'high' && $t[] = 'high_job_demand';
         $i->affordability_band === 'low' && $t[] = 'affordable';
         in_array($i->tuition_deposit_policy, ['none', 'low'], true) && $t[] = 'low_deposit';
 

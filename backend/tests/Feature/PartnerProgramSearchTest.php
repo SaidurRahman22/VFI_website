@@ -88,6 +88,27 @@ class PartnerProgramSearchTest extends TestCase
         $this->partner()->getJson('/api/partner/programs/search?facets[]=hackme')->assertStatus(422);
     }
 
+    public function test_levels_array_filter(): void
+    {
+        $res = $this->partner()->getJson('/api/partner/programs/search?include_stale=1&levels[]=master&levels[]=bachelor')
+            ->assertStatus(200);
+        $this->assertGreaterThan(0, $res->json('meta.total'));
+        foreach ($res->json('data') as $row) {
+            $this->assertContains($row['level'], ['master', 'bachelor']);
+        }
+    }
+
+    public function test_high_job_demand_facet(): void
+    {
+        $res = $this->partner()->getJson('/api/partner/programs/search?include_stale=1&facets[]=high_job_demand')
+            ->assertStatus(200);
+        $this->assertGreaterThan(0, $res->json('meta.total'));
+        $this->assertLessThan(90, $res->json('meta.total'));
+        foreach ($res->json('data') as $row) {
+            $this->assertContains('high_job_demand', $row['badges']);
+        }
+    }
+
     public function test_tuition_max_excludes_dearer_and_null_tuition(): void
     {
         $res = $this->partner()->getJson('/api/partner/programs/search?include_stale=1&tuition_max=1800000')->assertStatus(200);
