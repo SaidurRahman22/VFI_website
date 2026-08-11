@@ -240,6 +240,33 @@
       .catch(function () { wrap.innerHTML = '<div class="uni-msg">University not found. <a href="universities.html">Browse universities</a>.</div>'; });
   }
 
+  /* intake seasons — month, a short honest note, and a photo already on the site */
+  var SEASON = {
+    fall: { month: "September", img: "assets/img/campus.jpg",
+      note: "The main intake. The widest choice of courses and scholarships — start 8–12 months ahead." },
+    spring: { month: "January", img: "assets/img/students-group.jpg",
+      note: "The second intake. A good option if you need more time for tests, documents or funds." },
+    summer: { month: "May", img: "assets/img/students-friends.jpg",
+      note: "A smaller intake on selected courses, often pathway and short programs." },
+    winter: { month: "November", img: "assets/img/library.jpg",
+      note: "A limited intake on selected courses. Ask a counsellor which programs are open." }
+  };
+  function seasonKey(name) {
+    var n = String(name || "").toLowerCase();
+    for (var k in SEASON) { if (SEASON.hasOwnProperty(k) && n.indexOf(k) !== -1) return k; }
+    if (n.indexOf("autumn") !== -1) return "fall";
+    return "fall";
+  }
+  function intakeCard(name, month, note, key) {
+    var img = (SEASON[key] || SEASON.fall).img;
+    return '<article class="uintake">'
+      + '<div class="uintake__img" style="background-image:url(\'' + esc(img) + '\')"></div>'
+      + '<div class="uintake__body"><h3 class="uintake__name">' + esc(name) + '</h3>'
+      + (month ? '<span class="uintake__month">' + esc(month) + '</span>' : '')
+      + (note ? '<p class="uintake__note">' + esc(note) + '</p>' : '')
+      + '</div></article>';
+  }
+
   /* ---- small builders ---- */
   function statTile(v, k) { return '<div class="ustat"><div class="ustat__v">' + esc(v) + '</div><div class="ustat__k">' + esc(k) + '</div></div>'; }
   function rankCard(n, k) { return '<div class="urank__card"><div class="urank__n">' + esc(n) + '</div><div class="urank__k">' + esc(k) + '</div></div>'; }
@@ -323,15 +350,18 @@
     if (rk) push("ranking", "Ranking", '<div class="urank">' + rk + '</div>'
       + (p.ranking && p.ranking.note ? '<p class="unote" style="margin-top:12px">' + esc(p.ranking.note) + '</p>' : ''));
 
-    // Intakes — editorial blocks, else derived from the catalogue
+    // Intakes — card grid; editorial blocks if authored, else from the catalogue
     var ib = p.intake_blocks || [], intakeInner = "";
     if (ib.length) {
-      intakeInner = '<div class="upanel">' + ib.map(function (b) {
-        return '<div style="margin-bottom:14px"><p class="usub">' + esc(b.name) + '</p><p class="unote">' + esc(b.note || "") + '</p></div>';
+      intakeInner = '<div class="uintakes">' + ib.map(function (b) {
+        return intakeCard(b.name, "", b.note || "", seasonKey(b.name));
       }).join("") + '</div>';
     } else if (s.seasons && s.seasons.length) {
-      intakeInner = '<p class="unote unote--card">This university runs <b>' + esc(s.seasons.map(cap).join(", "))
-        + '</b> intake' + (s.seasons.length === 1 ? '' : 's') + '. Applications open several months ahead — a counsellor can confirm the exact deadline for your course.</p>';
+      intakeInner = '<div class="uintakes">' + s.seasons.map(function (sn) {
+        var m = SEASON[sn] || {};
+        return intakeCard(cap(sn) + " intake", m.month || "", m.note || "", sn);
+      }).join("") + '</div>'
+        + '<p class="unote" style="margin-top:12px">Applications open several months ahead — a counsellor can confirm the exact deadline for your course.</p>';
     }
     push("intakes", "Intakes", intakeInner);
 

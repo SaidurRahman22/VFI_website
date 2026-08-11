@@ -105,6 +105,24 @@
 .utable td:last-child, .utable th:last-child { text-align: right; }
 .utable td:last-child { font-weight: 700; color: var(--text); white-space: nowrap; }
 
+/* intake cards — short image banner + name/month/note */
+.uintakes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+.uintake {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  overflow: hidden; box-shadow: var(--shadow-sm); display: flex; flex-direction: column;
+  transition: transform .16s var(--ease), box-shadow .16s var(--ease);
+}
+.uintake:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.uintake__img { height: 96px; background-size: cover; background-position: center; position: relative; }
+.uintake__img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(21,36,64,.1), rgba(21,36,64,.45)); }
+.uintake__body { padding: 14px 16px 16px; }
+.uintake__name { font-family: var(--display); font-size: 1rem; font-weight: 700; color: var(--text); margin: 0; }
+.uintake__month {
+  display: inline-block; margin-top: 5px; font-size: .74rem; font-weight: 700;
+  color: var(--blue-dark); background: var(--tint-blue); border-radius: 999px; padding: 3px 10px;
+}
+.uintake__note { color: var(--muted); font-size: .87rem; line-height: 1.6; margin: 9px 0 0; }
+
 /* course rows — a fixed 2-column grid so every fee lines up in one column
    no matter how long the course title runs (no wrapping/reflow) */
 .ucourse {
