@@ -236,9 +236,18 @@
       return;
     }
     VFIApi.get("/api/universities/" + encodeURIComponent(id))
-      .then(function (d) { renderDetail(d.university); })
+      .then(function (d) { CMS = d.defaults || {}; applyLeadOptions(); renderDetail(d.university); })
       .catch(function () { wrap.innerHTML = '<div class="uni-msg">University not found. <a href="universities.html">Browse universities</a>.</div>'; });
   }
+
+  /* Staff-owned copy served by the API (/manage → University page defaults).
+     DEFAULTS below is only the safety net used before anything is authored. */
+  var CMS = {};
+  function cmsText(key, fallback) {
+    var v = CMS[key];
+    return (typeof v === "string" && v.trim() !== "") ? v : fallback;
+  }
+  function fill(t, u) { return String(t || "").replace(/\{university\}/g, u); }
 
   /* intake seasons — month, a short honest note, and a photo already on the site */
   var SEASON = {
@@ -257,14 +266,30 @@
     if (n.indexOf("autumn") !== -1) return "fall";
     return "fall";
   }
-  function intakeCard(name, month, note, key) {
-    var img = (SEASON[key] || SEASON.fall).img;
+  /* season card data: what staff set in the admin wins, else the built-in */
+  function season(key) {
+    var cms = (CMS.seasons || {})[key] || {}, base = SEASON[key] || SEASON.fall;
+    return {
+      month: cms.month || base.month,
+      note: cms.note || base.note,
+      img: cms.image || base.img
+    };
+  }
+  function intakeCard(name, month, note, key, image) {
+    var img = image || season(key).img;
     return '<article class="uintake">'
       + '<div class="uintake__img" style="background-image:url(\'' + esc(img) + '\')"></div>'
       + '<div class="uintake__body"><h3 class="uintake__name">' + esc(name) + '</h3>'
       + (month ? '<span class="uintake__month">' + esc(month) + '</span>' : '')
       + (note ? '<p class="uintake__note">' + esc(note) + '</p>' : '')
       + '</div></article>';
+  }
+
+  /* lead-form "I'm interested in" options come from the admin defaults */
+  function applyLeadOptions() {
+    var sel = $("#leadLevel"), opts = CMS.interest_options || [];
+    if (!sel || !opts.length) return;
+    sel.innerHTML = opts.map(function (o) { return '<option>' + esc(o) + '</option>'; }).join("");
   }
 
   /* ---- small builders ---- */
@@ -352,16 +377,18 @@
 
     // Intakes — card grid; editorial blocks if authored, else from the catalogue
     var ib = p.intake_blocks || [], intakeInner = "";
+    var footnote = cmsText("intake_footnote", "Applications open several months ahead — a counsellor can confirm the exact deadline for your course.");
     if (ib.length) {
       intakeInner = '<div class="uintakes">' + ib.map(function (b) {
-        return intakeCard(b.name, "", b.note || "", seasonKey(b.name));
-      }).join("") + '</div>';
+        return intakeCard(b.name, b.month || "", b.note || "", seasonKey(b.name), b.image);
+      }).join("") + '</div>'
+        + (footnote ? '<p class="unote" style="margin-top:12px">' + esc(footnote) + '</p>' : '');
     } else if (s.seasons && s.seasons.length) {
       intakeInner = '<div class="uintakes">' + s.seasons.map(function (sn) {
-        var m = SEASON[sn] || {};
-        return intakeCard(cap(sn) + " intake", m.month || "", m.note || "", sn);
+        var m = season(sn);
+        return intakeCard(cap(sn) + " intake", m.month, m.note, sn, m.img);
       }).join("") + '</div>'
-        + '<p class="unote" style="margin-top:12px">Applications open several months ahead — a counsellor can confirm the exact deadline for your course.</p>';
+        + (footnote ? '<p class="unote" style="margin-top:12px">' + esc(footnote) + '</p>' : '');
     }
     push("intakes", "Intakes", intakeInner);
 
@@ -394,10 +421,12 @@
 
     // Cost to Study — narrative, expenses table, footnote
     var cur = s.tuition_currency || "";
-    var costInner = '<p class="unote">' + esc(p.cost && p.cost.note ? p.cost.note
-      : ("The cost of studying at " + u.name + " has two parts: tuition for your course, and living costs while you are there — "
+    var costIntro = (p.cost && p.cost.note) ? p.cost.note
+      : fill(cmsText("cost_intro",
+        "The cost of studying at {university} has two parts: tuition for your course, and living costs while you are there — "
         + "housing and food, books and materials, local travel, health cover and personal spending. Tuition varies by course and level, "
-        + "so use the figures below as a planning guide and ask a counsellor for the exact cost of the courses on your shortlist.")) + '</p>';
+        + "so use the figures below as a planning guide and ask a counsellor for the exact cost of the courses on your shortlist."), u.name);
+    var costInner = '<p class="unote">' + esc(costIntro) + '</p>';
 
     var rows = (p.cost_rows || []).map(function (r) { return [r.label, r.value]; });
     if (!rows.length) {
@@ -408,8 +437,9 @@
     }
     if (rows.length) {
       costInner += tableHtml("Types of expenses", "Annual expenses" + (cur ? " in " + cur : ""), rows);
-      costInner += '<p class="ucost__note">Note: these figures are approximate and change year to year. '
-        + 'Check the current fee schedule on the university’s official website, or ask your VFI counsellor for the latest breakdown.</p>';
+      var cnote = cmsText("cost_footnote", "Note: these figures are approximate and change year to year. "
+        + "Check the current fee schedule on the university’s official website, or ask your VFI counsellor for the latest breakdown.");
+      if (cnote) costInner += '<p class="ucost__note">' + esc(cnote) + '</p>';
     } else {
       costInner += '<p class="unote unote--card" style="margin-top:14px">Ask a VFI counsellor for a full cost breakdown for this university.</p>';
     }
@@ -427,8 +457,8 @@
           + '<button type="button" class="btn btn--outline btn--sm" data-apply>View &amp; Apply</button></div></div>';
       }).join("") + '</div>';
     } else if (s.scholarship_available) {
-      scholInner = '<p class="unote unote--card">Scholarships are available on selected programs at ' + esc(u.name)
-        + '. Ask a counsellor which ones you qualify for.</p>';
+      scholInner = '<p class="unote unote--card">' + esc(fill(cmsText("scholarship_note",
+        "Scholarships are available on selected programs at {university}. Ask a counsellor which ones you qualify for."), u.name)) + '</p>';
     }
     push("scholarships", "Scholarships", scholInner);
 
@@ -488,15 +518,16 @@
         + p.gallery.map(function (g) { return '<img src="' + esc(g) + '" alt="' + esc(u.name) + '" loading="lazy">'; }).join("") + '</div>');
     }
 
-    // FAQs — staff-authored, else a generic VFI set (no invented facts)
-    var faqs = (p.faqs && p.faqs.length) ? p.faqs : [
+    // FAQs — this university's, else the admin default set, else the built-in
+    var faqs = (p.faqs && p.faqs.length) ? p.faqs
+      : ((CMS.faqs && CMS.faqs.length) ? CMS.faqs : [
       { q: "Is there an application fee?", a: "It varies by course. Your VFI counsellor will confirm the fee for each course on your shortlist and tell you if a fee waiver applies." },
       { q: "What are the English language requirements?", a: (s.tests_required && s.tests_required.length)
         ? ("This university accepts " + s.tests_required.map(function (t) { return t.toUpperCase(); }).join(", ") + ". The score you need depends on the course — ask a counsellor for the exact requirement.")
         : "Requirements depend on the course. Ask a counsellor which test and score your shortlist needs." },
       { q: "When should I apply?", a: "Apply as early as you can. Places and scholarships are limited and popular courses close before the published deadline." },
       { q: "Can VFI help with my application and visa?", a: "Yes. VFI supports you end to end — shortlisting, application, documents, scholarships and visa guidance. Counselling is free." }
-    ];
+    ]);
     push("faqs", "FAQs", faqs.map(function (f) { return accItem(f.q, f.a); }).join(""));
 
     /* ---- paint ---- */

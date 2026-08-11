@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Catalogue\Institution;
+use App\Models\SiteContent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -97,7 +98,12 @@ class PublicUniversityController extends Controller
                 'ranking' => array_filter([
                     'world' => $inst->ranking_world, 'national' => $inst->ranking_national, 'note' => $inst->ranking_note,
                 ]),
-                'intake_blocks' => array_values($inst->intakes_json ?? []),
+                'intake_blocks' => collect($inst->intakes_json ?? [])->map(fn ($b) => [
+                    'name' => $b['name'] ?? '',
+                    'month' => $b['month'] ?? '',
+                    'note' => $b['note'] ?? '',
+                    'image' => ! empty($b['image']) ? $this->assetUrl($b['image']) : null,
+                ])->values(),
                 'cost' => array_filter([
                     'note' => $inst->cost_note, 'living' => $inst->living_cost_note, 'accommodation' => $inst->accommodation_note,
                 ]),
@@ -149,7 +155,46 @@ class PublicUniversityController extends Controller
                 'seasons' => $p->intakes->pluck('season_label')->filter()->unique()->values(),
             ])->values(),
             'related' => $related,
-        ]])->header('Cache-Control', 'public, max-age=120');
+        ], 'defaults' => $this->pageDefaults()])->header('Cache-Control', 'public, max-age=120');
+    }
+
+    /** Map a stored asset path to a public URL (absolute URLs pass through). */
+    private function assetUrl(string $key): string
+    {
+        return preg_match('#^https?://#', $key) ? $key : '/storage/'.ltrim($key, '/');
+    }
+
+    /**
+     * Staff-owned fallback copy for the detail template (the `universityPage`
+     * singleton, edited at /manage/university-defaults). Everything the page
+     * would otherwise hardcode lives here.
+     */
+    private function pageDefaults(): array
+    {
+        $d = SiteContent::value('universityPage', []) ?: [];
+
+        $seasons = [];
+        foreach ($d['seasons'] ?? [] as $s) {
+            $key = strtolower(trim((string) ($s['key'] ?? '')));
+            if ($key === '') {
+                continue;
+            }
+            $seasons[$key] = [
+                'month' => $s['month'] ?? '',
+                'note' => $s['note'] ?? '',
+                'image' => ! empty($s['image']) ? $this->assetUrl($s['image']) : null,
+            ];
+        }
+
+        return [
+            'seasons' => $seasons,
+            'intake_footnote' => $d['intake_footnote'] ?? null,
+            'cost_intro' => $d['cost_intro'] ?? null,
+            'cost_footnote' => $d['cost_footnote'] ?? null,
+            'scholarship_note' => $d['scholarship_note'] ?? null,
+            'faqs' => array_values($d['faqs'] ?? []),
+            'interest_options' => array_values(array_filter(array_column($d['interest_options'] ?? [], 'label'))),
+        ];
     }
 
     private function card(Institution $i): array

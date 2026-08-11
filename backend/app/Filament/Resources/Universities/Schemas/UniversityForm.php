@@ -73,12 +73,17 @@ class UniversityForm
             ]),
 
             Section::make('Intakes')->schema([
-                Repeater::make('intakes_json')->label('Intake blocks')->collapsed()
+                Repeater::make('intakes_json')->label('Intake cards')->collapsed()->columns(2)
                     ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
                     ->schema([
-                        TextInput::make('name')->placeholder('Fall Intake (September)')->required()->columnSpanFull(),
+                        TextInput::make('name')->placeholder('Fall Intake')->required(),
+                        TextInput::make('month')->placeholder('September')->helperText('Shown as a pill on the card.'),
                         Textarea::make('note')->rows(2)->columnSpanFull(),
-                    ])->columnSpanFull()->helperText('Leave empty to auto-list the intakes from the course catalogue.'),
+                        FileUpload::make('image')->label('Card image')->image()->imageEditor()
+                            ->disk('public')->directory('media/universities/intakes')->visibility('public')->maxSize(3072)
+                            ->columnSpanFull()->helperText('Optional. Falls back to the season image set in University page defaults.'),
+                    ])->columnSpanFull()
+                    ->helperText('Leave empty to build the cards automatically from the course catalogue’s intakes.'),
             ]),
 
             Section::make('Cost to study')->columns(2)->schema([

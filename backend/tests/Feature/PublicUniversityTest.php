@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Catalogue\Institution;
+use App\Models\SiteContent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -72,6 +73,40 @@ class PublicUniversityTest extends TestCase
     public function test_detail_404_for_unknown(): void
     {
         $this->getJson('/api/universities/999999')->assertStatus(404);
+    }
+
+    public function test_detail_serves_admin_authored_page_defaults(): void
+    {
+        SiteContent::create(['key' => 'universityPage', 'value' => [
+            'seasons' => [['key' => 'fall', 'month' => 'Sept', 'note' => 'Main intake', 'image' => 'media/x/fall.jpg']],
+            'intake_footnote' => 'Apply early.',
+            'cost_intro' => 'Costs at {university} vary.',
+            'cost_footnote' => 'Indicative only.',
+            'scholarship_note' => 'Ask us about {university} funding.',
+            'faqs' => [['q' => 'Default Q?', 'a' => 'Default A.']],
+            'interest_options' => [['label' => "Master's"], ['label' => 'MBA']],
+        ]]);
+
+        $id = Institution::query()->value('id');
+        $this->getJson("/api/universities/{$id}")->assertStatus(200)
+            ->assertJsonPath('defaults.seasons.fall.month', 'Sept')
+            ->assertJsonPath('defaults.seasons.fall.image', '/storage/media/x/fall.jpg')
+            ->assertJsonPath('defaults.intake_footnote', 'Apply early.')
+            ->assertJsonPath('defaults.cost_intro', 'Costs at {university} vary.')
+            ->assertJsonPath('defaults.faqs.0.q', 'Default Q?')
+            ->assertJsonPath('defaults.interest_options.1', 'MBA');
+    }
+
+    public function test_intake_cards_carry_month_and_image(): void
+    {
+        $inst = Institution::query()->firstOrFail();
+        $inst->update(['intakes_json' => [
+            ['name' => 'Fall Intake', 'month' => 'September', 'note' => 'Main', 'image' => 'media/universities/intakes/f.jpg'],
+        ]]);
+
+        $this->getJson("/api/universities/{$inst->id}")->assertStatus(200)
+            ->assertJsonPath('university.profile.intake_blocks.0.month', 'September')
+            ->assertJsonPath('university.profile.intake_blocks.0.image', '/storage/media/universities/intakes/f.jpg');
     }
 
     public function test_detail_includes_editorial_profile_and_logo(): void
