@@ -54,16 +54,41 @@ class UniversityForm
             Section::make('Overview')->schema([
                 Textarea::make('overview')->rows(5)->columnSpanFull()
                     ->helperText('The “About” paragraph. Plain text; line breaks are kept.'),
+                Repeater::make('overview_stats_json')->label('Stat tiles')->columns(2)->grid(3)
+                    ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
+                    ->schema([
+                        TextInput::make('value')->placeholder('74%')->required(),
+                        TextInput::make('label')->placeholder('Acceptance rate')->required(),
+                    ])->columnSpanFull()->helperText('Three tiles read best, e.g. acceptance rate / international students / graduate employment.'),
             ]),
 
-            Section::make('Ranking')->columns(3)->schema([
-                TextInput::make('ranking_world')->label('World rank')->maxLength(60)->placeholder('#54'),
-                TextInput::make('ranking_national')->label('National rank')->maxLength(60),
-                TextInput::make('ranking_note')->label('Note')->maxLength(190)->columnSpan(3),
+            Section::make('Ranking')->schema([
+                Repeater::make('rankings_json')->label('Ranking cards')->columns(2)->grid(3)
+                    ->itemLabel(fn (array $state): ?string => $state['by'] ?? null)
+                    ->schema([
+                        TextInput::make('rank')->placeholder('#54')->required(),
+                        TextInput::make('by')->label('Ranked by')->placeholder('QS World Rankings')->required(),
+                    ])->columnSpanFull(),
+                TextInput::make('ranking_note')->label('Note')->maxLength(190)->columnSpanFull(),
+            ]),
+
+            Section::make('Intakes')->schema([
+                Repeater::make('intakes_json')->label('Intake blocks')->collapsed()
+                    ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
+                    ->schema([
+                        TextInput::make('name')->placeholder('Fall Intake (September)')->required()->columnSpanFull(),
+                        Textarea::make('note')->rows(2)->columnSpanFull(),
+                    ])->columnSpanFull()->helperText('Leave empty to auto-list the intakes from the course catalogue.'),
             ]),
 
             Section::make('Cost to study')->columns(2)->schema([
                 Textarea::make('cost_note')->rows(3)->columnSpanFull(),
+                Repeater::make('cost_rows_json')->label('Cost table')->columns(2)
+                    ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
+                    ->schema([
+                        TextInput::make('label')->placeholder('Annual avg PG tuition fee')->required(),
+                        TextInput::make('value')->placeholder('USD 25,000')->required(),
+                    ])->columnSpanFull(),
                 TextInput::make('living_cost_note')->label('Living cost')->maxLength(190),
                 TextInput::make('accommodation_note')->label('Accommodation')->maxLength(190),
             ]),
@@ -79,17 +104,43 @@ class UniversityForm
                     ]),
             ]),
 
-            Section::make('Admissions')->columns(2)->schema([
-                Textarea::make('admission_academic')->label('Academic requirements')->rows(3),
-                Textarea::make('admission_english')->label('English requirements')->rows(3),
+            Section::make('Admissions')->schema([
+                Repeater::make('admissions_json')->label('Requirements by level (shown as tabs)')->collapsed()
+                    ->itemLabel(fn (array $state): ?string => $state['level'] ?? null)
+                    ->schema([
+                        TextInput::make('level')->placeholder('Masters')->required()->columnSpanFull(),
+                        Textarea::make('academic')->label('Academic requirements')->rows(3)->columnSpanFull(),
+                        Textarea::make('english')->label('English proficiency')->rows(2)->columnSpanFull()
+                            ->helperText('e.g. TOEFL iBT 79 · IELTS 6.5 · DET 110'),
+                        Textarea::make('tests')->label('Standardised tests')->rows(2)->columnSpanFull(),
+                    ])->columnSpanFull(),
+                Textarea::make('admission_academic')->label('Fallback — academic')->rows(2)->columnSpanFull(),
+                Textarea::make('admission_english')->label('Fallback — English')->rows(2)->columnSpanFull(),
             ]),
 
             Section::make('Placements')->columns(2)->schema([
+                TextInput::make('placement_rate')->label('Placement rate')->maxLength(30)->placeholder('92%'),
+                TextInput::make('salary_note')->label('Average salary note')->maxLength(190),
                 Textarea::make('placement_note')->rows(3)->columnSpanFull(),
-                TextInput::make('salary_note')->label('Average salary note')->maxLength(190)->columnSpanFull(),
+                TextInput::make('alumni_note')->label('Alumni network note')->maxLength(190)->columnSpanFull(),
                 Repeater::make('recruiters_json')->label('Top recruiters')->columns(1)->grid(3)
                     ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
                     ->schema([TextInput::make('name')->required()])->columnSpanFull(),
+                Repeater::make('jobs_json')->label('Jobs after graduating (table)')->columns(2)
+                    ->itemLabel(fn (array $state): ?string => $state['profile'] ?? null)
+                    ->schema([
+                        TextInput::make('profile')->label('Job profile')->required(),
+                        TextInput::make('salary')->label('Average salary')->required(),
+                    ])->columnSpanFull(),
+            ]),
+
+            Section::make('Life on campus')->schema([
+                Repeater::make('services_json')->label('Student service blocks (accordion)')->collapsed()
+                    ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)
+                    ->schema([
+                        TextInput::make('title')->placeholder('Clubs and societies')->required()->columnSpanFull(),
+                        Textarea::make('body')->rows(3)->columnSpanFull(),
+                    ])->columnSpanFull(),
             ]),
 
             Section::make('Gallery')->schema([

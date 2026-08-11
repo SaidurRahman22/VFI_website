@@ -92,19 +92,27 @@ class PublicUniversityController extends Controller
             'hero' => $inst->heroUrl(),
             'profile' => [
                 'overview' => $inst->overview,
+                'stats' => array_values($inst->overview_stats_json ?? []),
+                'rankings' => array_values($inst->rankings_json ?? []),
                 'ranking' => array_filter([
                     'world' => $inst->ranking_world, 'national' => $inst->ranking_national, 'note' => $inst->ranking_note,
                 ]),
+                'intake_blocks' => array_values($inst->intakes_json ?? []),
                 'cost' => array_filter([
                     'note' => $inst->cost_note, 'living' => $inst->living_cost_note, 'accommodation' => $inst->accommodation_note,
                 ]),
+                'cost_rows' => array_values($inst->cost_rows_json ?? []),
+                'admissions' => array_values($inst->admissions_json ?? []),
                 'admission' => array_filter([
                     'academic' => $inst->admission_academic, 'english' => $inst->admission_english,
                 ]),
                 'placement' => array_filter([
                     'note' => $inst->placement_note, 'salary' => $inst->salary_note,
+                    'rate' => $inst->placement_rate, 'alumni' => $inst->alumni_note,
                     'recruiters' => array_values(array_filter(array_column($inst->recruiters_json ?? [], 'name'))),
+                    'jobs' => array_values($inst->jobs_json ?? []),
                 ]),
+                'services' => array_values($inst->services_json ?? []),
                 'scholarships' => array_values($inst->scholarships_json ?? []),
                 'faqs' => array_values($inst->faqs_json ?? []),
                 'gallery' => collect($inst->gallery_json ?? [])
@@ -129,7 +137,7 @@ class PublicUniversityController extends Controller
                 'tuition_max' => $tuitions->max(),
                 'tuition_currency' => optional($programs->firstWhere('tuition_currency', '!=', null))->tuition_currency,
             ],
-            'courses' => $programs->take(24)->map(fn ($p) => [
+            'courses' => $programs->take(80)->map(fn ($p) => [
                 'id' => $p->id,
                 'title' => $p->title,
                 'level' => $p->level,

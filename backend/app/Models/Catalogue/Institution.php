@@ -17,6 +17,8 @@ class Institution extends Model
         'cost_note', 'living_cost_note', 'accommodation_note',
         'admission_academic', 'admission_english', 'placement_note', 'salary_note',
         'scholarships_json', 'faqs_json', 'gallery_json', 'recruiters_json',
+        'overview_stats_json', 'rankings_json', 'intakes_json', 'cost_rows_json',
+        'admissions_json', 'jobs_json', 'services_json', 'placement_rate', 'alumni_note',
     ];
 
     protected function casts(): array
@@ -26,6 +28,9 @@ class Institution extends Model
             'interview_required' => 'boolean', 'vfi_represented' => 'boolean',
             'scholarships_json' => 'array', 'faqs_json' => 'array',
             'gallery_json' => 'array', 'recruiters_json' => 'array',
+            'overview_stats_json' => 'array', 'rankings_json' => 'array',
+            'intakes_json' => 'array', 'cost_rows_json' => 'array',
+            'admissions_json' => 'array', 'jobs_json' => 'array', 'services_json' => 'array',
         ];
     }
 

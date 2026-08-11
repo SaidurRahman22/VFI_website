@@ -3,35 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="University detail — courses, intakes, tuition, entry requirements and scholarships, with free VFI counselling." />
+  <meta name="description" content="University detail — courses, intakes, tuition, entry requirements, scholarships and placements, with free VFI counselling." />
   <title>University | VFI Overseas Education</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/university.css" />
   <script>document.documentElement.className += " js";</script>
   <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
 </head>
-<body data-page="destinations" data-header="overlay">
+<body data-page="destinations" data-header="solid">
   <a class="skip-link" href="#main">Skip to main content</a>
   <div id="site-header"></div>
 
   <main id="main">
 
-    <!-- ============ HERO ============ -->
-    <section class="page-hero">
-      <div class="page-hero__bg" style="background-image:url('assets/img/library.jpg')"></div>
-      <div class="container page-hero__inner">
-        <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="crumb__dot"></span><a href="universities.html">Universities</a><span class="crumb__dot"></span><span id="uniCrumb">University</span></nav>
-        <div id="uniHero"><h1 id="uniName">Loading…</h1></div>
+    <!-- ============ HERO: banner + logo card ============ -->
+    <section class="uhero">
+      <div class="uhero__banner" id="uniBanner"></div>
+      <div class="container">
+        <nav class="crumb crumb--dark" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="crumb__dot"></span><a href="universities.html">Universities</a><span class="crumb__dot"></span><span id="uniCrumb">University</span></nav>
+        <div class="uhero__card" id="uniHero"><h1>Loading…</h1></div>
       </div>
-      <svg class="page-hero__wave" viewBox="0 0 1440 130" preserveAspectRatio="none" aria-hidden="true"><path d="M0,0 Q720,150 1440,0 L1440,130 L0,130 Z"/></svg>
     </section>
 
-    <!-- ============ DETAIL (rendered from /api/universities/{id}) ============ -->
+    <!-- ============ STICKY SECTION NAV ============ -->
+    <div class="udetail__nav" id="uniNav" hidden><div class="container"><ul id="uniNavList"></ul></div></div>
+
+    <!-- ============ BODY: content + sticky lead form ============ -->
+    <div class="container">
+      <div class="ulayout">
+        <div class="ulayout__main" id="uniDetail">
+          <div class="uni-msg">Loading university…</div>
+        </div>
+
+        <aside class="ulayout__side">
+          <div class="ulead" id="uniLead">
+            <div class="ulead__head">
+              <h3 id="uniLeadTitle">Want to study abroad?</h3>
+              <p>Fill in your details and a VFI counsellor will call you back — free.</p>
+            </div>
+            <form class="ulead__form" id="leadForm" novalidate>
+              <div class="umodal__field"><label for="leadName">Full name</label><input id="leadName" required maxlength="120"></div>
+              <div class="umodal__field"><label for="leadPhone">Phone</label><input id="leadPhone" required maxlength="40"></div>
+              <div class="umodal__field"><label for="leadEmail">Email</label><input id="leadEmail" type="email" required maxlength="190"></div>
+              <div class="umodal__field"><label for="leadLevel">I'm interested in</label>
+                <select id="leadLevel" class="ulead__select">
+                  <option>Bachelor's</option><option>Master's</option><option>MBA</option><option>PhD</option><option>Diploma / Foundation</option>
+                </select>
+              </div>
+              <button class="btn btn--enquire" type="submit" id="leadSubmit" style="width:100%">Book Free Counselling</button>
+              <p class="umodal__msg" id="leadMsgOut" role="status"></p>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ============ FINAL CTA BAND ============ -->
     <section class="section">
-      <div class="container" id="uniDetail">
-        <div class="uni-msg">Loading university…</div>
+      <div class="container">
+        <div class="ctaband reveal" id="uniCta" hidden>
+          <div>
+            <h2 id="uniCtaTitle">Start your journey</h2>
+            <p>Talk to a VFI counsellor about entry requirements, scholarships and the next intake — free, and with no obligation.</p>
+          </div>
+          <button class="btn btn--white-pill btn--lg" data-apply type="button">Book Free Counselling</button>
+        </div>
       </div>
     </section>
 
