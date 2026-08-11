@@ -251,20 +251,20 @@
   function accItem(title, body) {
     return '<details class="uacc"><summary>' + esc(title) + '</summary><div class="uacc__b">' + esc(body || "") + '</div></details>';
   }
-  function courseRow(c, uniName) {
+  function courseRow(c) {
     var meta = [levelLabel(c.level)];
     if (c.duration_band) meta.push(String(c.duration_band).replace(/_/g, " "));
     if (c.study_area) meta.push(cap(String(c.study_area).replace(/_/g, " ")));
     var chips = "";
     if (c.is_stem) chips += '<span class="uchip">STEM</span>';
     if (c.scholarship_available) chips += '<span class="uchip uchip--coral">Scholarship</span>';
-    return '<div class="ucourse"><div><div class="ucourse__t">' + esc(c.title) + '</div>'
+    // the US feed ends CIP titles with a full stop — drop it for display
+    var title = String(c.title || "").replace(/\s*\.\s*$/, "");
+    return '<div class="ucourse"><div class="ucourse__info"><div class="ucourse__t">' + esc(title) + '</div>'
       + '<div class="ucourse__m">' + esc(meta.join(" · ")) + '</div>'
       + (chips ? '<div class="uchips" style="margin-top:6px">' + chips + '</div>' : '') + '</div>'
-      + '<div class="ucourse__right">'
-      + (c.tuition ? '<span class="ucourse__fee">' + money(c.tuition) + '</span>' : '')
-      + '<button type="button" class="btn btn--enquire btn--sm" data-apply-uni data-name="' + esc(uniName) + '">Apply Now</button>'
-      + '</div></div>';
+      + '<div class="ucourse__fee">' + (c.tuition ? money(c.tuition) : '<span class="ucourse__na">On request</span>') + '</div>'
+      + '</div>';
   }
   function autoOverview(u) {
     var s = u.stats || {};
@@ -352,7 +352,7 @@
         tabs += '<button type="button" class="utab' + (i === 0 ? ' is-on' : '') + '" data-tab="c-' + esc(lvl) + '">'
           + esc(levelLabel(lvl)) + ' (' + byLevel[lvl].length + ')</button>';
         panels += '<div class="utabpanel" data-panel="c-' + esc(lvl) + '"' + (i === 0 ? '' : ' hidden') + '><div class="upanel">'
-          + byLevel[lvl].map(function (c) { return courseRow(c, u.name); }).join("") + '</div></div>';
+          + byLevel[lvl].map(function (c) { return courseRow(c); }).join("") + '</div></div>';
       }
       push("courses", "Courses", '<div class="utabgroup"><div class="utabs">' + tabs + '</div>' + panels + '</div>');
     } else {

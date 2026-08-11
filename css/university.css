@@ -105,13 +105,22 @@
 .utable td:last-child, .utable th:last-child { text-align: right; }
 .utable td:last-child { font-weight: 700; color: var(--text); white-space: nowrap; }
 
-/* course rows */
-.ucourse { display: flex; justify-content: space-between; gap: 16px; padding: 15px 0; border-top: 1px solid var(--line-2); align-items: center; flex-wrap: wrap; }
+/* course rows — a fixed 2-column grid so every fee lines up in one column
+   no matter how long the course title runs (no wrapping/reflow) */
+.ucourse {
+  display: grid; grid-template-columns: minmax(0, 1fr) 132px;
+  gap: 8px 20px; align-items: start; padding: 15px 0; border-top: 1px solid var(--line-2);
+}
 .ucourse:first-child { border-top: 0; }
-.ucourse__t { font-weight: 600; color: var(--text); }
+.ucourse__info { min-width: 0; }
+.ucourse__t { font-weight: 600; color: var(--text); line-height: 1.4; }
 .ucourse__m { font-size: .84rem; color: var(--muted); margin-top: 3px; }
-.ucourse__right { display: flex; align-items: center; gap: 14px; }
-.ucourse__fee { font-weight: 700; color: var(--blue); white-space: nowrap; }
+.ucourse__fee { font-weight: 700; color: var(--blue); text-align: right; white-space: nowrap; padding-top: 1px; }
+.ucourse__na { color: var(--muted); font-weight: 600; font-size: .86rem; }
+@media (max-width: 560px) {
+  .ucourse { grid-template-columns: 1fr; gap: 6px; }
+  .ucourse__fee { text-align: left; }
+}
 
 /* text + chips */
 .unote { color: var(--muted); line-height: 1.75; }
