@@ -124,6 +124,9 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(20)->by('slug:'.$request->route('slug')),
         ]);
 
+        // Phase 8 — public university directory reads: generous per-IP cap.
+        RateLimiter::for('public-read', fn (Request $request) => Limit::perMinute(60)->by('ip:'.$request->ip()));
+
         // Phase 8 — program search: per-signed-in-partner cap (infra limiter; the
         // commercial quota is separate). Falls back to IP for safety.
         RateLimiter::for('program-search', fn (Request $request) => Limit::perMinute(

@@ -33,50 +33,18 @@
     <div class="container">
       <div class="dsearch">
         <h2>Find your university</h2>
-        <form class="dsearch__form" id="uniSearch" action="contact.html" method="get">
+        <div class="dsearch__form uni-tools" id="uniSearch">
           <div class="select-wrap">
-            <select id="uniCountry" name="country" aria-label="Select country">
-              <option value="">Select Country</option>
-              <option value="usa">United States</option>
-              <option value="canada">Canada</option>
-              <option value="uk">United Kingdom</option>
-              <option value="ireland">Ireland</option>
-              <option value="australia">Australia</option>
-              <option value="new-zealand">New Zealand</option>
-              <option value="europe">Europe</option>
-              <option value="asia">Asia</option>
+            <select id="uniCountry" aria-label="Select country">
+              <option value="">All Countries</option>
             </select>
             <svg class="ic ic--sm select-wrap__chev"><use href="#i-chevron"/></svg>
           </div>
-          <div class="select-wrap">
-            <select id="uniLevel" name="level" aria-label="Select study level">
-              <option value="">Select Study Level</option>
-              <option value="foundation">Foundation / Pathway</option>
-              <option value="diploma">Diploma</option>
-              <option value="bachelors">Bachelor's</option>
-              <option value="masters">Master's</option>
-              <option value="mba">MBA</option>
-              <option value="phd">PhD / Doctorate</option>
-            </select>
-            <svg class="ic ic--sm select-wrap__chev"><use href="#i-chevron"/></svg>
+          <div class="uni-tools__search">
+            <input type="search" id="uniQ" placeholder="Search universities by name or city…" autocomplete="off" aria-label="Search universities">
           </div>
-          <div class="select-wrap">
-            <select id="uniField" name="field" aria-label="Select field of study">
-              <option value="">Select Field of Study</option>
-              <option value="computing">Computer Science &amp; IT</option>
-              <option value="data">Data Science &amp; Analytics</option>
-              <option value="engineering">Engineering</option>
-              <option value="business">Business &amp; Management</option>
-              <option value="health">Health &amp; Medicine</option>
-              <option value="life-sciences">Life Sciences</option>
-              <option value="law">Law</option>
-              <option value="arts">Arts, Media &amp; Design</option>
-              <option value="hospitality">Hospitality &amp; Tourism</option>
-            </select>
-            <svg class="ic ic--sm select-wrap__chev"><use href="#i-chevron"/></svg>
-          </div>
-          <button type="submit" class="btn btn--outline">Search</button>
-        </form>
+          <button type="button" class="btn btn--enquire" id="uniSearchBtn">Search</button>
+        </div>
       </div>
     </div>
 
@@ -97,106 +65,21 @@
       </div>
     </section>
 
-    <!-- ============ FEATURED UNIVERSITIES ============ -->
+    <!-- ============ RESULTS ============ -->
     <section class="section">
       <div class="container">
-        <header class="sec-head reveal">
-          <span class="eyebrow">Featured partners</span>
-          <h2 class="sec-title">Universities students ask us about most</h2>
-          <p class="sec-lead">A starting point, not a ranking. Tell a counsellor what matters to you and we will build the full list around it.</p>
-        </header>
-        <div class="unicards">
-
-          <article class="unic reveal">
-            <div class="unic__logo unic__logo--a"><svg class="ic"><use href="#i-cap"/></svg></div>
-            <h3>Northeastern University</h3>
-            <p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> Boston, United States</p>
-            <ul class="unic__meta"><li>Paid co-op placements built into the degree</li><li>Strong CS, analytics and engineering intakes</li></ul>
-            <div class="unic__cta">
-              <a href="contact.html" class="btn btn--outline btn--sm">Know More</a>
-              <a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a>
-            </div>
-          </article>
-
-          <article class="unic reveal">
-            <div class="unic__logo unic__logo--b"><svg class="ic"><use href="#i-cap"/></svg></div>
-            <h3>Arizona State University</h3>
-            <p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> Tempe, United States</p>
-            <ul class="unic__meta"><li>Wide scholarship pool for internationals</li><li>Rolling intakes across Fall and Spring</li></ul>
-            <div class="unic__cta">
-              <a href="contact.html" class="btn btn--outline btn--sm">Know More</a>
-              <a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a>
-            </div>
-          </article>
-
-          <article class="unic reveal">
-            <div class="unic__logo unic__logo--c"><svg class="ic"><use href="#i-cap"/></svg></div>
-            <h3>University of Bristol</h3>
-            <p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> Bristol, United Kingdom</p>
-            <ul class="unic__meta"><li>Russell Group research reputation</li><li>One-year master's in most subjects</li></ul>
-            <div class="unic__cta">
-              <a href="contact.html" class="btn btn--outline btn--sm">Know More</a>
-              <a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a>
-            </div>
-          </article>
-
-          <article class="unic reveal">
-            <div class="unic__logo unic__logo--a"><svg class="ic"><use href="#i-cap"/></svg></div>
-            <h3>Queen Mary University of London</h3>
-            <p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> London, United Kingdom</p>
-            <ul class="unic__meta"><li>Central London campus with on-site housing</li><li>Well regarded for law and life sciences</li></ul>
-            <div class="unic__cta">
-              <a href="contact.html" class="btn btn--outline btn--sm">Know More</a>
-              <a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a>
-            </div>
-          </article>
-
-          <article class="unic reveal">
-            <div class="unic__logo unic__logo--b"><svg class="ic"><use href="#i-cap"/></svg></div>
-            <h3>University of Toronto</h3>
-            <p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> Toronto, Canada</p>
-            <ul class="unic__meta"><li>Canada's highest-ranked research university</li><li>Graduates qualify for the PGWP route</li></ul>
-            <div class="unic__cta">
-              <a href="contact.html" class="btn btn--outline btn--sm">Know More</a>
-              <a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a>
-            </div>
-          </article>
-
-          <article class="unic reveal">
-            <div class="unic__logo unic__logo--c"><svg class="ic"><use href="#i-cap"/></svg></div>
-            <h3>University of New South Wales</h3>
-            <p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> Sydney, Australia</p>
-            <ul class="unic__meta"><li>Three intakes a year on a trimester calendar</li><li>Engineering and business industry links</li></ul>
-            <div class="unic__cta">
-              <a href="contact.html" class="btn btn--outline btn--sm">Know More</a>
-              <a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a>
-            </div>
-          </article>
-
-          <article class="unic reveal">
-            <div class="unic__logo unic__logo--a"><svg class="ic"><use href="#i-cap"/></svg></div>
-            <h3>Trinity College Dublin</h3>
-            <p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> Dublin, Ireland</p>
-            <ul class="unic__meta"><li>Ireland's oldest university, founded 1592</li><li>Two-year stay-back on the Third Level Graduate route</li></ul>
-            <div class="unic__cta">
-              <a href="contact.html" class="btn btn--outline btn--sm">Know More</a>
-              <a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a>
-            </div>
-          </article>
-
-          <article class="unic reveal">
-            <div class="unic__logo unic__logo--b"><svg class="ic"><use href="#i-cap"/></svg></div>
-            <h3>University of Auckland</h3>
-            <p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> Auckland, New Zealand</p>
-            <ul class="unic__meta"><li>New Zealand's top-ranked university</li><li>Post-study work visa of up to three years</li></ul>
-            <div class="unic__cta">
-              <a href="contact.html" class="btn btn--outline btn--sm">Know More</a>
-              <a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a>
-            </div>
-          </article>
-
+        <div class="uni-reshead reveal">
+          <h2 class="sec-title" id="uniResTitle">Universities</h2>
+          <span class="uni-count" id="uniResCount"></span>
         </div>
-        <div class="ctr-more reveal"><a href="contact.html" class="btn btn--enquire">Ask for your full university list <svg class="ic"><use href="#i-arrow"/></svg></a></div>
+        <div class="unicards" id="uniResults" aria-live="polite">
+          <div class="uni-msg">Loading universities…</div>
+        </div>
+        <div class="uni-pager" id="uniPager" hidden>
+          <button class="btn btn--outline btn--sm" id="uniPrev" type="button">← Prev</button>
+          <span class="uni-pageinfo" id="uniPageInfo"></span>
+          <button class="btn btn--outline btn--sm" id="uniNext" type="button">Next →</button>
+        </div>
       </div>
     </section>
 
@@ -250,6 +133,29 @@
 
   </main>
 
+  <!-- Book Free Counselling modal (shared markup; opened by any Apply button) -->
+  <div class="umodal" id="bookModal" hidden>
+    <div class="umodal__bg" data-close></div>
+    <div class="umodal__panel" role="dialog" aria-modal="true" aria-labelledby="bookTitle">
+      <div class="umodal__head">
+        <button class="umodal__x" data-close type="button" aria-label="Close">&times;</button>
+        <h3 id="bookTitle">Book Free Counselling</h3>
+        <p>A VFI counsellor will get back to you — free, and with no obligation.</p>
+      </div>
+      <div class="umodal__body">
+        <div class="umodal__ctx" id="bookCtx" hidden></div>
+        <form id="bookForm" novalidate>
+          <div class="umodal__field"><label for="bookName">Full name</label><input id="bookName" name="fname" required maxlength="120"></div>
+          <div class="umodal__field"><label for="bookPhone">Phone (with country code)</label><input id="bookPhone" name="phone" required maxlength="40"></div>
+          <div class="umodal__field"><label for="bookEmail">Email</label><input id="bookEmail" name="email" type="email" required maxlength="190"></div>
+          <div class="umodal__field"><label for="bookNote">Anything specific? (optional)</label><textarea id="bookNote" name="note" rows="3" maxlength="1500"></textarea></div>
+          <button class="btn btn--enquire btn--lg" type="submit" id="bookSubmit" style="width:100%">Request my free call</button>
+          <p class="umodal__msg" id="bookMsgOut" role="status"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div id="site-footer"></div>
   <script src="js/api.js"></script>
   <script src="/api/content/bootstrap.js"></script>
@@ -257,5 +163,6 @@
   <script src="js/site.js"></script>
   <script src="js/main.js"></script>
   <script src="js/render.js"></script>
+  <script src="js/universities.js"></script>
 </body>
 </html>

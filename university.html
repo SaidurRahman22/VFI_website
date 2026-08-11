@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="University detail — courses, intakes, tuition, entry requirements and scholarships, with free VFI counselling." />
+  <title>University | VFI Overseas Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+</head>
+<body data-page="destinations" data-header="overlay">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="site-header"></div>
+
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section class="page-hero">
+      <div class="page-hero__bg" style="background-image:url('assets/img/library.jpg')"></div>
+      <div class="container page-hero__inner">
+        <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="crumb__dot"></span><a href="universities.html">Universities</a><span class="crumb__dot"></span><span id="uniCrumb">University</span></nav>
+        <h1 id="uniName">Loading…</h1>
+        <p id="uniLoc"></p>
+        <div style="margin-top:20px">
+          <button class="btn btn--enquire btn--lg" id="uniApplyHero" data-apply hidden>Apply — Book Free Counselling</button>
+        </div>
+      </div>
+      <svg class="page-hero__wave" viewBox="0 0 1440 130" preserveAspectRatio="none" aria-hidden="true"><path d="M0,0 Q720,150 1440,0 L1440,130 L0,130 Z"/></svg>
+    </section>
+
+    <!-- ============ DETAIL (rendered from /api/universities/{id}) ============ -->
+    <section class="section">
+      <div class="container" id="uniDetail">
+        <div class="uni-msg">Loading university…</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Book Free Counselling modal -->
+  <div class="umodal" id="bookModal" hidden>
+    <div class="umodal__bg" data-close></div>
+    <div class="umodal__panel" role="dialog" aria-modal="true" aria-labelledby="bookTitle">
+      <div class="umodal__head">
+        <button class="umodal__x" data-close type="button" aria-label="Close">&times;</button>
+        <h3 id="bookTitle">Book Free Counselling</h3>
+        <p>A VFI counsellor will get back to you — free, and with no obligation.</p>
+      </div>
+      <div class="umodal__body">
+        <div class="umodal__ctx" id="bookCtx" hidden></div>
+        <form id="bookForm" novalidate>
+          <div class="umodal__field"><label for="bookName">Full name</label><input id="bookName" name="fname" required maxlength="120"></div>
+          <div class="umodal__field"><label for="bookPhone">Phone (with country code)</label><input id="bookPhone" name="phone" required maxlength="40"></div>
+          <div class="umodal__field"><label for="bookEmail">Email</label><input id="bookEmail" name="email" type="email" required maxlength="190"></div>
+          <div class="umodal__field"><label for="bookNote">Anything specific? (optional)</label><textarea id="bookNote" name="note" rows="3" maxlength="1500"></textarea></div>
+          <button class="btn btn--enquire btn--lg" type="submit" id="bookSubmit" style="width:100%">Request my free call</button>
+          <p class="umodal__msg" id="bookMsgOut" role="status"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="site-footer"></div>
+  <script src="js/api.js"></script>
+  <script src="/api/content/bootstrap.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/site.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/universities.js"></script>
+</body>
+</html>

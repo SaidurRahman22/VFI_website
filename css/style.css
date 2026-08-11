@@ -2695,3 +2695,55 @@ html:not(.js) .acc[open] .acc__body{max-height:none}
   .bp-share__btn,.bp-back .ic,.feature-post.bp-linked{transition:none}
   .bp-back:hover .ic{transform:scaleX(-1)}
 }
+
+/* ==========================================================================
+   PUBLIC UNIVERSITY DIRECTORY + DETAIL + counselling modal  (Phase 8, student)
+   ========================================================================== */
+.uni-tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch; }
+.uni-tools .select-wrap { flex: 1 1 240px; }
+.uni-tools__search { flex: 2 1 300px; position: relative; }
+.uni-tools__search input { width: 100%; height: 100%; padding: 13px 15px; border: 1.6px solid var(--line); border-radius: 14px; font: inherit; font-size: .98rem; }
+.uni-tools__search input:focus { outline: none; border-color: var(--blue); }
+.uni-reshead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 34px 0 18px; }
+.uni-reshead h2 { margin: 0; font-size: 1.35rem; }
+.uni-count { color: var(--muted); font-size: .9rem; font-weight: 600; white-space: nowrap; }
+.unic__prog { display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; font-weight: 700; color: var(--blue); background: var(--tint-blue); padding: 3px 10px; border-radius: 999px; }
+.unic__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.unic__tag { font-size: .72rem; font-weight: 600; color: var(--muted); background: var(--bg-soft); border-radius: 999px; padding: 3px 9px; }
+.uni-pager { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 30px; }
+.uni-pageinfo { color: var(--muted); font-weight: 600; font-size: .9rem; }
+.uni-msg { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 44px 10px; font-size: 1rem; }
+
+/* detail */
+.udetail__facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin: 6px 0 30px; }
+.ufact { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; box-shadow: var(--shadow-sm); }
+.ufact__k { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; }
+.ufact__v { font-size: 1.08rem; font-weight: 700; color: var(--text); margin-top: 5px; }
+.ucourse { display: flex; justify-content: space-between; gap: 16px; padding: 15px 0; border-top: 1px solid var(--line-2); align-items: flex-start; }
+.ucourse:first-child { border-top: 0; }
+.ucourse__t { font-weight: 600; color: var(--text); }
+.ucourse__m { font-size: .84rem; color: var(--muted); margin-top: 3px; }
+.ucourse__fee { font-weight: 700; color: var(--blue); white-space: nowrap; }
+.uchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; }
+.uchip { font-size: .78rem; font-weight: 600; padding: 4px 11px; border-radius: 999px; background: var(--tint-blue); color: var(--blue-dark); }
+.uchip--coral { background: var(--tint-coral); color: var(--coral-dark); }
+
+/* Book Free Counselling modal (shared by universities.html + university.html) */
+.umodal { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 20px; }
+.umodal[hidden] { display: none; }
+.umodal__bg { position: absolute; inset: 0; background: rgba(10, 20, 40, .55); }
+.umodal__panel { position: relative; width: min(520px, 100%); max-height: 92vh; overflow: auto; background: #fff; border-radius: 20px; box-shadow: 0 30px 80px rgba(14, 27, 44, .42); }
+.umodal__head { padding: 20px 24px; background: linear-gradient(100deg, var(--navy), var(--blue)); color: #fff; }
+.umodal__head h3 { color: #fff; font-size: 1.18rem; margin: 0; }
+.umodal__head p { margin: 3px 0 0; font-size: .85rem; color: rgba(255, 255, 255, .82); }
+.umodal__x { position: absolute; top: 16px; right: 16px; border: 0; background: rgba(255, 255, 255, .16); color: #fff; width: 34px; height: 34px; border-radius: 9px; cursor: pointer; font-size: 20px; line-height: 1; }
+.umodal__body { padding: 20px 24px 24px; }
+.umodal__ctx { background: var(--bg-soft); border-radius: 12px; padding: 11px 14px; font-size: .86rem; color: var(--muted); margin-bottom: 16px; }
+.umodal__ctx b { color: var(--text); }
+.umodal__field { margin-bottom: 13px; }
+.umodal__field label { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.umodal__field input, .umodal__field textarea { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 12px; font: inherit; font-size: .95rem; }
+.umodal__field input:focus, .umodal__field textarea:focus { outline: none; border-color: var(--blue); }
+.umodal__msg { font-size: .86rem; margin-top: 10px; min-height: 1.1em; }
+.umodal__msg--ok { color: #046046; }
+.umodal__msg--bad { color: var(--coral-dark); }

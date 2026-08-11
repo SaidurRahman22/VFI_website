@@ -61,6 +61,15 @@ Route::get('/content/bootstrap.js', [\App\Http\Controllers\ContentBundleControll
 // divergent hardcoded option lists across the console/search pages).
 Route::get('/taxonomy', [\App\Http\Controllers\TaxonomyController::class, 'index']);
 
+// Phase 8 — public student-facing university directory (no auth; public
+// reference data). List + country facet + detail. Per-IP rate-limited.
+Route::middleware('throttle:public-read')->group(function () {
+    $uni = \App\Http\Controllers\PublicUniversityController::class;
+    Route::get('/universities', [$uni, 'index']);
+    Route::get('/universities/meta', [$uni, 'meta']);
+    Route::get('/universities/{institution}', [$uni, 'show'])->whereNumber('institution');
+});
+
 /* Student identity (Phase 4) lives in routes/web.php — like admin auth it is
    session-cookie based and same-origin, so it wants the web group's session +
    cookie + CSRF middleware unconditionally (the api group only attaches a
