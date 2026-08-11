@@ -381,26 +381,38 @@
         var lvl = levels[i];
         tabs += '<button type="button" class="utab' + (i === 0 ? ' is-on' : '') + '" data-tab="c-' + esc(lvl) + '">'
           + esc(levelLabel(lvl)) + ' (' + byLevel[lvl].length + ')</button>';
-        panels += '<div class="utabpanel" data-panel="c-' + esc(lvl) + '"' + (i === 0 ? '' : ' hidden') + '><div class="upanel">'
-          + byLevel[lvl].map(function (c) { return courseRow(c); }).join("") + '</div></div>';
+        panels += '<div class="utabpanel" data-panel="c-' + esc(lvl) + '"' + (i === 0 ? '' : ' hidden') + '>'
+          + '<div class="upanel ucourses"><div class="ucourses__scroll">'
+          + byLevel[lvl].map(function (c) { return courseRow(c); }).join("") + '</div></div>'
+          + (byLevel[lvl].length > 10 ? '<p class="ucourses__hint">Showing all ' + byLevel[lvl].length + ' courses — scroll the list above.</p>' : '')
+          + '</div>';
       }
       push("courses", "Courses", '<div class="utabgroup"><div class="utabs">' + tabs + '</div>' + panels + '</div>');
     } else {
       push("courses", "Courses", '<p class="unote unote--card">Full course list on request — ask a counsellor.</p>');
     }
 
-    // Cost to Study — narrative + table
-    var costInner = "";
-    if (p.cost && p.cost.note) costInner += '<p class="unote" style="margin-bottom:14px">' + esc(p.cost.note) + '</p>';
+    // Cost to Study — narrative, expenses table, footnote
+    var cur = s.tuition_currency || "";
+    var costInner = '<p class="unote">' + esc(p.cost && p.cost.note ? p.cost.note
+      : ("The cost of studying at " + u.name + " has two parts: tuition for your course, and living costs while you are there — "
+        + "housing and food, books and materials, local travel, health cover and personal spending. Tuition varies by course and level, "
+        + "so use the figures below as a planning guide and ask a counsellor for the exact cost of the courses on your shortlist.")) + '</p>';
+
     var rows = (p.cost_rows || []).map(function (r) { return [r.label, r.value]; });
     if (!rows.length) {
-      if (s.tuition_min != null) rows.push(["Annual tuition (from)", money({ minor: s.tuition_min, currency: s.tuition_currency })]);
-      if (s.tuition_max != null && s.tuition_max !== s.tuition_min) rows.push(["Annual tuition (up to)", money({ minor: s.tuition_max, currency: s.tuition_currency })]);
+      if (s.tuition_min != null) rows.push(["Annual tuition fee (from)", money({ minor: s.tuition_min, currency: cur })]);
+      if (s.tuition_max != null && s.tuition_max !== s.tuition_min) rows.push(["Annual tuition fee (up to)", money({ minor: s.tuition_max, currency: cur })]);
       if (p.cost && p.cost.living) rows.push(["Living expenses", p.cost.living]);
-      if (p.cost && p.cost.accommodation) rows.push(["Accommodation", p.cost.accommodation]);
+      if (p.cost && p.cost.accommodation) rows.push(["Housing & food", p.cost.accommodation]);
     }
-    if (rows.length) costInner += tableHtml("Types of expenses", "Annual expenses", rows);
-    if (!costInner) costInner = '<p class="unote unote--card">Ask a VFI counsellor for a full cost breakdown.</p>';
+    if (rows.length) {
+      costInner += tableHtml("Types of expenses", "Annual expenses" + (cur ? " in " + cur : ""), rows);
+      costInner += '<p class="ucost__note">Note: these figures are approximate and change year to year. '
+        + 'Check the current fee schedule on the university’s official website, or ask your VFI counsellor for the latest breakdown.</p>';
+    } else {
+      costInner += '<p class="unote unote--card" style="margin-top:14px">Ask a VFI counsellor for a full cost breakdown for this university.</p>';
+    }
     push("cost", "Cost to Study", costInner);
 
     // Scholarships

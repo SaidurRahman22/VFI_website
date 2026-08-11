@@ -96,14 +96,21 @@
 .utab.is-on { background: var(--coral); border-color: var(--coral); color: #fff; }
 .utabpanel[hidden] { display: none; }
 
-/* tables — cost of attendance, jobs & salaries */
-.utable-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
-.utable { width: 100%; border-collapse: collapse; font-size: .92rem; }
-.utable th { text-align: left; background: var(--bg-soft); color: var(--text); font-weight: 700; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-.utable td { padding: 12px 14px; border-bottom: 1px solid var(--line-2); color: var(--muted); }
-.utable tr:last-child td { border-bottom: 0; }
-.utable td:last-child, .utable th:last-child { text-align: right; }
-.utable td:last-child { font-weight: 700; color: var(--text); white-space: nowrap; }
+/* tables — cost of attendance, jobs & salaries.
+   Two equal-ish columns, tinted header band, ruled cells, all left-aligned. */
+.utable-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; margin-top: 18px; }
+.utable { width: 100%; border-collapse: collapse; font-size: .93rem; }
+.utable th {
+  text-align: left; background: var(--tint-blue); color: var(--navy);
+  font-family: var(--display); font-weight: 700; font-size: .95rem; padding: 15px 18px;
+}
+.utable th:first-child { width: 44%; }
+.utable th + th { border-left: 1px solid rgba(21, 36, 64, .1); }
+.utable td { padding: 14px 18px; border-top: 1px solid var(--line); color: var(--text); vertical-align: top; }
+.utable td:first-child { color: var(--blue-dark); font-weight: 500; }
+.utable td + td { border-left: 1px solid var(--line); font-weight: 600; }
+.utable tbody tr:nth-child(even) { background: #fbfcfe; }
+.ucost__note { margin-top: 12px; font-size: .84rem; font-style: italic; color: var(--muted); line-height: 1.65; }
 
 /* intake cards — short image banner + name/month/note */
 .uintakes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
@@ -122,6 +129,17 @@
   color: var(--blue-dark); background: var(--tint-blue); border-radius: 999px; padding: 3px 10px;
 }
 .uintake__note { color: var(--muted); font-size: .87rem; line-height: 1.6; margin: 9px 0 0; }
+
+/* course list — about 10 rows visible, the rest scrolls inside the panel so a
+   long catalogue never pushes the sections below it off the page */
+.ucourses { padding: 6px 22px; }
+.ucourses__scroll { max-height: 720px; overflow-y: auto; overscroll-behavior: contain; padding-right: 10px; }
+.ucourses__scroll::-webkit-scrollbar { width: 9px; }
+.ucourses__scroll::-webkit-scrollbar-track { background: var(--bg-soft); border-radius: 999px; }
+.ucourses__scroll::-webkit-scrollbar-thumb { background: #c9d3e4; border-radius: 999px; }
+.ucourses__scroll::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+.ucourses__scroll { scrollbar-width: thin; scrollbar-color: #c9d3e4 var(--bg-soft); }
+.ucourses__hint { margin: 10px 2px 0; font-size: .82rem; color: var(--muted); font-weight: 600; }
 
 /* course rows — a fixed 2-column grid so every fee lines up in one column
    no matter how long the course title runs (no wrapping/reflow) */
