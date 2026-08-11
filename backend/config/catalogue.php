@@ -19,6 +19,9 @@ return [
         'key' => env('CATALOGUE_SCORECARD_KEY', 'DEMO_KEY'),
         'base' => 'https://api.data.gov/ed/collegescorecard/v1/schools',
         'max_institutions' => (int) env('CATALOGUE_SCORECARD_MAX', 120),
+        // tiny pages so each request finishes under the DEMO_KEY throttle; raise
+        // once a real CATALOGUE_SCORECARD_KEY is set (see Developer_requier.md §4C).
+        'per_page' => (int) env('CATALOGUE_SCORECARD_PER_PAGE', 10),
     ],
 
     // DAAD International Programmes (Germany, English-taught degrees) — open API.

@@ -41,10 +41,11 @@ class CollegeScorecardSource implements IngestSource
     public function records(): iterable
     {
         $cfg = config('catalogue.scorecard');
-        // The programs-of-study field is heavy per school, so keep pages SMALL —
-        // 100/page overran the 30s network limit on the VPS. 25/page + a longer
-        // timeout completes reliably.
-        $perPage = 25;
+        // The programs-of-study field is heavy per school AND the DEMO_KEY is
+        // bandwidth-throttled (~30KB/s), so keep pages TINY so each one finishes
+        // inside the timeout (a page must complete for its records to persist).
+        // A real CATALOGUE_SCORECARD_KEY lifts the throttle — raise this then.
+        $perPage = (int) ($cfg['per_page'] ?? 10);
         $maxInst = (int) $cfg['max_institutions'];
         $pages = (int) ceil($maxInst / $perPage);
         $baseYear = (int) config('catalogue.seed.base_year', 2026);
