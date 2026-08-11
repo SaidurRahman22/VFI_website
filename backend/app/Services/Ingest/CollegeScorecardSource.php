@@ -54,7 +54,12 @@ class CollegeScorecardSource implements IngestSource
         for ($page = 0; $page < $pages; $page++) {
             $resp = Http::retry(2, 800)->connectTimeout(15)->timeout(90)->get($cfg['base'], [
                 'api_key' => $cfg['key'],
-                'fields' => 'id,school.name,school.city,school.state,latest.cost.tuition.out_of_state,latest.programs.cip_4_digit',
+                // Request ONLY the program sub-fields we use — the full
+                // cip_4_digit object carries dozens of earnings/debt fields and
+                // makes each school ~700KB; this trims it ~90% so the DEMO_KEY
+                // throttle can actually deliver a page.
+                'fields' => 'id,school.name,school.city,school.state,latest.cost.tuition.out_of_state,'
+                    .'latest.programs.cip_4_digit.code,latest.programs.cip_4_digit.title,latest.programs.cip_4_digit.credential.level',
                 'per_page' => $perPage,
                 'page' => $page,
                 'school.operating' => 1,
