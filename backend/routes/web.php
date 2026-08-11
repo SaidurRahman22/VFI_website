@@ -161,7 +161,14 @@ Route::prefix('api')->group(function () {
         // (public reference data, but console-only + per-partner rate-limited).
         $programs = \App\Http\Controllers\Partner\PartnerProgramController::class;
         Route::get('partner/programs/search', [$programs, 'search'])->middleware('throttle:program-search');
+        Route::get('partner/programs/compare', [$programs, 'compare'])->middleware('throttle:program-search');
         Route::get('partner/programs/{program}', [$programs, 'show'])->whereNumber('program')->middleware('throttle:program-search');
+
+        // Phase 8E — tenant-scoped program shortlist saved to a student.
+        $short = \App\Http\Controllers\Partner\PartnerShortlistController::class;
+        Route::get('partner/students/{student}/shortlist', [$short, 'index'])->whereNumber('student');
+        Route::post('partner/students/{student}/shortlist', [$short, 'store'])->whereNumber('student');
+        Route::delete('partner/students/{student}/shortlist/{program}', [$short, 'destroy'])->whereNumber('student')->whereNumber('program');
     });
 
     // PUBLIC referral resolver for the QR-registration landing (rate-limited).

@@ -118,6 +118,31 @@ class PartnerProgramController extends Controller
         ])->header('Cache-Control', 'no-store');
     }
 
+    /** GET /api/partner/programs/compare?ids=1,2,3 — up to 4 programs side by side. */
+    public function compare(Request $request): JsonResponse
+    {
+        $ids = collect(explode(',', (string) $request->query('ids')))
+            ->map(fn ($v) => (int) trim($v))
+            ->filter(fn ($v) => $v > 0)
+            ->unique()
+            ->take(4)
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return response()->json(['message' => 'Provide 1–4 program ids via ?ids='], 422)->header('Cache-Control', 'no-store');
+        }
+
+        $programs = Program::with(['institution', 'intakes', 'requirements'])
+            ->whereIn('id', $ids->all())->get();
+
+        // preserve the caller's order
+        $ordered = $ids->map(fn ($id) => $programs->firstWhere('id', $id))->filter();
+
+        return response()->json([
+            'data' => $ordered->map(fn (Program $p) => $this->compareRow($p))->values(),
+        ])->header('Cache-Control', 'no-store');
+    }
+
     /** GET /api/partner/programs/{program} — full detail (public reference data). */
     public function show(int $program): JsonResponse
     {
@@ -177,6 +202,40 @@ class PartnerProgramController extends Controller
             ])->values(),
             'labels' => $p->labels->map(fn ($l) => ['code' => $l->code, 'label' => $l->label])->values(),
         ]])->header('Cache-Control', 'no-store');
+    }
+
+    /** Compact, aligned view for the compare grid. */
+    private function compareRow(Program $p): array
+    {
+        return [
+            'id' => $p->id,
+            'title' => $p->title,
+            'university' => $p->institution?->name,
+            'country' => $p->institution?->country,
+            'level' => $p->level,
+            'study_area' => $p->study_area,
+            'discipline_area' => $p->discipline_area,
+            'duration_band' => $p->duration_band,
+            'tuition' => $p->tuition_fee_minor !== null
+                ? ['minor' => $p->tuition_fee_minor, 'currency' => $p->tuition_currency]
+                : null,
+            'application_fee' => $p->application_fee_minor !== null
+                ? ['minor' => $p->application_fee_minor, 'currency' => $p->application_fee_currency]
+                : null,
+            'is_stem' => $p->is_stem,
+            'has_coop_internship' => $p->has_coop_internship,
+            'scholarship_available' => $p->scholarship_available,
+            'moi_acceptable' => $p->moi_acceptable,
+            'interview_required' => $p->institution?->interview_required,
+            'intakes' => $p->intakes->map(fn ($i) => [
+                'season' => $i->season_label, 'year' => $i->intake_year,
+                'deadline' => optional($i->application_deadline_at)->toDateString(),
+            ])->values(),
+            'requirements' => $p->requirements->map(fn ($r) => [
+                'test' => $r->test, 'min_overall' => $r->min_overall,
+                'is_required' => $r->is_required, 'waiver_available' => $r->waiver_available,
+            ])->values(),
+        ];
     }
 
     private function presentRow(ProgramSearchRow $r): array
