@@ -85,7 +85,7 @@
                   dest('fl-asia', 'Asia', 'asia.html') +
                   dest('fl-gb', 'United Kingdom', 'study-in-uk.html') +
                   dest('fl-nz', 'New Zealand', 'study-in-new-zealand.html') +
-                  '<a href="destinations.html" class="dest dest--btn">Search Universities <svg class="ic ic--sm"><use href="#i-arrow"/></svg></a>' +
+                  '<a href="universities.html" class="dest dest--btn">Search Universities <svg class="ic ic--sm"><use href="#i-arrow"/></svg></a>' +
                 '</div>' +
               '</div>' +
             '</div>' +

@@ -2747,3 +2747,49 @@ html:not(.js) .acc[open] .acc__body{max-height:none}
 .umodal__msg { font-size: .86rem; margin-top: 10px; min-height: 1.1em; }
 .umodal__msg--ok { color: #046046; }
 .umodal__msg--bad { color: var(--coral-dark); }
+
+/* ==========================================================================
+   RICH UNIVERSITY DETAIL PAGE (Phase 8+) — sticky section nav + sections
+   ========================================================================== */
+.udetail__hero-in { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.udetail__logo { width: 78px; height: 78px; border-radius: 16px; background: #fff; display: grid; place-items: center; overflow: hidden; flex: none; box-shadow: 0 8px 22px rgba(14, 27, 44, .2); font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--blue); }
+.udetail__logo img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+.udetail__htext h1 { margin: 0; }
+.udetail__tagline { color: rgba(255, 255, 255, .85); font-weight: 600; margin: 6px 0 0; }
+
+.udetail__nav { position: sticky; top: 0; z-index: 30; background: rgba(255, 255, 255, .94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); margin: 0 0 26px; overflow-x: auto; }
+.udetail__nav ul { display: flex; gap: 2px; list-style: none; margin: 0 auto; padding: 6px 0; min-width: max-content; }
+.udetail__nav a { display: block; padding: 9px 15px; border-radius: 10px; font-size: .9rem; font-weight: 600; color: var(--muted); white-space: nowrap; text-decoration: none; transition: background .15s, color .15s; }
+.udetail__nav a:hover { background: var(--bg-soft); color: var(--blue-dark); }
+.udetail__nav a.is-active { background: var(--tint-blue); color: var(--blue-dark); }
+
+.usec { scroll-margin-top: 130px; margin: 0 0 36px; }
+.usec__title { font-family: var(--display); font-size: 1.35rem; font-weight: 700; color: var(--text); margin: 0 0 14px; display: flex; align-items: center; gap: 10px; }
+.usec__title::before { content: ""; width: 5px; height: 22px; border-radius: 3px; background: linear-gradient(var(--blue), var(--coral)); }
+.unote { color: var(--muted); line-height: 1.75; }
+.unote--card { background: var(--bg-soft); border-radius: 14px; padding: 16px 18px; }
+
+.urank { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+.urank__card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px; text-align: center; box-shadow: var(--shadow-sm); }
+.urank__n { font-size: 1.7rem; font-weight: 800; color: var(--blue); }
+.urank__k { font-size: .78rem; color: var(--muted); font-weight: 600; margin-top: 4px; }
+
+.uschol { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.uschol__card { background: var(--bg-soft); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+.uschol__name { font-weight: 700; color: var(--text); }
+.uschol__amt { color: var(--coral-dark); font-weight: 700; margin-top: 3px; }
+.uschol__note { font-size: .85rem; color: var(--muted); margin-top: 6px; }
+
+.urec { display: flex; flex-wrap: wrap; gap: 8px; }
+.urec__chip { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 7px 15px; font-weight: 600; font-size: .85rem; color: var(--text); }
+
+.ugallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.ugallery img { width: 100%; height: 145px; object-fit: cover; border-radius: 14px; display: block; }
+
+.ufaq { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-bottom: 10px; background: #fff; }
+.ufaq summary { padding: 15px 18px; font-weight: 600; color: var(--text); cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.ufaq summary::-webkit-details-marker { display: none; }
+.ufaq summary::after { content: "+"; color: var(--blue); font-weight: 700; font-size: 1.2rem; }
+.ufaq[open] summary::after { content: "\2013"; }
+.ufaq__a { padding: 0 18px 16px; color: var(--muted); font-size: .93rem; line-height: 1.7; }
+.unic__logo img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }

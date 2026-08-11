@@ -73,4 +73,29 @@ class PublicUniversityTest extends TestCase
     {
         $this->getJson('/api/universities/999999')->assertStatus(404);
     }
+
+    public function test_detail_includes_editorial_profile_and_logo(): void
+    {
+        $inst = Institution::query()->firstOrFail();
+        $inst->update([
+            'tagline' => 'A great university', 'logo_key' => 'media/universities/x.png',
+            'overview' => 'About this place.', 'ranking_world' => '#54',
+            'scholarships_json' => [['name' => 'Merit', 'amount' => '£5,000', 'level' => 'PG']],
+            'faqs_json' => [['q' => 'Is there an application fee?', 'a' => 'No.']],
+            'gallery_json' => ['media/universities/gallery/g1.jpg'],
+            'recruiters_json' => [['name' => 'Google']],
+            'admission_english' => 'IELTS 6.5',
+            'placement_note' => 'Strong graduate outcomes.',
+        ]);
+
+        $this->getJson("/api/universities/{$inst->id}")->assertStatus(200)
+            ->assertJsonPath('university.tagline', 'A great university')
+            ->assertJsonPath('university.logo', '/storage/media/universities/x.png')
+            ->assertJsonPath('university.profile.overview', 'About this place.')
+            ->assertJsonPath('university.profile.ranking.world', '#54')
+            ->assertJsonPath('university.profile.scholarships.0.name', 'Merit')
+            ->assertJsonPath('university.profile.faqs.0.q', 'Is there an application fee?')
+            ->assertJsonPath('university.profile.gallery.0', '/storage/media/universities/gallery/g1.jpg')
+            ->assertJsonPath('university.profile.placement.recruiters.0', 'Google');
+    }
 }

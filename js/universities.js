@@ -52,13 +52,14 @@
   }
   function uniCardHtml(r) {
     var variant = ["a", "b", "c"][r.id % 3];
+    var logoInner = r.logo ? '<img src="' + esc(r.logo) + '" alt="' + esc(r.name) + ' logo">' : esc(initials(r.name));
     var tags = "";
     if (r.is_major_city) tags += '<span class="unic__tag">Major city</span>';
     if (r.affordability_band === "low") tags += '<span class="unic__tag">Affordable</span>';
     if (r.offer_tat_band === "fast") tags += '<span class="unic__tag">Fast offers</span>';
     if (r.vfi_represented) tags += '<span class="unic__tag">VFI partner</span>';
     return '<article class="unic">'
-      + '<div class="unic__logo unic__logo--' + variant + '">' + esc(initials(r.name)) + '</div>'
+      + '<div class="unic__logo unic__logo--' + variant + '">' + logoInner + '</div>'
       + '<h3>' + esc(r.name) + '</h3>'
       + '<p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> ' + esc(r.location) + '</p>'
       + (tags ? '<div class="unic__tags">' + tags + '</div>' : '')
@@ -205,48 +206,127 @@
   function renderDetail(u) {
     window.__uniCtx = { name: u.name, country: u.country, id: u.id };
     document.title = u.name + " | VFI Overseas Education";
-    if ($("#uniName")) $("#uniName").textContent = u.name;
     if ($("#uniCrumb")) $("#uniCrumb").textContent = u.name;
-    if ($("#uniLoc")) $("#uniLoc").textContent = [u.city, u.province_state, u.country].filter(Boolean).join(", ");
-    show("#uniApplyHero", true);
 
-    var s = u.stats || {}, facts = "";
-    facts += fact("Programs", s.programs || 0);
-    facts += fact("Study levels", (s.levels || []).length);
-    if (s.tuition_min != null) facts += fact("Tuition from", money({ minor: s.tuition_min, currency: s.tuition_currency }));
-    facts += fact("Affordability", cap(u.affordability_band || "—"));
-    facts += fact("Offer speed", tatText(u.offer_tat_band));
-    facts += fact("Scholarships", s.scholarship_available ? "Available" : "Ask us");
+    var s = u.stats || {}, p = u.profile || {};
 
-    var areas = (s.study_areas || []).slice(0, 8).map(function (a) { return '<span class="uchip">' + esc(cap(a)) + '</span>'; }).join("");
-    var courses = u.courses || [];
+    // ---- hero: logo + name + tagline + location + apply ----
+    var loc = [u.city, u.province_state, u.country].filter(Boolean).join(", ");
+    var logo = u.logo
+      ? '<span class="udetail__logo"><img src="' + esc(u.logo) + '" alt="' + esc(u.name) + ' logo"></span>'
+      : '<span class="udetail__logo">' + esc(initials(u.name)) + '</span>';
+    var hero = $("#uniHero");
+    if (hero) hero.innerHTML =
+      '<div class="udetail__hero-in">' + logo
+      + '<div class="udetail__htext"><h1>' + esc(u.name) + '</h1>'
+      + (u.tagline ? '<p class="udetail__tagline">' + esc(u.tagline) + '</p>' : '')
+      + (loc ? '<p class="udetail__tagline">' + esc(loc) + '</p>' : '') + '</div></div>'
+      + '<div style="margin-top:20px"><button class="btn btn--enquire btn--lg" data-apply type="button">Apply — Book Free Counselling</button></div>';
+    if (u.hero) { var hb = document.querySelector(".page-hero__bg"); if (hb) hb.style.backgroundImage = "url('" + u.hero + "')"; }
 
-    var html = '<div class="udetail__facts">' + facts + '</div>';
-    html += '<div class="info-card"><h3>About ' + esc(u.name) + '</h3><p>' + esc(overviewText(u)) + '</p>'
-      + (areas ? '<div class="uchips">' + areas + '</div>' : '')
-      + '<div style="margin-top:18px"><button class="btn btn--enquire" data-apply type="button">Apply — Book Free Counselling</button></div></div>';
+    // ---- build the sections that have content ----
+    var secs = [];
+    function push(id, label, inner) { if (inner) secs.push({ id: id, label: label, inner: inner }); }
 
-    html += '<h2 class="sec-title" style="font-size:1.3rem;margin:30px 0 6px">Intakes &amp; entry requirements</h2>';
-    html += '<p class="sec-lead" style="margin:0 0 18px">Intakes: '
-      + ((s.seasons && s.seasons.length) ? s.seasons.map(cap).join(", ") : "ask a counsellor") + '. '
-      + ((s.tests_required && s.tests_required.length) ? 'Common tests: ' + s.tests_required.map(function (t) { return t.toUpperCase(); }).join(", ") + '.' : '') + '</p>';
+    var facts = fact("Programs", s.programs || 0) + fact("Study levels", (s.levels || []).length)
+      + (s.tuition_min != null ? fact("Tuition from", money({ minor: s.tuition_min, currency: s.tuition_currency })) : "")
+      + fact("Affordability", cap(u.affordability_band || "—")) + fact("Offer speed", tatText(u.offer_tat_band))
+      + fact("Scholarships", s.scholarship_available ? "Available" : "Ask us");
+    var areas = (s.study_areas || []).slice(0, 10).map(function (a) { return '<span class="uchip">' + esc(cap(a)) + '</span>'; }).join("");
+    push("overview", "Overview",
+      '<div class="udetail__facts">' + facts + '</div>'
+      + '<p class="unote">' + esc(p.overview || overviewText(u)) + '</p>'
+      + (areas ? '<div class="uchips" style="margin-top:12px">' + areas + '</div>' : ''));
 
-    html += '<h2 class="sec-title" style="font-size:1.3rem;margin:26px 0 12px">Top courses</h2><div class="info-card">';
-    if (courses.length) { for (var i = 0; i < courses.length; i++) html += courseHtml(courses[i]); }
-    else html += '<p class="ucourse__m">Full course list on request — ask a counsellor.</p>';
-    html += '</div>';
+    if (p.ranking && (p.ranking.world || p.ranking.national || p.ranking.note)) {
+      var rc = "";
+      if (p.ranking.world) rc += '<div class="urank__card"><div class="urank__n">' + esc(p.ranking.world) + '</div><div class="urank__k">World rank</div></div>';
+      if (p.ranking.national) rc += '<div class="urank__card"><div class="urank__n">' + esc(p.ranking.national) + '</div><div class="urank__k">National rank</div></div>';
+      push("ranking", "Ranking", '<div class="urank">' + rc + '</div>' + (p.ranking.note ? '<p class="unote" style="margin-top:12px">' + esc(p.ranking.note) + '</p>' : ''));
+    }
 
+    push("intakes", "Intakes",
+      '<p class="unote unote--card">Intakes: <b>' + esc((s.seasons && s.seasons.length) ? s.seasons.map(cap).join(", ") : "ask a counsellor") + '</b>.'
+      + ((s.tests_required && s.tests_required.length) ? ' Common tests: ' + esc(s.tests_required.map(function (t) { return t.toUpperCase(); }).join(", ")) + '.' : '') + '</p>');
+
+    var courses = u.courses || [], cl = "";
+    if (courses.length) { for (var i = 0; i < courses.length; i++) cl += courseHtml(courses[i]); }
+    else cl = '<p class="ucourse__m">Full course list on request — ask a counsellor.</p>';
+    push("courses", "Courses", '<div class="info-card">' + cl + '</div>');
+
+    var costInner = "";
+    if (s.tuition_min != null) costInner += '<p class="unote">Tuition from <b>' + money({ minor: s.tuition_min, currency: s.tuition_currency }) + '</b>'
+      + (s.tuition_max && s.tuition_max !== s.tuition_min ? ' up to <b>' + money({ minor: s.tuition_max, currency: s.tuition_currency }) + '</b>' : '') + ' per year.</p>';
+    if (p.cost && p.cost.note) costInner += '<p class="unote">' + esc(p.cost.note) + '</p>';
+    var costFacts = "";
+    if (p.cost && p.cost.living) costFacts += fact("Living cost", p.cost.living);
+    if (p.cost && p.cost.accommodation) costFacts += fact("Accommodation", p.cost.accommodation);
+    if (costFacts) costInner += '<div class="udetail__facts">' + costFacts + '</div>';
+    if (!costInner) costInner = '<p class="unote">Ask a VFI counsellor for a full cost breakdown.</p>';
+    push("cost", "Cost to Study", costInner);
+
+    var schols = p.scholarships || [];
+    if (schols.length) {
+      var sc = schols.map(function (x) {
+        return '<div class="uschol__card"><div class="uschol__name">' + esc(x.name || "Scholarship") + '</div>'
+          + (x.amount ? '<div class="uschol__amt">' + esc(x.amount) + '</div>' : '')
+          + (x.level ? '<div class="uschol__note">' + esc(x.level) + '</div>' : '')
+          + (x.note ? '<div class="uschol__note">' + esc(x.note) + '</div>' : '') + '</div>';
+      }).join("");
+      push("scholarships", "Scholarships", '<div class="uschol">' + sc + '</div>');
+    } else if (s.scholarship_available) {
+      push("scholarships", "Scholarships", '<p class="unote unote--card">Scholarships are available on selected programs. Ask a counsellor which ones you qualify for.</p>');
+    }
+
+    var adm = "";
+    if (p.admission && p.admission.academic) adm += '<h4 style="margin:0 0 6px">Academic</h4><p class="unote" style="margin-bottom:14px">' + esc(p.admission.academic) + '</p>';
+    if (p.admission && p.admission.english) adm += '<h4 style="margin:0 0 6px">English</h4><p class="unote">' + esc(p.admission.english) + '</p>';
+    if (!adm && s.tests_required && s.tests_required.length) adm = '<p class="unote unote--card">Accepted entry tests: ' + esc(s.tests_required.map(function (t) { return t.toUpperCase(); }).join(", ")) + '. Ask a counsellor for the exact scores per course.</p>';
+    if (adm) push("admissions", "Admissions", adm);
+
+    if (p.placement && (p.placement.note || p.placement.salary || (p.placement.recruiters && p.placement.recruiters.length))) {
+      var pl = "";
+      if (p.placement.note) pl += '<p class="unote">' + esc(p.placement.note) + '</p>';
+      if (p.placement.salary) pl += '<p class="unote"><b>Average salary:</b> ' + esc(p.placement.salary) + '</p>';
+      if (p.placement.recruiters && p.placement.recruiters.length) pl += '<div class="urec" style="margin-top:10px">' + p.placement.recruiters.map(function (r) { return '<span class="urec__chip">' + esc(r) + '</span>'; }).join("") + '</div>';
+      push("placements", "Placements", pl);
+    }
+
+    if (p.gallery && p.gallery.length) {
+      push("gallery", "Gallery", '<div class="ugallery">' + p.gallery.map(function (g) { return '<img src="' + esc(g) + '" alt="' + esc(u.name) + '" loading="lazy">'; }).join("") + '</div>');
+    }
+
+    if (p.faqs && p.faqs.length) {
+      push("faqs", "FAQs", p.faqs.map(function (f) {
+        return '<details class="ufaq"><summary>' + esc(f.q || "") + '</summary><div class="ufaq__a">' + esc(f.a || "") + '</div></details>';
+      }).join(""));
+    }
+
+    var nav = '<nav class="udetail__nav"><ul>' + secs.map(function (x) { return '<li><a href="#usec-' + x.id + '">' + esc(x.label) + '</a></li>'; }).join("") + '</ul></nav>';
+    var body = secs.map(function (x) { return '<section class="usec" id="usec-' + x.id + '"><h2 class="usec__title">' + esc(x.label) + '</h2>' + x.inner + '</section>'; }).join("");
     if (u.related && u.related.length) {
-      html += '<h2 class="sec-title" style="font-size:1.3rem;margin:32px 0 14px">Other universities in ' + esc(u.country) + '</h2><div class="unicards">';
-      for (var j = 0; j < u.related.length; j++) html += uniCardHtml(u.related[j]);
-      html += '</div>';
+      body += '<section class="usec"><h2 class="usec__title">Other universities in ' + esc(u.country) + '</h2><div class="unicards">'
+        + u.related.map(uniCardHtml).join("") + '</div></section>';
     }
 
     var wrap = $("#uniDetail");
-    wrap.innerHTML = html;
+    wrap.innerHTML = nav + body;
     wrap.addEventListener("click", function (e) {
       var b = closestAttr(e.target, "data-apply-uni");
       if (b) { e.preventDefault(); openBook({ name: b.getAttribute("data-name"), country: b.getAttribute("data-country") }); }
     });
+    spy(wrap);
+  }
+
+  function spy(wrap) {
+    var links = Array.prototype.slice.call(wrap.querySelectorAll(".udetail__nav a"));
+    var secEls = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+    function onScroll() {
+      var y = window.pageYOffset + 150, active = 0;
+      for (var i = 0; i < secEls.length; i++) { if (secEls[i] && secEls[i].offsetTop <= y) active = i; }
+      for (var j = 0; j < links.length; j++) links[j].classList.toggle("is-active", j === active);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
   }
 })();

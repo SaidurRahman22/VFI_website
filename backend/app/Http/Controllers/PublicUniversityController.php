@@ -83,9 +83,34 @@ class PublicUniversityController extends Controller
         return response()->json(['university' => [
             'id' => $inst->id,
             'name' => $inst->name,
+            'tagline' => $inst->tagline,
             'country' => $inst->country,
             'province_state' => $inst->province_state,
             'city' => $inst->city,
+            'website' => $inst->website,
+            'logo' => $inst->logoUrl(),
+            'hero' => $inst->heroUrl(),
+            'profile' => [
+                'overview' => $inst->overview,
+                'ranking' => array_filter([
+                    'world' => $inst->ranking_world, 'national' => $inst->ranking_national, 'note' => $inst->ranking_note,
+                ]),
+                'cost' => array_filter([
+                    'note' => $inst->cost_note, 'living' => $inst->living_cost_note, 'accommodation' => $inst->accommodation_note,
+                ]),
+                'admission' => array_filter([
+                    'academic' => $inst->admission_academic, 'english' => $inst->admission_english,
+                ]),
+                'placement' => array_filter([
+                    'note' => $inst->placement_note, 'salary' => $inst->salary_note,
+                    'recruiters' => array_values(array_filter(array_column($inst->recruiters_json ?? [], 'name'))),
+                ]),
+                'scholarships' => array_values($inst->scholarships_json ?? []),
+                'faqs' => array_values($inst->faqs_json ?? []),
+                'gallery' => collect($inst->gallery_json ?? [])
+                    ->map(fn ($p) => preg_match('#^https?://#', (string) $p) ? $p : '/storage/'.ltrim((string) $p, '/'))
+                    ->values(),
+            ],
             'is_major_city' => $inst->is_major_city,
             'has_own_english_test' => $inst->has_own_english_test,
             'offer_tat_band' => $inst->offer_tat_band,
@@ -126,6 +151,8 @@ class PublicUniversityController extends Controller
         return [
             'id' => $i->id,
             'name' => $i->name,
+            'tagline' => $i->tagline,
+            'logo' => $i->logoUrl(),
             'country' => $i->country,
             'location' => implode(', ', array_slice($loc, 0, 2)) ?: $i->country,
             'programs' => (int) ($i->programs_count ?? 0),
