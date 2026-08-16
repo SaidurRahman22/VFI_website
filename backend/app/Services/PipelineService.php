@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\WalletGateway;
 use App\Enums\ActorType;
 use App\Enums\ApplicationStatus;
 use App\Models\Partner\Application;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\DB;
  */
 class PipelineService
 {
+    public function __construct(private readonly WalletGateway $wallet) {}
+
     /** Create an application at `submitted` with its first pipeline event. */
     public function create(Student $student, array $attrs, ?int $actorId): Application
     {
@@ -45,8 +48,14 @@ class PipelineService
                 'link' => 'partner-applications.html',
             ]);
 
-            // Phase 9: the application-fee debit is called HERE behind a Pennant
-            // flag — OFF in Phase 7 (no money surface yet).
+            // The application-fee debit. Atomic with the row above by design: the
+            // invariant is "no debit without an application, no application
+            // without its debit", so this must stay INSIDE this transaction.
+            // Today it resolves to NullWalletGateway and does nothing; Phase 9
+            // swaps the binding for the real ledger and this line is unchanged.
+            // A throw here rolls the whole submission back, which is the correct
+            // outcome for insufficient funds or a frozen wallet.
+            $this->wallet->debitApplicationFee($app, (int) $app->agency_id, 'app-fee:'.$app->id);
 
             return $app;
         });

@@ -89,6 +89,25 @@ class IngestProgramsTest extends TestCase
         $this->assertSame(90, DB::table('program_search')->count());
     }
 
+    public function test_feed_soft_fill_never_overwrites_staff_edits(): void
+    {
+        $this->artisan('programs:ingest', ['--source' => 'seed'])->assertSuccessful();
+
+        // staff author a placement note + website in the admin
+        $inst = Institution::query()->firstOrFail();
+        $inst->forceFill([
+            'website' => 'https://staff-edited.example',
+            'salary_note' => 'Staff wrote this',
+        ])->save();
+
+        // a later feed run must leave both alone
+        $this->artisan('programs:ingest', ['--source' => 'seed'])->assertSuccessful();
+
+        $inst->refresh();
+        $this->assertSame('https://staff-edited.example', $inst->website);
+        $this->assertSame('Staff wrote this', $inst->salary_note);
+    }
+
     public function test_allow_list_rejects_values_not_in_the_taxonomy(): void
     {
         // retire the Bachelor level → every seeded Bachelor program must be refused

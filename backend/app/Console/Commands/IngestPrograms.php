@@ -60,6 +60,11 @@ class IngestPrograms extends Command
                 $this->error("  source [{$source->name()}] failed: {$e->getMessage()}");
                 report($e);
             }
+
+            // A source may stop on a provider quota — say so instead of looking done.
+            if (method_exists($source, 'stoppedEarly') && ($why = $source->stoppedEarly())) {
+                $this->warn("  [{$source->name()}] {$why}");
+            }
         }
 
         $this->line("Records kept: {$this->kept}, skipped (allow-list): {$this->skipped}");
@@ -108,6 +113,19 @@ class IngestPrograms extends Command
                     ['source' => $source->name(), 'external_ref' => $clean['institution']['external_ref']],
                     ['source' => $source->name()] + $clean['institution'],
                 );
+
+                // Soft-fill: published figures from the feed are written ONLY into
+                // fields staff have left empty, so re-ingesting never overwrites
+                // content someone authored in the admin.
+                $patch = [];
+                foreach ($clean['soft'] ?? [] as $col => $value) {
+                    if (blank($inst->{$col})) {
+                        $patch[$col] = $value;
+                    }
+                }
+                if ($patch !== []) {
+                    $inst->forceFill($patch)->save();
+                }
 
                 $program = Program::updateOrCreate(
                     ['source' => $source->name(), 'external_ref' => $clean['program']['external_ref']],
@@ -168,6 +186,18 @@ class IngestPrograms extends Command
             'external_ref' => $this->str($inst['external_ref'], 120),
         ];
 
+        // Editorial values a feed can supply (real published figures). Kept apart
+        // from the columns above because they are only ever SOFT-filled — staff
+        // edits in the admin always win over a re-ingest. See ingest().
+        $soft = array_filter([
+            'website' => $this->str($inst['website'] ?? null, 190),
+            'salary_note' => $this->str($inst['salary_note'] ?? null, 190),
+            'placement_note' => $this->str($inst['placement_note'] ?? null, 2000),
+            'overview_stats_json' => ! empty($inst['overview_stats']) && is_array($inst['overview_stats'])
+                ? array_values($inst['overview_stats'])
+                : null,
+        ], fn ($v) => $v !== null && $v !== []);
+
         $program = [
             'title' => $this->str($prog['title'], 240),
             'level' => $level,
@@ -226,7 +256,7 @@ class IngestPrograms extends Command
             ];
         }
 
-        return compact('institution', 'program', 'intakes', 'requirements');
+        return compact('institution', 'program', 'intakes', 'requirements', 'soft');
     }
 
     private function loadAllowLists(): void

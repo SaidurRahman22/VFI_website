@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Content\Blog;
+use App\Models\Content\ContentItem;
 use App\Models\Content\Event;
 use App\Models\Content\NewsItem;
 use App\Models\Content\Photo;
@@ -82,7 +83,7 @@ class ImportContent extends Command
                     if (! is_array($item)) {
                         continue;
                     }
-                    /** @var \App\Models\Content\ContentItem $proto */
+                    /** @var ContentItem $proto */
                     $proto = new $modelClass;
                     $attrs = $proto->mapFromBundle($item);
                     if (empty($attrs['legacy_id'])) {

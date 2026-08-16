@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\WalletGateway;
 use App\Models\Content\Blog;
 use App\Models\Content\Event;
 use App\Models\Content\NewsItem;
@@ -13,6 +14,7 @@ use App\Models\Content\PpNotif;
 use App\Models\Content\PpQuicklink;
 use App\Models\Content\PpUpdate;
 use App\Policies\ContentPolicy;
+use App\Services\Money\NullWalletGateway;
 use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -27,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
         // One tenant context per request; the BelongsToAgency scope + RLS binding
         // both read it. Set from the session only (P6), never a request param.
         $this->app->singleton(TenantContext::class);
+
+        // The money seam. There is no wallet surface yet (Phase 9), so the
+        // application-fee debit resolves to a no-op. Phase 9 swaps ONE line here
+        // for the real ledger implementation — the pipeline never changes.
+        // See App\Contracts\WalletGateway for the contract and rollout notes.
+        $this->app->singleton(WalletGateway::class, NullWalletGateway::class);
     }
 
     public function boot(): void

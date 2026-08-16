@@ -2,6 +2,7 @@
 
 namespace App\Services\Ingest;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -33,6 +34,11 @@ class CollegeScorecardSource implements IngestSource
 
     private const STEM_AREAS = ['engineering', 'it_computing', 'sciences'];
 
+    /** Cache key holding the next page to fetch when a run hits the hourly quota. */
+    private const RESUME_KEY = 'ingest:scorecard:next_page';
+
+    private ?string $stoppedEarly = null;
+
     public function name(): string
     {
         return 'scorecard';
@@ -51,14 +57,25 @@ class CollegeScorecardSource implements IngestSource
         $baseYear = (int) config('catalogue.seed.base_year', 2026);
         $seen = 0;
 
-        for ($page = 0; $page < $pages; $page++) {
-            $resp = Http::retry(2, 800)->connectTimeout(15)->timeout(90)->get($cfg['base'], [
+        // Resume point: DEMO_KEY allows only ~30 requests/hour, so a full run can
+        // span several hours. We remember the last page that fully imported and
+        // continue from there on the next run (cleared once the run completes).
+        $startPage = (int) Cache::get(self::RESUME_KEY, 0);
+        $pages = max($pages, $startPage + 1);
+
+        for ($page = $startPage; $page < $pages; $page++) {
+            // No ->retry(): every retry burns another request against the hourly
+            // quota, and a timeout here means the page was too big, not flaky.
+            $resp = Http::connectTimeout(15)->timeout(120)->get($cfg['base'], [
                 'api_key' => $cfg['key'],
-                // Request ONLY the program sub-fields we use — the full
-                // cip_4_digit object carries dozens of earnings/debt fields and
-                // makes each school ~700KB; this trims it ~90% so the DEMO_KEY
-                // throttle can actually deliver a page.
-                'fields' => 'id,school.name,school.city,school.state,latest.cost.tuition.out_of_state,'
+                // Request ONLY the sub-fields we use — the full cip_4_digit object
+                // carries dozens of earnings/debt fields and makes each school
+                // ~700KB; this trims it ~90% so the throttle can deliver a page.
+                'fields' => 'id,school.name,school.city,school.state,school.school_url,'
+                    .'latest.cost.tuition.out_of_state,latest.student.size,'
+                    .'latest.admissions.admission_rate.overall,'
+                    .'latest.completion.completion_rate_4yr_150nt,'
+                    .'latest.earnings.10_yrs_after_entry.median,'
                     .'latest.programs.cip_4_digit.code,latest.programs.cip_4_digit.title,latest.programs.cip_4_digit.credential.level',
                 'per_page' => $perPage,
                 'page' => $page,
@@ -68,8 +85,13 @@ class CollegeScorecardSource implements IngestSource
             ]);
 
             if (! $resp->successful()) {
-                // rate-limit / transient — stop cleanly, keep what we have
-                break;
+                // Rate limited → remember where to resume; other errors → stop clean.
+                if ($resp->status() === 429 || str_contains((string) $resp->body(), 'OVER_RATE_LIMIT')) {
+                    Cache::put(self::RESUME_KEY, $page, now()->addDay());
+                    $this->stoppedEarly = 'rate limit reached — re-run later to continue from page '.$page;
+                }
+
+                return;
             }
 
             $results = $resp->json('results') ?? [];
@@ -79,12 +101,25 @@ class CollegeScorecardSource implements IngestSource
 
             foreach ($results as $school) {
                 if ($seen >= $maxInst) {
+                    Cache::forget(self::RESUME_KEY);
+
                     return;
                 }
                 $seen++;
                 yield from $this->schoolRecords($school, $baseYear);
             }
+
+            // page fully yielded — next run may start after it
+            Cache::put(self::RESUME_KEY, $page + 1, now()->addDay());
         }
+
+        Cache::forget(self::RESUME_KEY);   // reached the end of the catalogue
+    }
+
+    /** Set when the run stopped on the hourly quota; the command reports it. */
+    public function stoppedEarly(): ?string
+    {
+        return $this->stoppedEarly;
     }
 
     private function schoolRecords(array $school, int $baseYear): iterable
@@ -100,6 +135,25 @@ class CollegeScorecardSource implements IngestSource
         $tuitionAnnual = $school['latest.cost.tuition.out_of_state'] ?? null;
         $instRef = 'scorecard:'.($school['id'] ?? md5($name));
 
+        // REAL public-domain figures from the feed — these fill the Overview stat
+        // tiles and the Placements section so staff don't have to type them, and
+        // nothing is invented. Only set when the feed actually reports a value.
+        $admitRate = $school['latest.admissions.admission_rate.overall'] ?? null;
+        $gradRate = $school['latest.completion.completion_rate_4yr_150nt'] ?? null;
+        $earnings = $school['latest.earnings.10_yrs_after_entry.median'] ?? null;
+        $size = $school['latest.student.size'] ?? null;
+
+        $stats = [];
+        if (is_numeric($admitRate)) {
+            $stats[] = ['value' => round($admitRate * 100).'%', 'label' => 'Acceptance rate'];
+        }
+        if (is_numeric($gradRate)) {
+            $stats[] = ['value' => round($gradRate * 100).'%', 'label' => 'Graduation rate'];
+        }
+        if (is_numeric($size)) {
+            $stats[] = ['value' => number_format((int) $size), 'label' => 'Students enrolled'];
+        }
+
         $institution = [
             'name' => $name,
             'country' => 'United States',
@@ -108,6 +162,15 @@ class CollegeScorecardSource implements IngestSource
             'is_major_city' => in_array($city, ['New York', 'Los Angeles', 'Chicago', 'Boston', 'Houston', 'Seattle', 'San Francisco', 'Washington'], true),
             'vfi_represented' => true,
             'offer_tat_band' => 'standard',
+            'website' => $this->url($school['school.school_url'] ?? null),
+            'overview_stats' => $stats,
+            'salary_note' => is_numeric($earnings)
+                ? ('USD '.number_format((int) $earnings).' median earnings 10 years after entry (U.S. Dept. of Education, College Scorecard)')
+                : null,
+            'placement_note' => is_numeric($earnings)
+                ? ('Graduate earnings for this institution are published by the U.S. Department of Education. '
+                    .'The figure below is the median for former students ten years after they first enrolled, across all programs.')
+                : null,
             'external_ref' => $instRef,
         ];
 
@@ -148,6 +211,20 @@ class CollegeScorecardSource implements IngestSource
                 'requirements' => [], // Scorecard carries no test data — leave honest/empty
             ];
         }
+    }
+
+    /** Normalise the feed's school URL into a storable absolute URL. */
+    private function url(?string $raw): ?string
+    {
+        $raw = trim((string) $raw);
+        if ($raw === '') {
+            return null;
+        }
+        if (! preg_match('#^https?://#i', $raw)) {
+            $raw = 'https://'.$raw;
+        }
+
+        return filter_var($raw, FILTER_VALIDATE_URL) ? mb_substr($raw, 0, 190) : null;
     }
 
     /** The three standard VFI intakes (no deadline data in the feed). */
