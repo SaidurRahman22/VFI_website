@@ -2793,3 +2793,13 @@ html:not(.js) .acc[open] .acc__body{max-height:none}
 .ufaq[open] summary::after { content: "\2013"; }
 .ufaq__a { padding: 0 18px 16px; color: var(--muted); font-size: .93rem; line-height: 1.7; }
 .unic__logo img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+
+/* ==========================================================================
+   The [hidden] attribute must win.
+   A class that sets `display` (flex/grid/block) silently beats the browser's
+   `[hidden] { display: none }`, so anything toggled by adding/removing `hidden`
+   stays visible — which is how an empty modal and a "0 selected" bar ended up
+   on screen. Declared last, and !important precisely because it has to
+   outrank a component's own display rule.
+   ========================================================================== */
+[hidden] { display: none !important; }

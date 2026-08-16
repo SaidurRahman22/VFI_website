@@ -672,3 +672,9 @@ body.pp-collapsed .pp-nav__sub { display: none; }
 }
 .pp-soonbar .ic { color: var(--pp-teal); flex: none; }
 .pp-nav__item.is-soon { opacity: .6; }
+
+/* ==========================================================================
+   The [hidden] attribute must win — see the note in style.css.
+   Every console panel toggled with `hidden` depends on this.
+   ========================================================================== */
+[hidden] { display: none !important; }
