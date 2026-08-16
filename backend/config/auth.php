@@ -135,4 +135,35 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Demo OTP  (TEMPORARY — clear before onboarding real users)
+    |--------------------------------------------------------------------------
+    | While mail is on the `log` driver no OTP ever reaches an inbox, so signup
+    | and verification cannot be walked through. Setting AUTH_DEMO_OTP makes the
+    | verifier ALSO accept that one fixed code, on top of the real one.
+    |
+    | Empty = disabled, which is the default and the correct production state.
+    | Nothing else is relaxed: the flow id, expiry, attempt cap and single-use
+    | consumption still apply, and every use writes an `otp_demo_bypass` auth
+    | event plus a warning log, so the window it was open for stays auditable.
+    */
+    'demo_otp' => env('AUTH_DEMO_OTP', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cross-tenant read roles  (Phase 9A slice 5)
+    |--------------------------------------------------------------------------
+    | Which staff roles may open a student record belonging to a partner agency.
+    | Confirmed with the client: superadmin + staff_counsellor.
+    |
+    | Comma-separated role values. Leave empty for the confirmed default — an
+    | empty or unparseable list falls back to that pair rather than opening the
+    | door wider, so a typo can only ever narrow access.
+    */
+    'cross_tenant_roles' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('AUTH_CROSS_TENANT_ROLES', ''))
+    ))),
+
 ];

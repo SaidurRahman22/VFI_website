@@ -627,3 +627,48 @@ body.pp-collapsed .pp-nav__sub { display: none; }
   * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
   .js .pp-anim { opacity: 1; transform: none; }
 }
+
+/* ==========================================================================
+   COMING-SOON (Phase 9 money surface, disabled until it ships)
+   A control keeps its shape but is inert, and says why on hover/focus.
+   ========================================================================== */
+.pp-soon { position: relative; display: inline-flex; }
+.pp-soon > .pp-btn,
+.pp-soon > button { opacity: .55; cursor: not-allowed; filter: grayscale(35%); }
+.pp-soon__tag {
+  display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+  background: var(--pp-teal-soft); color: var(--pp-teal-dark);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
+  vertical-align: middle; white-space: nowrap;
+}
+/* tooltip — pure CSS so it works with no JS and on keyboard focus */
+.pp-soon::after {
+  content: attr(data-soon);
+  position: absolute; bottom: calc(100% + 9px); left: 50%; transform: translateX(-50%) translateY(4px);
+  background: var(--pp-ink); color: #fff; font-size: 12px; font-weight: 600; line-height: 1.45;
+  padding: 8px 11px; border-radius: 9px; width: max-content; max-width: 240px;
+  text-align: center; white-space: normal; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity .15s, transform .15s; z-index: 70;
+  box-shadow: 0 10px 24px rgba(20, 28, 38, .28);
+}
+.pp-soon::before {
+  content: ""; position: absolute; bottom: calc(100% + 4px); left: 50%;
+  transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--pp-ink);
+  opacity: 0; visibility: hidden; transition: opacity .15s; z-index: 70;
+}
+.pp-soon:hover::after, .pp-soon:hover::before,
+.pp-soon:focus-within::after, .pp-soon:focus-within::before {
+  opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+}
+.pp-soon:focus-within::before { transform: translateX(-50%); }
+
+/* a whole page/section that is not live yet */
+.pp-soonbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--pp-teal-soft); border: 1px solid var(--pp-line);
+  border-left: 4px solid var(--pp-teal); border-radius: 12px;
+  padding: 13px 16px; margin-bottom: 18px; color: var(--pp-teal-dark);
+  font-size: 14px; font-weight: 600;
+}
+.pp-soonbar .ic { color: var(--pp-teal); flex: none; }
+.pp-nav__item.is-soon { opacity: .6; }

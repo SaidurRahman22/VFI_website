@@ -135,7 +135,9 @@
       '<div class="pp-pop__body" style="max-height:none">' +
         '<a class="pp-menu__item" href="partner-dashboard.html" role="menuitem"><svg class="ic ic--sm"><use href="#pi-home"/></svg>Dashboard</a>' +
         '<a class="pp-menu__item" href="partner-students.html" role="menuitem"><svg class="ic ic--sm"><use href="#pi-cap"/></svg>My Students</a>' +
-        '<a class="pp-menu__item" href="partner-wallet.html" role="menuitem"><svg class="ic ic--sm"><use href="#pi-wallet"/></svg>My Wallet</a>' +
+        /* Money surface ships in a later upgrade — the page stays reachable as a
+           preview, but the menu says so rather than implying it works. */
+        '<a class="pp-menu__item" href="partner-wallet.html" role="menuitem" title="Wallet &amp; payments are coming in an upgrade."><svg class="ic ic--sm"><use href="#pi-wallet"/></svg>My Wallet<span class="pp-soon__tag">Soon</span></a>' +
         '<button class="pp-menu__item pp-menu__item--danger" id="ppMenuLogout" role="menuitem"><svg class="ic ic--sm"><use href="#pi-logout"/></svg>Logout</button>' +
       "</div>" +
     "</div>";

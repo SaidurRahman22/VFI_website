@@ -51,13 +51,14 @@
         <div>
           <h1 class="pp-head__title">My Wallet</h1>
           <p class="pp-head__sub">Top up your wallet to pay application fees instantly.</p>
+          <div class="pp-soonbar" role="status"><svg class="ic ic--sm"><use href="#pi-wallet"/></svg><span><b>Wallet &amp; payments are coming in an upgrade.</b> This page is a preview — top-ups, application-fee debits and the transaction ledger are not live yet. Your counsellor will confirm fees in the meantime.</span></div>
         </div>
         <div class="pp-head__actions pg-wallet__actions">
           <div class="pg-wallet__balance">
             <span class="pg-wallet__balance-label">Balance:</span>
             <span class="pp-badge pp-badge--teal pg-wallet__chip">&#2547; 0</span>
           </div>
-          <button class="pp-btn pp-btn--primary" id="pgAddMoney"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Add Money</button>
+          <span class="pp-soon" data-soon="This feature is coming in an upgrade."><button class="pp-btn pp-btn--primary" id="pgAddMoney" disabled aria-disabled="true"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Add Money</button></span><span class="pp-soon__tag">Coming soon</span>
         </div>
       </div>
 
@@ -119,7 +120,7 @@
           </svg>
           <p class="pp-empty__title">No transactions found</p>
           <p class="pp-empty__text">You have no wallet transactions yet. Top up your wallet to pay student application fees instantly — every payment will then appear here in one ledger.</p>
-          <button class="pp-btn pp-btn--primary" id="pgAddMoney2"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Add Money</button>
+          <span class="pp-soon" data-soon="This feature is coming in an upgrade."><button class="pp-btn pp-btn--primary" id="pgAddMoney2" disabled aria-disabled="true"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Add Money</button></span><span class="pp-soon__tag">Coming soon</span>
         </div>
       </div>
 
@@ -138,8 +139,8 @@
       var $ = function (s, c) { return (c || document).querySelector(s); };
       var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
 
-      function topUp() { window.VFIToast("Wallet top-up would open here."); }
-      $$("#pgAddMoney, #pgAddMoney2").forEach(function (b) { b.addEventListener("click", topUp); });
+      /* Money surface is disabled until the wallet ships — the buttons are
+         rendered disabled with a tooltip, so nothing is wired here. */
 
       var search = $("#pgWalletSearch");
       if (search) search.addEventListener("click", function () {

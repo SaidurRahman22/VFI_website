@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\UserStatus;
+use App\Models\AuthEvent;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
-use App\Enums\UserStatus;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -104,7 +106,7 @@ class OtpService
      * promotes the user to a verified/active account.
      *
      * @return array{status: string, record: ?EmailVerificationCode}
-     *         status ∈ ok | invalid | expired | locked | not_found
+     *                                                               status ∈ ok | invalid | expired | locked | not_found
      */
     public function verify(string $flowId, string $code): array
     {
@@ -118,14 +120,39 @@ class OtpService
         }
         if ($record->attemptsExhausted()) {
             $record->markConsumed();   // destroy an exhausted code
+
             return ['status' => 'locked', 'record' => $record];
         }
 
-        // Constant-time compare against the stored hash.
-        if (! Hash::check($code, $record->code_hash)) {
+        // ------------------------------------------------------------------
+        // DEMO BYPASS — accepts one fixed code so the product can be walked
+        // through before a mail sender exists (OTP mail currently goes to the
+        // log, so no real code ever reaches an inbox).
+        //
+        // OFF unless AUTH_DEMO_OTP is explicitly set, and it is NOT a shortcut
+        // for anything else: the flow, expiry, attempt caps and single-use
+        // consumption all still apply. Every use is recorded as its own auth
+        // event so the window it was open for is auditable after the fact.
+        //
+        // MUST be cleared before real users are onboarded — see
+        // Developer_requier.md, Priority 1.
+        // ------------------------------------------------------------------
+        $demo = (string) config('auth.demo_otp', '');
+        if ($demo !== '' && hash_equals($demo, $code)) {
+            AuthEvent::record('otp_demo_bypass', [
+                'user_id' => $record->user_id,
+                'email' => $record->email ?? null,
+                'ip' => request()?->ip(),
+                'context' => ['purpose' => $record->purpose, 'flow_id' => $flowId],
+            ]);
+            Log::warning('OTP demo bypass used — AUTH_DEMO_OTP is set. Clear it before onboarding real users.', [
+                'purpose' => $record->purpose,
+            ]);
+        } elseif (! Hash::check($code, $record->code_hash)) {
             $record->increment('attempts_used');
             if ($record->fresh()->attemptsExhausted()) {
                 $record->markConsumed();
+
                 return ['status' => 'locked', 'record' => $record];
             }
 

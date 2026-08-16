@@ -125,6 +125,25 @@ class StaffAccessTest extends TestCase
         $this->assertSame(0, StaffAccessLog::count());
     }
 
+    public function test_the_allowed_roles_can_be_narrowed_by_config(): void
+    {
+        config(['auth.cross_tenant_roles' => ['superadmin']]);
+
+        $this->assertTrue($this->svc()->mayReadAcrossTenants($this->userWithRole(Role::SuperAdmin)));
+        // narrowed: the counsellor is no longer permitted
+        $this->assertFalse($this->svc()->mayReadAcrossTenants($this->userWithRole(Role::StaffCounsellor)));
+    }
+
+    public function test_a_broken_config_falls_back_to_the_confirmed_pair_not_open_access(): void
+    {
+        // a typo must never widen the door
+        config(['auth.cross_tenant_roles' => ['not_a_real_role', '']]);
+
+        $this->assertTrue($this->svc()->mayReadAcrossTenants($this->userWithRole(Role::SuperAdmin)));
+        $this->assertTrue($this->svc()->mayReadAcrossTenants($this->userWithRole(Role::StaffCounsellor)));
+        $this->assertFalse($this->svc()->mayReadAcrossTenants($this->userWithRole(Role::ContentEditor)));
+    }
+
     public function test_the_permission_check_is_exposed_for_gating_the_screen(): void
     {
         $this->assertTrue($this->svc()->mayReadAcrossTenants($this->userWithRole(Role::StaffCounsellor)));

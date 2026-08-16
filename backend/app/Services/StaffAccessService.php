@@ -32,14 +32,35 @@ use RuntimeException;
 class StaffAccessService
 {
     /**
-     * Roles permitted to read across tenants.
-     * Default chosen at build time; confirm with the client before launch.
+     * Roles permitted to read across tenants — CONFIRMED with the client:
+     * superadmin + staff_counsellor.
+     *
+     * Read from config so the list can be tightened without a deploy, but the
+     * fallback is the confirmed pair rather than "everything": a typo in the
+     * env must narrow access, never widen it. Unknown role names are dropped.
      */
-    private const ALLOWED_ROLES = [Role::SuperAdmin, Role::StaffCounsellor];
+    private const DEFAULT_ROLES = [Role::SuperAdmin, Role::StaffCounsellor];
+
+    /** @return list<Role> */
+    private function allowedRoles(): array
+    {
+        $configured = (array) config('auth.cross_tenant_roles', []);
+        if ($configured === []) {
+            return self::DEFAULT_ROLES;
+        }
+
+        $roles = array_values(array_filter(array_map(
+            fn ($v) => Role::tryFrom(trim((string) $v)),
+            $configured,
+        )));
+
+        // never fail open: an unusable list falls back to the confirmed pair
+        return $roles !== [] ? $roles : self::DEFAULT_ROLES;
+    }
 
     public function mayReadAcrossTenants(User $staff): bool
     {
-        foreach (self::ALLOWED_ROLES as $role) {
+        foreach ($this->allowedRoles() as $role) {
             if ($staff->hasRole($role)) {
                 return true;
             }
