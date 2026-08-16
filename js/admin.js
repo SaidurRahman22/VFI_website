@@ -221,26 +221,59 @@
     return [];
   }
 
+  /* Where each collection is actually EDITED.
+     This panel can only read content (it renders the public content bundle and
+     has no write endpoints at all). The staff panel has real CRUD for every one
+     of these, so rather than show Edit/Delete buttons that silently do nothing,
+     each list points at its working editor. */
+  var EDITOR = {
+    events: "/manage/content/events",
+    blogs: "/manage/content/blogs",
+    news: "/manage/content/news-items",
+    photos: "/manage/content/photos",
+    ppManagers: "/manage/content/pp-managers",
+    ppUpdates: "/manage/content/pp-updates",
+    ppQuicklinks: "/manage/content/pp-quicklinks",
+    ppDocs: "/manage/content/pp-docs",
+    ppEmails: "/manage/content/pp-emails",
+    ppNotifs: "/manage/content/pp-notifs"
+  };
+
+  function editorBanner(kind) {
+    var url = EDITOR[kind];
+    if (!url) return "";
+    var what = (SCHEMA[kind] && SCHEMA[kind].many) ? SCHEMA[kind].many.toLowerCase() : "items";
+    return '<div class="ad__notice ad__notice--editor">' +
+      "<b>This list is read-only here.</b> Add, edit, reorder or delete " + esc(what) +
+      ' in the staff panel — changes appear on the website immediately. ' +
+      '<a class="ad__noticelink" href="' + url + '">Open the ' + esc(what) + ' editor &rarr;</a>' +
+      "</div>";
+  }
+
   function renderList(kind) {
     if (kind === "photos") return renderGallery();
     var host = $("#list-" + kind);
     var items = VFI.list(kind);
     if (!items.length) {
-      host.innerHTML = '<div class="empty"><b>No ' + esc(SCHEMA[kind].many.toLowerCase()) + ' yet</b>' +
-        'Click “New ' + esc(SCHEMA[kind].one.toLowerCase()) + '” to add your first one.</div>';
+      host.innerHTML = editorBanner(kind) +
+        '<div class="empty"><b>No ' + esc(SCHEMA[kind].many.toLowerCase()) + ' yet</b>' +
+        "Add the first one in the staff panel.</div>";
       refreshCounts(); return;
     }
     var titleKey = SCHEMA[kind].titleKey || "title";
     var flat = !!SCHEMA[kind].flat;
-    host.innerHTML = items.map(function (it) {
+    var editUrl = EDITOR[kind];
+    host.innerHTML = editorBanner(kind) + items.map(function (it) {
       var meta = metaFor(kind, it).map(function (m) { return '<span class="tag">' + esc(m) + "</span>"; }).join("");
       var thumb = flat ? "" : '<span class="row__thumb row__thumb--' + esc(it.color || "a") + '" data-img="' + esc(it.imgId || "") + '"></span>';
       return '<article class="row' + (flat ? " row--flat" : "") + '" data-id="' + esc(it.id) + '">' + thumb +
         '<div class="row__main"><div class="row__title">' + esc(it[titleKey] || "Untitled") + "</div>" +
         '<div class="row__meta">' + meta + "</div></div>" +
         '<div class="row__act">' +
-          '<button class="btn btn--sm btn--icon" data-act="edit" title="Edit"><svg class="ai"><use href="#a-edit"/></svg></button>' +
-          '<button class="btn btn--sm btn--icon" data-act="del" title="Delete"><svg class="ai"><use href="#a-trash"/></svg></button>' +
+          // a real link to the working editor, not a button wired to nothing
+          (editUrl
+            ? '<a class="btn btn--sm btn--icon" href="' + editUrl + '" title="Edit in the staff panel"><svg class="ai"><use href="#a-edit"/></svg></a>'
+            : "") +
         "</div></article>";
     }).join("");
 

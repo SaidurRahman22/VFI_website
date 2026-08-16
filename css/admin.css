@@ -281,3 +281,15 @@ input,select,textarea{font-family:inherit;font-size:15px}
   box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .22s var(--ease)}
 .tgl.is-on{background:var(--green)}
 .tgl.is-on .tgl__dot{transform:translateX(22px)}
+
+/* ==========================================================================
+   Read-only collection notice.
+   This panel renders the public content bundle and has no write endpoints, so
+   every collection list points at the staff panel where the real editor lives.
+   ========================================================================== */
+.ad__notice{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;
+  padding:13px 16px;border-radius:12px;font-size:.9rem;line-height:1.55}
+.ad__notice--editor{background:#eef3fb;border:1px solid #d7e2f4;border-left:4px solid var(--blue);color:#234f88}
+.ad__notice b{color:#152440}
+.ad__noticelink{font-weight:700;color:var(--blue);white-space:nowrap}
+.ad__noticelink:hover{text-decoration:underline}
