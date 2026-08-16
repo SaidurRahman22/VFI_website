@@ -16,8 +16,10 @@ class NewsItemsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->reorderable(position)
-            ->defaultSort(position)
+            // quoted: bare `position` is parsed as an undefined constant and
+            // fataled the whole News & Updates page
+            ->reorderable('position')
+            ->defaultSort('position')
             ->columns([
                 TextColumn::make('legacy_id')
                     ->searchable(),

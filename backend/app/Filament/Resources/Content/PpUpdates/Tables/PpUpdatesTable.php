@@ -16,8 +16,8 @@ class PpUpdatesTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->reorderable(position)
-            ->defaultSort(position)
+            ->reorderable('position')
+            ->defaultSort('position')
             ->columns([
                 TextColumn::make('legacy_id')
                     ->searchable(),

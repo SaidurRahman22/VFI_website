@@ -4,7 +4,6 @@ namespace App\Filament\Pages;
 
 use App\Models\SiteContent;
 use BackedEnum;
-use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
@@ -105,8 +104,6 @@ class UniversityDefaults extends Page
         Notification::make()->success()->title('University page defaults saved')->send();
     }
 
-    protected function getFormActions(): array
-    {
-        return [Action::make('save')->label('Save')->submit('save')];
-    }
+    // No getFormActions(): the Blade view renders its own submit button, because
+    // the cached-form-actions helper does not exist on a custom Page here.
 }
