@@ -92,6 +92,21 @@
           <button class="ad__navbtn" data-view="settings"><svg class="ai"><use href="#a-cog"/></svg> Site Settings</button>
           <button class="ad__navbtn" data-view="backup"><svg class="ai"><use href="#a-save"/></svg> Backup</button>
         </div>
+
+        <!-- This panel edits website CONTENT only. Everything operational —
+             processing applications, verifying documents, agencies, roles,
+             GDPR — lives in the staff panel at /manage. There was no link
+             between the two, so staff looked for applications in here and
+             concluded the feature did not exist. -->
+        <div class="ad__group is-open" data-group="staffops">
+          <button class="ad__grouphd" type="button" aria-expanded="true"><span class="ad__grouptx">Staff operations</span><svg class="ai ad__chev"><use href="#a-chev"/></svg></button>
+          <div class="ad__sub">
+            <a class="ad__navbtn" href="/manage/staff-applications"><svg class="ai"><use href="#a-doc"/></svg> Applications &nbsp;&rarr;</a>
+            <a class="ad__navbtn" href="/manage/document-reviews"><svg class="ai"><use href="#a-check"/></svg> Document reviews &nbsp;&rarr;</a>
+            <a class="ad__navbtn" href="/manage/agencies"><svg class="ai"><use href="#a-users"/></svg> Agencies &nbsp;&rarr;</a>
+            <a class="ad__navbtn" href="/manage"><svg class="ai"><use href="#a-cog"/></svg> All staff tools &nbsp;&rarr;</a>
+          </div>
+        </div>
       </div>
     </nav>
     <a class="ad__view-site" href="index.html" target="_blank" rel="noopener"><svg class="ai"><use href="#a-out"/></svg> View website</a>
