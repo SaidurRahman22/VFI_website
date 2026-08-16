@@ -8,6 +8,7 @@ use App\Filament\Resources\StaffApplications\Tables\StaffApplicationsTable;
 use App\Models\Concerns\BelongsToAgencyScope;
 use App\Models\Partner\Application;
 use App\Support\RlsBypass;
+use App\Support\StaffAbilities;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -42,6 +43,12 @@ class StaffApplicationResource extends Resource
     protected static ?string $modelLabel = 'application';
 
     protected static ?int $navigationSort = 11;
+
+    /** Role gate: see App\Support\StaffAbilities for who holds this. */
+    public static function canAccess(): bool
+    {
+        return StaffAbilities::current('applications.process');
+    }
 
     public static function table(Table $table): Table
     {

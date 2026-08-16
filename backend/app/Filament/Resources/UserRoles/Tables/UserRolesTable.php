@@ -6,7 +6,9 @@ use App\Enums\Role;
 use App\Models\Partner\PartnerAgency;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Services\AdminAccounts;
 use App\Services\RoleAssignmentService;
+use App\Support\StaffAbilities;
 use App\Support\StepUp;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -38,6 +40,49 @@ class UserRolesTable
                 TextColumn::make('mfa_enrolled_at')->label('2FA')
                     ->formatStateUsing(fn ($state) => $state ? 'Enrolled' : 'No')
                     ->badge()->color(fn ($state) => $state ? 'success' : 'gray'),
+            ])
+            ->toolbarActions([
+                /* Creating a staff account previously required shell access:
+                   AdminAccounts::issueInvite had no caller and the invite email
+                   could not be delivered anyway (mail is on the log driver).
+                   Step-up protected like every other role change. */
+                Action::make('createStaff')
+                    ->label('New staff account')
+                    ->icon(Heroicon::OutlinedUserPlus)
+                    ->color('primary')
+                    ->modalHeading('Create a staff account')
+                    ->modalDescription('The account is created immediately and you are shown a one-time password to pass on. The holder should change it after signing in, and enrol two-factor authentication.')
+                    ->schema([
+                        TextInput::make('name')->label('Full name')->required()->maxLength(120),
+                        TextInput::make('email')->label('Email')->email()->required()->maxLength(190),
+                        Select::make('role')->label('Role')->required()
+                            ->options(collect(StaffAbilities::ASSIGNABLE)
+                                ->mapWithKeys(fn (Role $r) => [$r->value => ucwords(str_replace('_', ' ', $r->value))])->all())
+                            ->helperText(collect(StaffAbilities::ASSIGNABLE)
+                                ->map(fn (Role $r) => ucwords(str_replace('_', ' ', $r->value)).' — '.StaffAbilities::describe($r))
+                                ->implode("\n"))
+                            ->live(),
+                        TextInput::make('code')->label('Your 6-digit authenticator code')->required()
+                            ->helperText('Creating an account that can reach student data needs your code, the same as changing a role.'),
+                    ])
+                    ->action(function (array $data) {
+                        try {
+                            $actor = auth()->user();
+                            StepUp::assert($actor, $data['code'] ?? null, 'staff_account_create');
+                            $made = app(AdminAccounts::class)->createStaff(
+                                $actor, $data['name'], $data['email'], Role::from($data['role']),
+                            );
+
+                            Notification::make()->success()
+                                ->title('Staff account created')
+                                ->body('One-time password for '.$made['user']->email.': '.$made['password']
+                                    .' — copy it now, it is not shown again.')
+                                ->persistent()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()->danger()->title('Not created')->body($e->getMessage())->send();
+                        }
+                    }),
             ])
             ->recordActions([
                 Action::make('grant')

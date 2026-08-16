@@ -10,7 +10,22 @@
 */
 return [
 
-    'signin' => ['login.html', 'vfi-partner-login.html'],
+    /*
+    | Pages that may never be switched off, because hiding one breaks the way
+    | people get INTO the product — and it fails silently, days later, for
+    | someone who never touched the admin.
+    |
+    | This deliberately covers the whole authentication flow, not just the two
+    | login screens. Switching off student-verify.html would let people register
+    | and then never confirm their email; switching off a forgot/reset page
+    | would strand anyone locked out of their account.
+    */
+    'signin' => [
+        'login.html', 'student-verify.html', 'student-forgot.html', 'student-reset.html',
+        'vfi-partner-login.html', 'vfi-partner-verify.html',
+        'vfi-partner-forgot.html', 'vfi-partner-reset.html',
+        'qr-register.html',   // the QR landing a partner's students register through
+    ],
 
     'catalogue' => [
         'Main pages' => [

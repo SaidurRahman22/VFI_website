@@ -6,6 +6,7 @@ use App\Enums\DocumentStatus;
 use App\Filament\Resources\DocumentReviews\Pages\ListDocumentReviews;
 use App\Filament\Resources\DocumentReviews\Tables\DocumentReviewsTable;
 use App\Models\Student\StudentDocument;
+use App\Support\StaffAbilities;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -31,6 +32,12 @@ class DocumentReviewResource extends Resource
     protected static ?string $modelLabel = 'document review';
 
     protected static ?int $navigationSort = 10;
+
+    /** Role gate: see App\Support\StaffAbilities for who holds this. */
+    public static function canAccess(): bool
+    {
+        return StaffAbilities::current('documents.review');
+    }
 
     public static function table(Table $table): Table
     {

@@ -7,6 +7,7 @@ use App\Filament\Resources\ContactEnquiries\Pages\ViewContactEnquiry;
 use App\Filament\Resources\ContactEnquiries\Schemas\ContactEnquiryInfolist;
 use App\Filament\Resources\ContactEnquiries\Tables\ContactEnquiriesTable;
 use App\Models\ContactEnquiry;
+use App\Support\StaffAbilities;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -48,6 +49,12 @@ class ContactEnquiryResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return ContactEnquiryInfolist::configure($schema);
+    }
+
+    /** Role gate: see App\Support\StaffAbilities for who holds this. */
+    public static function canAccess(): bool
+    {
+        return StaffAbilities::current('enquiries.view');
     }
 
     public static function table(Table $table): Table

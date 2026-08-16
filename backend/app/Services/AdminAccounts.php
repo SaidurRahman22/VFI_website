@@ -8,6 +8,7 @@ use App\Models\AdminInvite;
 use App\Models\AuthEvent;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Support\StaffAbilities;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -45,6 +46,63 @@ class AdminAccounts
             AuthEvent::record('superadmin_bootstrapped', ['user_id' => $user->id, 'email' => $email]);
 
             return $user;
+        });
+    }
+
+    /**
+     * Superadmin creates a staff account directly, with its starting role.
+     *
+     * The invite flow below is the nicer path, but it needs email — which is
+     * still on the `log` driver, so an invite would never arrive. This creates
+     * the account now and returns a one-time password to hand over out of band.
+     *
+     * @return array{user: User, password: string}
+     */
+    public function createStaff(User $actor, string $name, string $email, Role $role): array
+    {
+        if (! $actor->isSuperAdmin()) {
+            throw new \RuntimeException('Only a superadmin can create staff accounts.');
+        }
+        if (! in_array($role, StaffAbilities::ASSIGNABLE, true)) {
+            throw new \RuntimeException('That role cannot be assigned here.');
+        }
+
+        $email = mb_strtolower(trim($email));
+        $name = trim($name);
+        if ($name === '') {
+            throw new \RuntimeException('A name is required.');
+        }
+        if (User::withTrashed()->where('email', $email)->exists()) {
+            throw new \RuntimeException('An account with that email already exists — grant it a role instead.');
+        }
+
+        // 18 URL-safe characters: long enough that it never needs a complexity
+        // rule, and it is replaced by the holder on first sign-in anyway.
+        $password = Str::random(18);
+
+        return DB::transaction(function () use ($name, $email, $role, $password, $actor) {
+            $user = User::create([
+                'name' => $name,
+                'email' => $email,
+                'password' => $password,          // hashed by the model cast
+            ]);
+            $user->forceFill(['status' => UserStatus::Active])->save();
+
+            UserRole::create([
+                'user_id' => $user->id,
+                'role' => $role,
+                'agency_id' => null,              // staff roles are never tenant-bound
+                'granted_by' => $actor->id,
+                'granted_at' => now(),
+            ]);
+
+            AuthEvent::record('staff_account_created', [
+                'user_id' => $actor->id,          // who did it, not who it is
+                'email' => $email,
+                'context' => ['role' => $role->value, 'new_user_id' => $user->id],
+            ]);
+
+            return ['user' => $user, 'password' => $password];
         });
     }
 

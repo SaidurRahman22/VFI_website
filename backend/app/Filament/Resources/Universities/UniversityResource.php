@@ -8,6 +8,7 @@ use App\Filament\Resources\Universities\Pages\ListUniversities;
 use App\Filament\Resources\Universities\Schemas\UniversityForm;
 use App\Filament\Resources\Universities\Tables\UniversitiesTable;
 use App\Models\Catalogue\Institution;
+use App\Support\StaffAbilities;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -35,6 +36,12 @@ class UniversityResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return UniversityForm::configure($schema);
+    }
+
+    /** Role gate: see App\Support\StaffAbilities for who holds this. */
+    public static function canAccess(): bool
+    {
+        return StaffAbilities::current('catalogue.manage');
     }
 
     public static function table(Table $table): Table

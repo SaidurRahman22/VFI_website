@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Agencies;
 use App\Filament\Resources\Agencies\Pages\ListAgencies;
 use App\Filament\Resources\Agencies\Tables\AgenciesTable;
 use App\Models\Partner\PartnerAgency;
+use App\Support\StaffAbilities;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -28,6 +29,12 @@ class AgencyResource extends Resource
     protected static ?string $modelLabel = 'agency';
 
     protected static ?int $navigationSort = 12;
+
+    /** Role gate: see App\Support\StaffAbilities for who holds this. */
+    public static function canAccess(): bool
+    {
+        return StaffAbilities::current('agencies.manage');
+    }
 
     public static function table(Table $table): Table
     {
