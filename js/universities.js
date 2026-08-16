@@ -128,7 +128,12 @@
       out.textContent = "Please add your name, phone and email.";
       return;
     }
-    var uni = window.__uniCtx;
+    /* Prefer the university the visitor actually clicked (ctxUni, set by
+       openBook from a directory card) over the page-level one. Reading only
+       window.__uniCtx meant every lead raised from the universities LIST — where
+       no page-level context exists — reached staff with no university attached,
+       so nobody knew what the enquiry was about. */
+    var uni = ctxUni || window.__uniCtx;
     var msg = "Counselling request";
     if (fields.interest) msg += " — interested in " + fields.interest;
     if (uni && uni.name) msg += " — university: " + uni.name + (uni.country ? " (" + uni.country + ")" : "");

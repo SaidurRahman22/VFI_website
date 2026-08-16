@@ -1197,6 +1197,22 @@
     w.innerHTML = "<b>Storage is blocked in this browser.</b> Nothing you save here will stick. " +
       "Open the site through a local server (for example <code>python -m http.server 8000</code>) instead of double-clicking the file.";
   }
+  /* Sign out. POST /api/admin/logout has existed since Phase 1 with no caller,
+     so an admin session could only be ended by clearing the cookie by hand.
+     VFIApi (js/api.js) handles the CSRF cookie for us. */
+  var signOut = $("#adSignOut");
+  if (signOut) {
+    signOut.addEventListener("click", function () {
+      signOut.disabled = true;
+      var done = function () { window.location.href = "admin-login.html"; };
+      if (window.VFIApi) {
+        window.VFIApi.post("/api/admin/logout", {}, {}).then(done)["catch"](done);
+      } else {
+        done();
+      }
+    });
+  }
+
   buildPartnerView();
   refreshCounts();
   show("dashboard");

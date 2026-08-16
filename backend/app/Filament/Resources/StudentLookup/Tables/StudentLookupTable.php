@@ -21,8 +21,13 @@ class StudentLookupTable
             ->defaultSort('created_at', 'desc')
             // Nothing is listed until someone searches: an idle screen must not
             // be a browsable directory of every agency's students.
-            ->modifyQueryUsing(fn ($query) => $query->when(
-                blank(request()->input('tableSearch')),
+            //
+            // Read the search off the Livewire component, NOT request()->input():
+            // the table is a Livewire property, so the request never carries
+            // `tableSearch` and the guard used to hide every row permanently —
+            // the search box could not return anything at all.
+            ->modifyQueryUsing(fn ($query, $livewire) => $query->when(
+                blank($livewire->getTableSearch()),
                 fn ($q) => $q->whereRaw('1 = 0'),
             ))
             ->emptyStateHeading('Search for a student')

@@ -110,6 +110,10 @@
       </div>
     </nav>
     <a class="ad__view-site" href="index.html" target="_blank" rel="noopener"><svg class="ai"><use href="#a-out"/></svg> View website</a>
+    <!-- There was no way out of this panel at all: POST /api/admin/logout has
+         existed since Phase 1 with no caller, so the only way to end an admin
+         session was to clear the cookie by hand. -->
+    <button type="button" class="ad__view-site ad__signout" id="adSignOut"><svg class="ai"><use href="#a-out"/></svg> Sign out</button>
   </aside>
 
   <!-- ============ MAIN ============ -->

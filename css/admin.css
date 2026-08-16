@@ -293,3 +293,9 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .ad__notice b{color:#152440}
 .ad__noticelink{font-weight:700;color:var(--blue);white-space:nowrap}
 .ad__noticelink:hover{text-decoration:underline}
+
+/* Sign out sits beside "View website"; it is a <button>, so it needs the
+   element defaults reset to match the anchor next to it. */
+.ad__signout{width:100%;background:none;border:0;border-top:1px solid rgba(255,255,255,.07);
+  font:inherit;text-align:left;cursor:pointer;color:inherit}
+.ad__signout:hover{color:#fff}
