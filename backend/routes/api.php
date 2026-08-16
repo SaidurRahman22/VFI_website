@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContentBundleController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PublicUniversityController;
 use App\Http\Controllers\TaxonomyController;
 use Illuminate\Http\Request;
@@ -51,6 +52,13 @@ Route::get('/health', function () {
 | POST /api/contact
 */
 Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:contact');
+
+/*
+| Public newsletter subscribe — the footer box on ~30 pages. Reuses the contact
+| throttle: same shape of anonymous public write, same abuse profile.
+*/
+Route::post('/newsletter', [NewsletterController::class, 'store'])
     ->middleware('throttle:contact');
 
 /*

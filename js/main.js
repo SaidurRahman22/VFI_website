@@ -449,10 +449,18 @@
       function finish(okState) {
         if (done) {
           done.hidden = false;
-          if (!okState) done.textContent = "Thanks! We received your details — if you don't hear back, please call us.";
+          /* Never claim receipt of something we did not store. The old copy said
+             "Thanks! We received your details" even when the request failed, so
+             a visitor whose enquiry was lost walked away believing VFI had it. */
+          if (!okState) {
+            done.textContent = "Sorry — we could not send that just now. Please try again, "
+              + "or email dhaka@vfi-edu.com / call +880 1700-000000 and we will pick it up.";
+          }
           done.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
         }
-        cform.reset();
+        // only clear the form on success — otherwise the visitor loses what they
+        // typed and has to write it all again
+        if (okState) cform.reset();
         if (btn) { btn.disabled = false; btn.style.opacity = ""; }
       }
       var base = (typeof window.VFI_API_BASE === "string") ? window.VFI_API_BASE : "";
@@ -468,18 +476,40 @@
     });
   }
 
-  /* -------- Newsletter (front-end only) -------- */
+  /* -------- Newsletter --------
+     Previously this only relabelled its own button to "Subscribed" and threw the
+     address away, on every page carrying the footer box. It now posts to
+     /api/newsletter, and only claims success when the server actually stored it. */
   var nform = $("#nform");
   if (nform) {
     nform.addEventListener("submit", function (e) {
       e.preventDefault();
       var input = $("input[type=email]", nform);
       if (!input.value.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(input.value)) { input.focus(); return; }
+
       var btn = $("button[type=submit]", nform);
-      btn.textContent = "Subscribed ✓";
+      var label = btn.textContent;
+      var sel = nform.querySelector("select");
       btn.disabled = true;
-      input.value = "";
-      setTimeout(function () { btn.textContent = "Subscribe Now"; btn.disabled = false; }, 2600);
+      btn.textContent = "Subscribing…";
+
+      var base = (typeof window.VFI_API_BASE === "string") ? window.VFI_API_BASE : "";
+      fetch(base + "/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          email: input.value.trim(),
+          interest: sel && sel.value ? String(sel.value).toLowerCase() : null,
+          source_page: (window.VFI && VFI.baseName ? VFI.baseName(location.pathname) : location.pathname)
+        })
+      }).then(function (r) {
+        if (r.ok) { btn.textContent = "Subscribed ✓"; input.value = ""; }
+        else { btn.textContent = "Try again"; }
+      }).catch(function () {
+        btn.textContent = "Try again";
+      }).then(function () {
+        setTimeout(function () { btn.textContent = label; btn.disabled = false; }, 2600);
+      });
     });
   }
 
