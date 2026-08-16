@@ -60,7 +60,41 @@
         "<td>" + esc(s.email) + "</td>" +
         "<td>" + esc(s.destination_country || "—") + "</td>" +
         "<td>" + esc(s.intake || "—") + "</td>" +
+        '<td><button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" data-shortlist="' + s.id +
+          '" data-name="' + esc(s.name || s.email) + '">Shortlist</button></td>' +
         "</tr>";
+    }
+
+    /* Programs saved from Search Programs land against a student. Without this
+       they were written correctly and then unreachable — saved, invisible, and
+       indistinguishable from lost. */
+    function openShortlist(studentId, studentName) {
+      var box = $("#ppSlModal");
+      if (!box) return;
+      $("#ppSlTitle").textContent = "Shortlist — " + studentName;
+      var body = $("#ppSlBody");
+      body.innerHTML = '<p class="pp-datalist__meta">Loading…</p>';
+      box.classList.add("is-open");
+
+      window.VFIApi.get("/api/partner/students/" + studentId + "/shortlist", {})
+        .then(function (res) {
+          var rows = res.data || [];
+          if (!rows.length) {
+            body.innerHTML = '<p class="pp-datalist__meta">Nothing saved yet. Use <b>Search Programs</b>, open a program and save it to this student.</p>';
+            return;
+          }
+          body.innerHTML = '<table class="pp-table"><thead><tr><th>Program</th><th>University</th><th>Intake</th><th>Tuition</th><th>Note</th><th></th></tr></thead><tbody>' +
+            rows.map(function (r) {
+              var t = r.tuition ? (r.tuition.currency + " " + Math.round(r.tuition.minor / 100).toLocaleString()) : "—";
+              var intake = r.next_intake ? (r.next_intake.season + " " + r.next_intake.year) : "—";
+              return "<tr><td>" + esc(r.title || "—") + "</td><td>" + esc(r.university || "—") + "</td>" +
+                "<td>" + esc(intake) + "</td><td>" + esc(t) + "</td><td>" + esc(r.note || "—") + "</td>" +
+                '<td><button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" data-unsave="' + r.program_id +
+                  '" data-sid="' + studentId + '">Remove</button></td></tr>';
+            }).join("") + "</tbody></table>";
+        })["catch"](function () {
+          body.innerHTML = '<p class="pp-datalist__meta">Could not load the shortlist.</p>';
+        });
     }
 
     function load() {
@@ -72,13 +106,59 @@
         .then(function (res) {
           var rows = res.data || [];
           host.innerHTML = rows.length
-            ? '<table class="pp-table"><thead><tr><th>Ref</th><th>Name</th><th>Email</th><th>Destination</th><th>Intake</th></tr></thead><tbody>' +
+            ? '<table class="pp-table"><thead><tr><th>Ref</th><th>Name</th><th>Email</th><th>Destination</th><th>Intake</th><th>Saved programs</th></tr></thead><tbody>' +
               rows.map(row).join("") + "</tbody></table>" +
               '<p class="pp-datalist__meta">' + rows.length + " of " + res.meta.total + (archived ? " archived" : "") + " student(s)</p>"
             : "";
           swap(host, empty, rows.length > 0);
         })["catch"](quiet);
     }
+
+    /* Modal shell, injected once so partner-students.html stays untouched. */
+    (function mountShortlistModal() {
+      if ($("#ppSlModal")) return;
+      // Uses the console's own modal contract: .pp-modal is visibility-hidden
+      // and becomes visible via .is-open, with the panel as .pp-modal__card.
+      // Toggling the hidden attribute alone would leave it invisible.
+      var el = document.createElement("div");
+      el.className = "pp-modal";
+      el.id = "ppSlModal";
+      el.innerHTML =
+        '<div class="pp-modal__backdrop" data-slclose></div>' +
+        '<div class="pp-modal__card pp-modal__card--lg" role="dialog" aria-modal="true" aria-labelledby="ppSlTitle">' +
+          '<div class="pp-modal__head"><h3 class="pp-modal__title" id="ppSlTitle">Shortlist</h3>' +
+            '<button type="button" class="pp-modal__close" data-slclose aria-label="Close">&times;</button></div>' +
+          '<div class="pp-modal__body" id="ppSlBody"></div>' +
+        "</div>";
+      document.body.appendChild(el);
+
+      el.addEventListener("click", function (e) {
+        // walk up: the click may land on an icon inside the button
+        var n = e.target;
+        while (n && n !== el) {
+          if (n.getAttribute && n.getAttribute("data-slclose") !== null) { el.classList.remove("is-open"); return; }
+          n = n.parentNode;
+        }
+      });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") el.classList.remove("is-open"); });
+
+      // remove a saved program
+      el.addEventListener("click", function (e) {
+        var b = e.target.closest ? e.target.closest("[data-unsave]") : null;
+        if (!b) return;
+        window.VFIApi.del("/api/partner/students/" + b.getAttribute("data-sid") +
+          "/shortlist/" + b.getAttribute("data-unsave"), {})
+          .then(function () {
+            var tr = b.closest("tr"); if (tr) tr.remove();
+            if (window.VFIToast) window.VFIToast("Removed from shortlist.");
+          })["catch"](function () { if (window.VFIToast) window.VFIToast("Could not remove it."); });
+      });
+    })();
+
+    host.addEventListener("click", function (e) {
+      var b = e.target.closest ? e.target.closest("[data-shortlist]") : null;
+      if (b) openShortlist(b.getAttribute("data-shortlist"), b.getAttribute("data-name"));
+    });
 
     search.addEventListener("click", function () { archived = false; load(); });
     var kwIn = $("#ppStuKeyword");
