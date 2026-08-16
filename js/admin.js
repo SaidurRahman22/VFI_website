@@ -168,6 +168,10 @@
   }
 
   $$(".ad__navbtn").forEach(function (b) {
+    // Only view-switchers carry data-view. The Staff-operations entries are real
+    // links out to /manage; without this guard they called show(null) and blanked
+    // the panel instead of navigating.
+    if (!b.getAttribute("data-view")) return;
     b.addEventListener("click", function () { show(b.getAttribute("data-view")); });
   });
 
