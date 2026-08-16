@@ -36,9 +36,9 @@ class StaffApplicationsTable
                 TextColumn::make('ack_no')->label('Ack no.')->toggleable()->searchable(),
                 TextColumn::make('deadline_at')->label('Deadline')->date('d M Y')->sortable()->toggleable(),
                 TextColumn::make('submitted_at')->label('Submitted')->dateTime('d M Y, H:i')->sortable(),
-                TextColumn::make('notes_count')->label('Notes')
-                    ->state(fn (Application $r) => ApplicationNote::where('application_id', $r->id)->count())
-                    ->badge()->color('gray')->toggleable(),
+                // counted in the base query (withCount) — a per-row count here
+                // would be one extra query per visible row
+                TextColumn::make('notes_count')->label('Notes')->badge()->color('gray')->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('status')->options(

@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Phase 9A — the staff queue for checking student documents.
@@ -44,12 +45,16 @@ class DocumentReviewResource extends Resource
             ->with(['student', 'documentType', 'file']);
     }
 
-    /** Badge the nav with how many are waiting, so the queue is visible. */
+    /**
+     * Badge the nav with how many are waiting. Cached — this fires on every
+     * admin page render, and a COUNT per request adds up fast once the document
+     * table is large. 60s is fresh enough for a queue badge.
+     */
     public static function getNavigationBadge(): ?string
     {
-        $n = static::getModel()::query()
+        $n = Cache::remember('badge:document-reviews', 60, fn () => static::getModel()::query()
             ->where('status', DocumentStatus::Uploaded->value)
-            ->whereNotNull('file_id')->count();
+            ->whereNotNull('file_id')->count());
 
         return $n > 0 ? (string) $n : null;
     }

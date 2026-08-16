@@ -39,6 +39,16 @@ class Application extends Model
         return $this->belongsTo(PartnerAgency::class, 'agency_id');
     }
 
+    /**
+     * Staff-internal counsellor notes (Phase 9A). Present so the admin queue can
+     * withCount() them in one query. NEVER eager-load or serialise this from a
+     * Partner\* or Me\* controller — the notes are not agency- or student-visible.
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(ApplicationNote::class);
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(ApplicationStatusEvent::class)->orderBy('occurred_at');

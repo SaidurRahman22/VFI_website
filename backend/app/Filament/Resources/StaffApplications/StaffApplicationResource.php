@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Phase 9A slice 2 — the staff view of every agency's applications.
@@ -48,16 +49,22 @@ class StaffApplicationResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScope(BelongsToAgencyScope::class)   // staff act across tenants
-            ->with(['student', 'agency']);
+            ->with(['student:id,first_name,last_name,email', 'agency:id,legal_name'])
+            ->withCount('notes');                               // avoids a count per row
     }
 
-    /** Cases waiting on VFI (not on the partner) — the actual work queue. */
+    /**
+     * Cases waiting on VFI (not on the partner) — the actual work queue.
+     * Cached: this runs on EVERY admin page render, and at scale an
+     * unindexed-status COUNT on every request is exactly the kind of load the
+     * panel does not need. 60s is fresh enough for a queue badge.
+     */
     public static function getNavigationBadge(): ?string
     {
-        $n = static::getModel()::query()
+        $n = Cache::remember('badge:staff-applications', 60, fn () => static::getModel()::query()
             ->withoutGlobalScope(BelongsToAgencyScope::class)
             ->whereIn('status', [ApplicationStatus::Submitted->value, ApplicationStatus::Review->value])
-            ->count();
+            ->count());
 
         return $n > 0 ? (string) $n : null;
     }
