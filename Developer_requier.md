@@ -127,6 +127,25 @@ Postmark is a transactional-email service the codebase already supports.
 **To apply:** in `.env` set `MAIL_MAILER=postmark`, `POSTMARK_TOKEN=<token>`,
 `MAIL_FROM_ADDRESS=<verified address>`, then `config:clear`.
 
+### ⚠️ TEMPORARY: the demo code `123456` is currently switched on
+
+So the portals can be demonstrated before email works, the server is set to
+**also accept `123456`** as the verification code on any signup or email
+verification. The real, randomly generated code still works too; nothing else is
+relaxed (codes still expire after 10 minutes, still allow only 5 attempts, and
+still work only once).
+
+**This must be turned off before real students or partners sign up.** While it is
+on, anyone who guesses `123456` can verify an account they do not own. Every use
+is recorded in the audit trail, so the period it was enabled is reviewable
+afterwards.
+
+**To turn it off** (do this the same day email starts working):
+```bash
+sudo nano /var/www/vfi/backend/.env     # delete the line AUTH_DEMO_OTP=123456
+sudo -u www-data php /var/www/vfi/backend/artisan config:cache
+```
+
 ### How we confirm email works
 Once set, the developer registers a test account and confirms the OTP arrives in a
 real inbox. You'll be told "email is live".
@@ -287,7 +306,7 @@ These are deferred by choice and only matter as volume grows:
 
 | # | Item | Blocks | What to deliver |
 |---|------|--------|-----------------|
-| 0 | **Rotate SSH password, set strong admin password, enable admin 2FA** | security 🔒 | do it on the server; nothing to send |
+| 0 | **Rotate SSH password, set strong admin password, enable admin 2FA, turn OFF the `123456` demo code once email works** | security 🔒 | do it on the server; nothing to send |
 | 1 | **Email (SMTP or Postmark)** | OTP/reset emails ❌ | SMTP host/port/user/pass **or** Postmark token + from-address |
 | 2 | **Domain + point DNS to the IP** | HTTPS, links, deliverability | the domain name (A record → `103.14.23.151`) |
 | 3 | **Turnstile keys** | bot protection | site key + secret key |
