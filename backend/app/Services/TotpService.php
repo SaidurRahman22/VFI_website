@@ -20,7 +20,7 @@ class TotpService
 
     public function __construct()
     {
-        $this->engine = new Google2FA();
+        $this->engine = new Google2FA;
     }
 
     public function generateSecret(): string
@@ -40,7 +40,7 @@ class TotpService
     /** Inline SVG QR for the otpauth URI — no client JS required. */
     public function qrSvg(string $otpauthUri, int $size = 220): string
     {
-        $writer = new Writer(new ImageRenderer(new RendererStyle($size), new SvgImageBackEnd()));
+        $writer = new Writer(new ImageRenderer(new RendererStyle($size), new SvgImageBackEnd));
 
         return $writer->writeString($otpauthUri);
     }

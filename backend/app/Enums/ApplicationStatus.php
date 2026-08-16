@@ -9,15 +9,15 @@ namespace App\Enums;
  */
 enum ApplicationStatus: string
 {
-    case Submitted          = 'submitted';
-    case Review             = 'review';
-    case Offer              = 'offer';
-    case Conditional        = 'conditional';
-    case Payment            = 'payment';
-    case VisaReceived       = 'visa_received';
-    case VisaRejected       = 'visa_rejected';
-    case NonEnrolment       = 'non_enrolment';
-    case Deferral           = 'deferral';
+    case Submitted = 'submitted';
+    case Review = 'review';
+    case Offer = 'offer';
+    case Conditional = 'conditional';
+    case Payment = 'payment';
+    case VisaReceived = 'visa_received';
+    case VisaRejected = 'visa_rejected';
+    case NonEnrolment = 'non_enrolment';
+    case Deferral = 'deferral';
     case PendingFromPartner = 'pending_from_partner';
 
     /** @return list<string> */

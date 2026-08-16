@@ -20,8 +20,7 @@ class ResetMail extends Mailable
     public function __construct(
         public string $url,
         public int $ttlMinutes,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

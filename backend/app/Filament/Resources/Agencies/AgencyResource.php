@@ -37,11 +37,13 @@ class AgencyResource extends Resource
     /**
      * Aggregated in the base query rather than per row.
      *
-     * Only the applications count: `partner_agency_members` is RLS-protected, so
-     * a staff COUNT with no tenant returns 0 on Postgres no matter what the
-     * Eloquent scope does — a silently wrong number is worse than no number.
-     * `applications` is guarded by the Eloquent scope alone, so dropping the
-     * scope genuinely counts across tenants.
+     * Only the applications count. Both tables are RLS-protected, but the
+     * applications policy now also admits a read when `app.rls_bypass` is on,
+     * which the admin panel sets for authenticated requests
+     * (App\Http\Middleware\StaffRlsRead). `partner_agency_members` deliberately
+     * keeps no such bypass, so a staff COUNT there would return 0 on Postgres
+     * whatever the Eloquent scope did — and a silently wrong number is worse
+     * than no number.
      */
     public static function getEloquentQuery(): Builder
     {

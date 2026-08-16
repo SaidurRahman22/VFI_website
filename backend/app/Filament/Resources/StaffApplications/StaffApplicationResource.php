@@ -7,6 +7,7 @@ use App\Filament\Resources\StaffApplications\Pages\ListStaffApplications;
 use App\Filament\Resources\StaffApplications\Tables\StaffApplicationsTable;
 use App\Models\Concerns\BelongsToAgencyScope;
 use App\Models\Partner\Application;
+use App\Support\RlsBypass;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -17,13 +18,15 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Phase 9A slice 2 — the staff view of every agency's applications.
  *
- * Cross-tenant by necessity: VFI staff process cases for all partner agencies,
- * and the BelongsToAgency scope is fail-closed, so it is dropped here
- * explicitly. That opt-out is exactly what the trait's docblock prescribes, and
- * it is safe for this table specifically because `applications` is guarded by
- * the Eloquent scope only (no RLS policy) — every WRITE still goes through
- * ApplicationReviewService, which adopts the owning tenant before touching
- * tenant-owned rows.
+ * Cross-tenant by necessity: VFI staff process cases for all partner agencies.
+ * TWO nets have to be stood down for that, and missing either one returns an
+ * empty screen rather than an error:
+ *   1. the fail-closed BelongsToAgency Eloquent scope, dropped explicitly here;
+ *   2. Postgres RLS FORCE on `applications` — which applies even to the table
+ *      owner — handled by reading inside RlsBypass::run().
+ * Only reads are admitted this way. Every WRITE still goes through
+ * ApplicationReviewService, which adopts the owning tenant, because the
+ * policies' WITH CHECK carries no bypass by design.
  *
  * Read-only as a resource: no create/edit form. The row actions are the whole
  * write surface, so every status move passes the transition guard.
@@ -61,10 +64,12 @@ class StaffApplicationResource extends Resource
      */
     public static function getNavigationBadge(): ?string
     {
-        $n = Cache::remember('badge:staff-applications', 60, fn () => static::getModel()::query()
-            ->withoutGlobalScope(BelongsToAgencyScope::class)
-            ->whereIn('status', [ApplicationStatus::Submitted->value, ApplicationStatus::Review->value])
-            ->count());
+        $n = Cache::remember('badge:staff-applications', 60, fn () => RlsBypass::run(
+            fn () => static::getModel()::query()
+                ->withoutGlobalScope(BelongsToAgencyScope::class)
+                ->whereIn('status', [ApplicationStatus::Submitted->value, ApplicationStatus::Review->value])
+                ->count()
+        ));
 
         return $n > 0 ? (string) $n : null;
     }

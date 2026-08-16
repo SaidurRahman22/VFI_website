@@ -19,9 +19,7 @@ use Illuminate\Http\Request;
  */
 class PartnerApplicationController extends Controller
 {
-    public function __construct(private readonly PipelineService $pipeline)
-    {
-    }
+    public function __construct(private readonly PipelineService $pipeline) {}
 
     /** POST /api/partner/applications — create for a tenant student. */
     public function store(Request $request): JsonResponse

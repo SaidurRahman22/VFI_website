@@ -14,9 +14,7 @@ use Illuminate\Http\Request;
  */
 class TrackingController extends Controller
 {
-    public function __construct(private readonly TrackingService $tracking)
-    {
-    }
+    public function __construct(private readonly TrackingService $tracking) {}
 
     /** GET /api/me/tracking — journey + applications + timeline + actions. */
     public function index(Request $request): JsonResponse

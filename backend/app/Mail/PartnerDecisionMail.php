@@ -19,8 +19,7 @@ class PartnerDecisionMail extends Mailable
     public function __construct(
         public string $decision,   // approved | rejected | more_info
         public string $detail,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

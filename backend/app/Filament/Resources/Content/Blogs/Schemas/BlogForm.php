@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\Content\Blogs\Schemas;
 
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
 class BlogForm

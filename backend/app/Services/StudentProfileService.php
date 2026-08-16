@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Date;
  */
 class StudentProfileService
 {
-    public function __construct(private readonly DocumentChecklist $checklist)
-    {
-    }
+    public function __construct(private readonly DocumentChecklist $checklist) {}
 
     /** The full profile payload (shaped to the frontend `state` object). */
     public function aggregate(Student $student): array

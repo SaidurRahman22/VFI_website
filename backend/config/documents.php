@@ -30,4 +30,9 @@ return [
 
     // Single-use presigned-GET lifetime (docs §Signed URLs: 60–300s).
     'download_ttl' => (int) env('DOCUMENTS_DOWNLOAD_TTL', 120),
+
+    // Phase 9B — default retention clock. A file with no explicit clock is kept
+    // this many years from upload, then its bytes are destroyed (the row, the
+    // checklist and every audit line survive as proof of the deletion).
+    'retention_years' => (int) env('DOCUMENTS_RETENTION_YEARS', 7),
 ];

@@ -16,9 +16,7 @@ use Illuminate\Http\Request;
  */
 class PartnerReferralController extends Controller
 {
-    public function __construct(private readonly ReferralService $referrals)
-    {
-    }
+    public function __construct(private readonly ReferralService $referrals) {}
 
     /** GET /api/partner/referral-link */
     public function show(Request $request): JsonResponse

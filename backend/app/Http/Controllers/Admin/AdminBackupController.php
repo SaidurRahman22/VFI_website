@@ -18,9 +18,7 @@ class AdminBackupController extends Controller
 {
     private const MAX_IMPORT_BYTES = 8 * 1024 * 1024;   // 8 MB payload ceiling
 
-    public function __construct(private readonly BackupService $backups)
-    {
-    }
+    public function __construct(private readonly BackupService $backups) {}
 
     public function export(Request $request): JsonResponse
     {

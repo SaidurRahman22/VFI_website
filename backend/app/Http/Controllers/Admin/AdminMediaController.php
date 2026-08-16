@@ -13,9 +13,7 @@ use Illuminate\Http\Request;
  */
 class AdminMediaController extends Controller
 {
-    public function __construct(private readonly ImageService $images)
-    {
-    }
+    public function __construct(private readonly ImageService $images) {}
 
     public function upload(Request $request): JsonResponse
     {

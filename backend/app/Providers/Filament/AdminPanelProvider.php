@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\StaffRlsRead;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -59,6 +60,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                // Runs only for AUTHENTICATED panel requests: lets staff screens
+                // read across tenants past Postgres RLS. Reads only — every
+                // policy's WITH CHECK still demands a named tenant on write.
+                StaffRlsRead::class,
             ]);
     }
 }

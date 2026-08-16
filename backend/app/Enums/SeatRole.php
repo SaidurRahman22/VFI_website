@@ -8,8 +8,8 @@ namespace App\Enums;
  */
 enum SeatRole: string
 {
-    case Owner         = 'owner';
-    case Counsellor    = 'counsellor';
+    case Owner = 'owner';
+    case Counsellor = 'counsellor';
     case FinanceViewer = 'finance_viewer';
 
     /** The partner-scoped app role this seat authenticates under. */

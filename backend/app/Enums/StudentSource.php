@@ -9,8 +9,8 @@ namespace App\Enums;
  */
 enum StudentSource: string
 {
-    case SelfSignup   = 'self_signup';
+    case SelfSignup = 'self_signup';
     case PartnerModal = 'partner_modal';
-    case QrLink       = 'qr_link';
-    case Admin        = 'admin';
+    case QrLink = 'qr_link';
+    case Admin = 'admin';
 }

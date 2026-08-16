@@ -82,7 +82,13 @@ class ApplicationReviewService
             throw new RuntimeException('Moving a case to '.$to->value.' needs a reason.');
         }
 
-        return DB::transaction(function () use ($app, $from, $to, $staff, $reason) {
+        // Everything below writes into RLS-protected, agency-owned tables
+        // (applications, application_status_events, partner_notifications) whose
+        // WITH CHECK carries no bypass by design. Staff hold no tenant, so the
+        // whole unit of work adopts the owning agency — without this the UPDATE
+        // silently matches zero rows and the event INSERT is rejected outright,
+        // and neither shows up on SQLite where these tests run.
+        return TenantScope::runAs((int) $app->agency_id, fn () => DB::transaction(function () use ($app, $from, $to, $staff, $reason) {
             // The write itself reuses the Phase 7 primitive, so there is still
             // exactly ONE code path producing status events.
             $updated = $this->pipeline->transition($app, $to, ActorType::Staff, $staff->id, $reason);
@@ -92,20 +98,19 @@ class ApplicationReviewService
                 ['status' => $to->value, 'reason' => $reason, 'actor_user_id' => $staff->id],
             );
 
-            // Tell the owning agency. Written AS that tenant: partner_notifications
-            // is RLS-protected and its WITH CHECK has no bypass, so a staff write
-            // without adopting the tenant is rejected on Postgres.
-            TenantScope::runAs((int) $app->agency_id, fn () => PartnerNotification::create([
+            // Tell the owning agency — already inside runAs, so the tenant that
+            // partner_notifications' WITH CHECK demands is bound.
+            PartnerNotification::create([
                 'agency_id' => $app->agency_id,
                 'kind' => 'application',
                 'title' => 'Application updated',
                 'body' => 'An application moved to '.str_replace('_', ' ', $to->value).'.'
                     .($reason ? ' '.$reason : ''),
                 'link' => 'partner-applications.html',
-            ]));
+            ]);
 
             return $updated;
-        });
+        }));
     }
 
     /** Add a staff-internal note. Append-only — corrections are new notes. */

@@ -9,8 +9,8 @@ namespace App\Enums;
  */
 enum ScanStatus: string
 {
-    case Pending  = 'pending';
-    case Clean    = 'clean';
+    case Pending = 'pending';
+    case Clean = 'clean';
     case Infected = 'infected';
 
     /** Only a clean file may ever have a download URL minted. */

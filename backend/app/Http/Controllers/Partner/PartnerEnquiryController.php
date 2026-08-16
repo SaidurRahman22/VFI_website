@@ -29,8 +29,7 @@ class PartnerEnquiryController extends Controller
     public function __construct(
         private readonly DocumentStorage $storage,
         private readonly DocumentScanner $scanner,
-    ) {
-    }
+    ) {}
 
     /** POST /api/partner/enquiries — multipart (fields + #ppProgFiles). */
     public function store(Request $request): JsonResponse

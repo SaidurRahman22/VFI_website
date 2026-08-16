@@ -10,10 +10,10 @@ use App\Mail\OtpMail;
 use App\Mail\ResetMail;
 use App\Models\AuthEvent;
 use App\Models\EmailVerificationCode;
+use App\Models\Student\Student;
 use App\Models\TermsAcceptance;
 use App\Models\User;
 use App\Models\UserRole;
-use App\Models\Student\Student;
 use App\Rules\NotBreachedPassword;
 use App\Services\OtpService;
 use App\Services\PasswordResetService;
@@ -41,8 +41,7 @@ class StudentAuthController extends Controller
     public function __construct(
         private readonly OtpService $otp,
         private readonly ReferralAttribution $attribution,
-    ) {
-    }
+    ) {}
 
     /**
      * POST /api/register — create a pending student, record consent, start an

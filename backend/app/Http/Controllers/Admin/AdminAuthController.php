@@ -30,9 +30,7 @@ class AdminAuthController extends Controller
     // (enumeration safety, docs §8.2).
     private const DUMMY_HASH = '$argon2id$v=19$m=65536,t=3,p=1$Y1ZtZUJ2c3hZbUZ4Y0hORQ$0m6l3Yy0oXwqk0m2Qd8m2y6Yk3q3W1Rj0m0mQ4d8m2y';
 
-    public function __construct(private readonly TotpService $totp)
-    {
-    }
+    public function __construct(private readonly TotpService $totp) {}
 
     /** Step 1 — password. */
     public function login(Request $request): JsonResponse

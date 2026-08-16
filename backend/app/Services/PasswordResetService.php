@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\AuthEvent;
 use App\Models\PasswordResetToken;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -48,7 +48,7 @@ class PasswordResetService
      * Consume a raw token + set the new password. On success revokes all
      * sessions and invalidates the user's other tokens.
      *
-     * @return array{status: string, user?: User}  status ∈ ok | invalid | expired
+     * @return array{status: string, user?: User} status ∈ ok | invalid | expired
      */
     public function consume(string $rawToken, string $newPassword, ?string $ip): array
     {

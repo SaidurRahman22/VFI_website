@@ -28,9 +28,13 @@ class PartnerAgency extends Model
     /**
      * Every application this agency has filed, ignoring the tenant scope.
      * Admin-facing aggregate only: staff hold no tenant, so the scoped relation
-     * would fail-closed to zero. Safe here because `applications` is guarded by
-     * the Eloquent scope alone (no RLS policy) — do NOT copy this pattern for
-     * RLS-protected tables, where the database would still hide the rows.
+     * would fail-closed to zero.
+     *
+     * Dropping the Eloquent scope is only HALF of what is needed: `applications`
+     * also carries Postgres RLS FORCE, so this count is still zero unless the
+     * read runs with `app.rls_bypass` on — which the admin panel does for
+     * authenticated requests (App\Http\Middleware\StaffRlsRead). Outside the
+     * panel, wrap the read in App\Support\RlsBypass::run().
      */
     public function applicationsAll(): HasMany
     {

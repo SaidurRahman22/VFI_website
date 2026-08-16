@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminBackupController;
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminPageController;
+use App\Http\Controllers\Admin\GdprExportController;
 use App\Http\Controllers\Admin\StaffDocumentController;
 use App\Http\Controllers\Auth\StudentAuthController;
 use App\Http\Controllers\Me\DocumentController;
@@ -81,6 +82,12 @@ Route::middleware(['auth:web', EnsureAdmin::class])->group(function () {
     Route::get('manage-files/documents/{document}', [StaffDocumentController::class, 'download'])
         ->whereNumber('document')
         ->name('staff.documents.download');
+
+    // Phase 9B — the GDPR subject-access bundle. Same gate for the same reason:
+    // this streams somebody's entire personal record, and every fetch is audited.
+    Route::get('manage-files/gdpr-export/{record}', [GdprExportController::class, 'download'])
+        ->whereNumber('record')
+        ->name('admin.gdpr.export.download');
 });
 
 /*

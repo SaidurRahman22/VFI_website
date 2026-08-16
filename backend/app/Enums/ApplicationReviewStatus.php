@@ -8,7 +8,7 @@ namespace App\Enums;
  */
 enum ApplicationReviewStatus: string
 {
-    case Pending  = 'pending';
+    case Pending = 'pending';
     case Approved = 'approved';
     case Rejected = 'rejected';
     case MoreInfo = 'more_info';

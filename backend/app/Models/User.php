@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -65,7 +66,7 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(UserRole::class);
     }
 
-    /** @return \Illuminate\Support\Collection<int,Role> active (non-revoked) roles */
+    /** @return Collection<int,Role> active (non-revoked) roles */
     public function activeRoles()
     {
         return $this->roles->whereNull('revoked_at')->map(fn (UserRole $r) => $r->role);

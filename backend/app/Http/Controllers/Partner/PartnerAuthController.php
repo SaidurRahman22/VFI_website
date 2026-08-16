@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Partner;
 
 use App\Enums\ApplicationReviewStatus;
+use App\Enums\MemberStatus;
+use App\Enums\Role;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Mail\AccountExistsMail;
 use App\Mail\OtpMail;
-use App\Enums\MemberStatus;
-use App\Enums\Role;
 use App\Mail\ResetMail;
 use App\Models\AuthEvent;
 use App\Models\Concerns\BelongsToAgencyScope;
@@ -27,7 +27,6 @@ use App\Support\Turnstile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
@@ -41,9 +40,7 @@ use Illuminate\Validation\Rules\Password;
  */
 class PartnerAuthController extends Controller
 {
-    public function __construct(private readonly OtpService $otp)
-    {
-    }
+    public function __construct(private readonly OtpService $otp) {}
 
     /**
      * POST /api/partner/register — the 3-step wizard payload (agency + person +
@@ -205,7 +202,7 @@ class PartnerAuthController extends Controller
         $isPartner = $user && ($user->hasRole(Role::PartnerOwner) || $user->hasRole(Role::PartnerCounsellor)
             || PartnerApplication::where('user_id', $user->id)->exists());
 
-        if ($user && $isPartner && $user->status !== \App\Enums\UserStatus::Suspended) {
+        if ($user && $isPartner && $user->status !== UserStatus::Suspended) {
             $issued = $resets->request($user, $request->ip());
             $url = rtrim((string) config('app.url'), '/').'/vfi-partner-reset.html?token='.$issued['token'];
             Mail::to($email)->send(new ResetMail($url, PasswordResetService::TTL_MINUTES));

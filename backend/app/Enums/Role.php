@@ -12,14 +12,14 @@ namespace App\Enums;
  */
 enum Role: string
 {
-    case Student           = 'student';            // public portal (P4)
-    case PartnerOwner      = 'partner_owner';      // tenant-bound (P6)
+    case Student = 'student';            // public portal (P4)
+    case PartnerOwner = 'partner_owner';      // tenant-bound (P6)
     case PartnerCounsellor = 'partner_counsellor'; // tenant-bound (P6)
-    case StaffCounsellor   = 'staff_counsellor';   // VFI staff
-    case StaffPartnerOps   = 'staff_partner_ops';  // reviews agency applications (P6)
-    case StaffFinance      = 'staff_finance';      // money writes (P9)
-    case ContentEditor     = 'content_editor';     // CMS only (P3)
-    case SuperAdmin        = 'superadmin';         // owner: backups, reset, admin users
+    case StaffCounsellor = 'staff_counsellor';   // VFI staff
+    case StaffPartnerOps = 'staff_partner_ops';  // reviews agency applications (P6)
+    case StaffFinance = 'staff_finance';      // money writes (P9)
+    case ContentEditor = 'content_editor';     // CMS only (P3)
+    case SuperAdmin = 'superadmin';         // owner: backups, reset, admin users
 
     /** Tenant-bound roles MUST carry a non-null agency_id (enforced in DB + app). */
     public function isTenantBound(): bool
@@ -48,8 +48,8 @@ enum Role: string
     {
         return match (true) {
             $this === self::Student => 'student',
-            $this->isTenantBound()  => 'partner',
-            default                 => 'admin',
+            $this->isTenantBound() => 'partner',
+            default => 'admin',
         };
     }
 }

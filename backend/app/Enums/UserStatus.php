@@ -5,9 +5,9 @@ namespace App\Enums;
 /** Account lifecycle state (docs §1.1). */
 enum UserStatus: string
 {
-    case Active              = 'active';
-    case Suspended           = 'suspended';
-    case Invited             = 'invited';   // created via invite, no usable password yet
+    case Active = 'active';
+    case Suspended = 'suspended';
+    case Invited = 'invited';   // created via invite, no usable password yet
     case PendingVerification = 'pending';   // student registered, email not yet verified (P4)
 
     public function canSignIn(): bool

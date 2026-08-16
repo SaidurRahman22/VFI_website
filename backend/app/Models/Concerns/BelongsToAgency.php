@@ -24,7 +24,7 @@ trait BelongsToAgency
 {
     public static function bootBelongsToAgency(): void
     {
-        static::addGlobalScope(new BelongsToAgencyScope());
+        static::addGlobalScope(new BelongsToAgencyScope);
 
         static::creating(function (Model $model) {
             if ($model->getAttribute('agency_id') === null) {
@@ -42,9 +42,10 @@ class BelongsToAgencyScope implements Scope
 
         if ($agencyId === null) {
             $builder->whereRaw('1 = 0');   // fail closed — no tenant, no rows
+
             return;
         }
 
-        $builder->where($model->getTable() . '.agency_id', $agencyId);
+        $builder->where($model->getTable().'.agency_id', $agencyId);
     }
 }

@@ -10,10 +10,10 @@ namespace App\Enums;
 enum AgencyStatus: string
 {
     case PendingReview = 'pending_review';
-    case Approved      = 'approved';
-    case Rejected      = 'rejected';
-    case Suspended     = 'suspended';
-    case Closed        = 'closed';
+    case Approved = 'approved';
+    case Rejected = 'rejected';
+    case Suspended = 'suspended';
+    case Closed = 'closed';
 
     /** Only an approved agency may sign in / hold a live tenant session. */
     public function canOperate(): bool

@@ -34,8 +34,7 @@ class DocumentController extends Controller
         private readonly DocumentStorage $storage,
         private readonly DocumentScanner $scanner,
         private readonly StudentProfileService $profiles,
-    ) {
-    }
+    ) {}
 
     /** GET /api/me/documents */
     public function index(Request $request): JsonResponse

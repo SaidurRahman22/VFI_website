@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContentBundleController;
+use App\Http\Controllers\PublicUniversityController;
+use App\Http\Controllers\TaxonomyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -26,16 +30,16 @@ Route::get('/health', function () {
         DB::connection()->getPdo();
         DB::select('select 1');
         $checks['database'] = 'ok';
-    } catch (\Throwable $e) {
+    } catch (Throwable $e) {
         $checks['database'] = 'down';
         $status = 503;
     }
 
     return response()->json([
-        'status'  => $status === 200 ? 'ok' : 'degraded',
+        'status' => $status === 200 ? 'ok' : 'degraded',
         'service' => 'vfi-api',
-        'checks'  => $checks,
-        'time'    => now()->toIso8601String(),
+        'checks' => $checks,
+        'time' => now()->toIso8601String(),
     ], $status);
 });
 
@@ -46,25 +50,25 @@ Route::get('/health', function () {
 | Public contact-form intake (Phase 2 §7) — anonymous, stateless, rate-limited.
 | POST /api/contact
 */
-Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'store'])
+Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:contact');
 
 /*
 | Public content read path (Phase 2C) — GET-only, ETag-cacheable, no cookies.
 | GET /api/content/bundle  → the full content object for window.VFI_BOOTSTRAP.
 */
-Route::get('/content/bundle', [\App\Http\Controllers\ContentBundleController::class, 'bundle']);
+Route::get('/content/bundle', [ContentBundleController::class, 'bundle']);
 // Classic-script bootstrap: sets window.VFI_BOOTSTRAP before store.js.
-Route::get('/content/bootstrap.js', [\App\Http\Controllers\ContentBundleController::class, 'bootstrap']);
+Route::get('/content/bootstrap.js', [ContentBundleController::class, 'bootstrap']);
 
 // Phase 8 — the single served taxonomy (public reference data; kills the five
 // divergent hardcoded option lists across the console/search pages).
-Route::get('/taxonomy', [\App\Http\Controllers\TaxonomyController::class, 'index']);
+Route::get('/taxonomy', [TaxonomyController::class, 'index']);
 
 // Phase 8 — public student-facing university directory (no auth; public
 // reference data). List + country facet + detail. Per-IP rate-limited.
 Route::middleware('throttle:public-read')->group(function () {
-    $uni = \App\Http\Controllers\PublicUniversityController::class;
+    $uni = PublicUniversityController::class;
     Route::get('/universities', [$uni, 'index']);
     Route::get('/universities/meta', [$uni, 'meta']);
     Route::get('/universities/{institution}', [$uni, 'show'])->whereNumber('institution');

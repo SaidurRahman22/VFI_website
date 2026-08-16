@@ -10,7 +10,7 @@ namespace App\Enums;
  */
 enum DocumentStatus: string
 {
-    case Missing  = 'missing';
+    case Missing = 'missing';
     case Uploaded = 'uploaded';
     case Verified = 'verified';
     case Rejected = 'rejected';

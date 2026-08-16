@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\DB;
  */
 class ProfileController extends Controller
 {
-    public function __construct(private readonly StudentProfileService $profiles)
-    {
-    }
+    public function __construct(private readonly StudentProfileService $profiles) {}
 
     /** GET /api/me — light identity for the portal page guard. */
     public function me(Request $request): JsonResponse
