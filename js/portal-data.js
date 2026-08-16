@@ -89,8 +89,14 @@
               var intake = r.next_intake ? (r.next_intake.season + " " + r.next_intake.year) : "—";
               return "<tr><td>" + esc(r.title || "—") + "</td><td>" + esc(r.university || "—") + "</td>" +
                 "<td>" + esc(intake) + "</td><td>" + esc(t) + "</td><td>" + esc(r.note || "—") + "</td>" +
-                '<td><button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" data-unsave="' + r.program_id +
-                  '" data-sid="' + studentId + '">Remove</button></td></tr>';
+                '<td style="white-space:nowrap">' +
+                  '<button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-apply-prog="' + r.program_id +
+                    '" data-sid="' + studentId + '"' +
+                    ' data-season="' + esc((r.next_intake && r.next_intake.season) || "") + '"' +
+                    ' data-year="' + esc((r.next_intake && r.next_intake.year) || "") + '">Apply</button> ' +
+                  '<button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" data-unsave="' + r.program_id +
+                    '" data-sid="' + studentId + '">Remove</button>' +
+                "</td></tr>";
             }).join("") + "</tbody></table>";
         })["catch"](function () {
           body.innerHTML = '<p class="pp-datalist__meta">Could not load the shortlist.</p>';
@@ -142,6 +148,33 @@
       });
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") el.classList.remove("is-open"); });
 
+      /* Create the application. This is the point of the console: a shortlisted
+         program plus the student it was saved for is exactly what the pipeline
+         needs, so applying is one click rather than a re-keyed form. */
+      el.addEventListener("click", function (e) {
+        var b = e.target.closest ? e.target.closest("[data-apply-prog]") : null;
+        if (!b) return;
+        b.disabled = true;
+        var body = {
+          student_id: Number(b.getAttribute("data-sid")),
+          program_id: Number(b.getAttribute("data-apply-prog"))
+        };
+        var season = b.getAttribute("data-season");
+        var year = b.getAttribute("data-year");
+        if (season) body.intake_month = season;
+        if (year) body.intake_year = Number(year);
+
+        window.VFIApi.post("/api/partner/applications", body, {})
+          .then(function () {
+            b.textContent = "Applied";
+            if (window.VFIToast) window.VFIToast("Application created — see the Applications page.");
+            document.dispatchEvent(new CustomEvent("vfi:application-created"));
+          })["catch"](function () {
+            b.disabled = false;
+            if (window.VFIToast) window.VFIToast("Could not create the application.");
+          });
+      });
+
       // remove a saved program
       el.addEventListener("click", function (e) {
         var b = e.target.closest ? e.target.closest("[data-unsave]") : null;
@@ -167,6 +200,40 @@
     if (arch) arch.addEventListener("click", function () { archived = !archived; load(); });
     document.addEventListener("vfi:student-created", function () { archived = false; load(); });
     load();
+  })();
+
+  /* ==================================================================
+     DASHBOARD — partner-dashboard.html
+     The KPI tiles ship with a hardcoded 0 and nothing ever replaced it, so the
+     dashboard looked broken even once a partner had real applications. The
+     counts are computed server-side per tenant; this just paints them.
+     ================================================================== */
+  (function dashboard() {
+    if (document.body.getAttribute("data-pp-page") !== "dashboard") return;
+
+    function paint() {
+      window.VFIApi.get("/api/partner/dashboard/kpis", {})
+        .then(function (res) {
+          var counts = (res && res.counts) || {};
+          $$("[data-pp-kpi]").forEach(function (el) {
+            var k = el.getAttribute("data-pp-kpi");
+            el.textContent = k === "total" ? (res.total || 0) : (counts[k] || 0);
+          });
+        })["catch"](quiet);
+
+      window.VFIApi.get("/api/partner/dashboard/deadlines", {})
+        .then(function (res) {
+          var b = res && res.buckets ? res.buckets : res;
+          if (!b) return;
+          $$("[data-pp-deadline]").forEach(function (el) {
+            var k = el.getAttribute("data-pp-deadline");
+            if (b[k] != null) el.textContent = b[k];
+          });
+        })["catch"](quiet);
+    }
+
+    paint();
+    document.addEventListener("vfi:application-created", paint);
   })();
 
   /* ==================================================================
