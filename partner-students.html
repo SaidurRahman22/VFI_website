@@ -95,13 +95,12 @@
   <script src="js/portal-render.js"></script>
   <script src="js/portal-data.js"></script>
   <script>
-    /* students-only wiring: archived toast, search feedback, clear dates */
+    /* Search and Archived are handled by js/portal-data.js, which really queries
+       /api/partner/students. Placeholder toasts used to live here from before
+       that existed; both handlers fired, so a working search still announced
+       "No students match your filters yet" and looked broken. */
     (function () {
       var $ = function (s, c) { return (c || document).querySelector(s); };
-      var arch = $("#ppArchived");
-      if (arch) arch.addEventListener("click", function () { window.VFIToast("No archived students yet."); });
-      var search = $("#ppStuSearch");
-      if (search) search.addEventListener("click", function () { window.VFIToast("No students match your filters yet."); });
       var clear = $("#ppStuDates");
       if (clear) clear.addEventListener("click", function () {
         var pill = $("#ppStuDateRange");

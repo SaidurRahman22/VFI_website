@@ -221,13 +221,36 @@
           });
         })["catch"](quiet);
 
+      /* The dashboard has four deadline tabs (d0..d3) over four static panels.
+         There were no [data-pp-deadline] elements at all, so an earlier version
+         of this wrote its counts into nothing. Map tab -> API bucket instead,
+         put the count on the tab and the real wording in the panel. */
+      var BUCKET = { d0: "today", d1: "tomorrow", d2: "in_7_days", d3: "in_14_days" };
+      var WHEN = { d0: "today", d1: "tomorrow", d2: "in the next 7 days", d3: "in the next 14 days" };
+
       window.VFIApi.get("/api/partner/dashboard/deadlines", {})
         .then(function (res) {
-          var b = res && res.buckets ? res.buckets : res;
+          var b = (res && res.buckets) ? res.buckets : res;
           if (!b) return;
-          $$("[data-pp-deadline]").forEach(function (el) {
-            var k = el.getAttribute("data-pp-deadline");
-            if (b[k] != null) el.textContent = b[k];
+          Object.keys(BUCKET).forEach(function (tabId) {
+            var n = b[BUCKET[tabId]];
+            if (n == null) return;
+
+            var tab = document.querySelector('[data-pp-tab="' + tabId + '"]');
+            if (tab) {
+              var base = tab.getAttribute("data-label") || tab.textContent.trim();
+              tab.setAttribute("data-label", base);
+              tab.textContent = base + " (" + n + ")";
+            }
+            var panel = document.getElementById(tabId);
+            if (panel) {
+              var msg = panel.querySelector(".pp-empty__text");
+              if (msg) {
+                msg.textContent = n > 0
+                  ? n + " application deadline" + (n === 1 ? "" : "s") + " " + WHEN[tabId] + "."
+                  : "No deadlines " + WHEN[tabId] + ".";
+              }
+            }
           });
         })["catch"](quiet);
     }
@@ -265,14 +288,24 @@
         "</tr>";
     }
 
-    window.VFIApi.get("/api/partner/applications", {}).then(function (res) {
-      var rows = res.data || [];
-      host.innerHTML = rows.length
-        ? '<table class="pp-table"><thead><tr><th>Student</th><th>Ref</th><th>Status</th><th>Intake</th><th>Ack no.</th><th>Deadline</th></tr></thead><tbody>' +
-          rows.map(row).join("") + "</tbody></table>" +
-          '<p class="pp-datalist__meta">' + res.meta.total + " application(s)</p>"
-        : '<p class="pp-datalist__meta">No applications yet. Register a student, then create their application.</p>';
-    })["catch"](quiet);
+    function paint() {
+      window.VFIApi.get("/api/partner/applications", {}).then(function (res) {
+        var rows = res.data || [];
+        // the static "you have no applications" panel must not stay on screen
+        // above a table that is listing them
+        var emptyNotice = $("#ppAppsEmpty");
+        if (emptyNotice) emptyNotice.hidden = rows.length > 0;
+
+        host.innerHTML = rows.length
+          ? '<table class="pp-table"><thead><tr><th>Student</th><th>Ref</th><th>Status</th><th>Intake</th><th>Ack no.</th><th>Deadline</th></tr></thead><tbody>' +
+            rows.map(row).join("") + "</tbody></table>" +
+            '<p class="pp-datalist__meta">' + res.meta.total + " application(s)</p>"
+          : "";   // the static notice already says there are none
+      })["catch"](quiet);
+    }
+
+    paint();
+    document.addEventListener("vfi:application-created", paint);
   })();
 
   /* ==================================================================

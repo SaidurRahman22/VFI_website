@@ -678,3 +678,18 @@ body.pp-collapsed .pp-nav__sub { display: none; }
    Every console panel toggled with `hidden` depends on this.
    ========================================================================== */
 [hidden] { display: none !important; }
+
+/* ==========================================================================
+   Notification bell unread count.
+   portal-data.js sets data-unread on the bell, but nothing ever rendered it,
+   so new notifications arrived silently. Hidden at zero.
+   ========================================================================== */
+.pp-iconbtn[data-unread]::after{
+  content:attr(data-unread);
+  position:absolute;top:6px;right:6px;min-width:17px;height:17px;padding:0 4px;
+  border-radius:9px;background:var(--pp-emerald);color:#fff;
+  font-size:10px;font-weight:700;line-height:17px;text-align:center;
+  border:2px solid var(--pp-teal-dark);box-sizing:content-box;pointer-events:none;
+}
+.pp-iconbtn[data-unread="0"]::after,
+.pp-iconbtn[data-unread=""]::after{content:none}

@@ -418,9 +418,14 @@
     /* required-by-* marker fields */
     $$(".pp-field__label .req", form).forEach(function (req) {
       var f = req.closest(".pp-field");
-      var ctrl = f ? f.querySelector("input, select") : null;
-      if (ctrl && !ctrl.value.trim()) { ctrl.classList.add("is-bad"); ok = false; }
-      else if (ctrl) ctrl.classList.remove("is-bad");
+      if (!f) return;
+      /* EVERY control in the field, not just the first. The mobile field holds a
+         dial-code <select> ahead of the number <input>, so checking only the
+         first match validated the dial code and let an empty number through. */
+      $$("input, select, textarea", f).forEach(function (ctrl) {
+        if (!ctrl.value.trim()) { ctrl.classList.add("is-bad"); ok = false; }
+        else ctrl.classList.remove("is-bad");
+      });
     });
     return ok;
   }
