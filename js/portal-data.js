@@ -242,15 +242,26 @@
               tab.setAttribute("data-label", base);
               tab.textContent = base + " (" + n + ")";
             }
+            /* List the actual cases. A count with a permanent "No upcoming
+               deadlines" underneath it is not work a partner can act on. */
             var panel = document.getElementById(tabId);
-            if (panel) {
+            if (!panel) return;
+            var items = (b.items && b.items[BUCKET[tabId]]) || [];
+
+            if (!items.length) {
               var msg = panel.querySelector(".pp-empty__text");
-              if (msg) {
-                msg.textContent = n > 0
-                  ? n + " application deadline" + (n === 1 ? "" : "s") + " " + WHEN[tabId] + "."
-                  : "No deadlines " + WHEN[tabId] + ".";
-              }
+              if (msg) msg.textContent = "No deadlines " + WHEN[tabId] + ".";
+              return;
             }
+
+            panel.innerHTML = '<ul class="pp-dlist">' + items.map(function (it) {
+              var st = String(it.status || "").replace(/_/g, " ");
+              return "<li><span class=\"pp-dlist__who\">" + esc(it.student) + "</span>" +
+                "<span class=\"pp-dlist__when\">" + esc(st) + " · " + esc(it.deadline || "") + "</span></li>";
+            }).join("") + "</ul>" +
+              (n > items.length
+                ? '<p class="pp-datalist__meta">Showing ' + items.length + " of " + n + ".</p>"
+                : "");
           });
         })["catch"](quiet);
     }
@@ -428,16 +439,39 @@
         "</div>";
     }
 
+    /* Important Updates are staff-authored announcements (the ppUpdates
+       collection) and were only ever visible in a card on the dashboard. A
+       partner who never opens the dashboard never saw them, so they are folded
+       into the bell alongside the per-agency notifications. They carry no read
+       state — they are broadcasts, not addressed to one agency — so they never
+       affect the unread count. */
+    function updateItems() {
+      if (!window.VFI || !VFI.list) return [];
+      // fields as authored in the admin: flag, title, sub, date
+      return (VFI.list("ppUpdates") || []).map(function (u) {
+        return {
+          title: [u.flag, u.title].filter(Boolean).join(" "),
+          body: u.sub || "",
+          created_at: u.date || "",
+          read: true,
+          isUpdate: true
+        };
+      });
+    }
+
     function paint(res) {
       var rows = res.data || [];
+      // newest-looking first: agency notifications, then broadcast updates
+      var merged = rows.concat(updateItems());
+
       if (list) {
-        list.innerHTML = rows.map(item).join("");
-        swap(list, empty, rows.length > 0);
+        list.innerHTML = merged.map(item).join("");
+        swap(list, empty, merged.length > 0);
       }
       if (pop) {
         var body = pop.querySelector(".pp-pop__body") || pop;
-        body.innerHTML = rows.length
-          ? rows.slice(0, 5).map(item).join("")
+        body.innerHTML = merged.length
+          ? merged.slice(0, 6).map(item).join("")
           : '<p class="pp-pop__empty">No notifications found</p>';
       }
       var bell = $("#ppBell");

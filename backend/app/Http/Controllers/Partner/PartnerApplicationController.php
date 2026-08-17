@@ -105,12 +105,38 @@ class PartnerApplicationController extends Controller
         $today = today();
         $base = fn () => Application::query()->whereNotNull('deadline_at');
 
-        return response()->json([
-            'today' => (clone $base())->whereDate('deadline_at', $today)->count(),
-            'tomorrow' => (clone $base())->whereDate('deadline_at', $today->copy()->addDay())->count(),
-            'in_7_days' => (clone $base())->whereBetween('deadline_at', [$today->copy()->startOfDay(), $today->copy()->addDays(7)->endOfDay()])->count(),
-            'in_14_days' => (clone $base())->whereBetween('deadline_at', [$today->copy()->startOfDay(), $today->copy()->addDays(14)->endOfDay()])->count(),
-        ])->header('Cache-Control', 'no-store');
+        // Counts alone left the dashboard panels showing a permanent "No
+        // upcoming deadlines" — a number with nothing behind it is not usable
+        // work. Each bucket now carries the cases themselves, capped so a busy
+        // agency cannot pull its whole pipeline into a dashboard widget.
+        $items = function ($query) {
+            return $query->with(['student:id,first_name,last_name,email'])
+                ->orderBy('deadline_at')
+                ->limit(25)
+                ->get()
+                ->map(fn (Application $a) => [
+                    'id' => $a->id,
+                    'student' => trim(($a->student->first_name ?? '').' '.($a->student->last_name ?? ''))
+                        ?: ($a->student->email ?? 'Student'),
+                    'status' => $a->status?->value,
+                    'deadline' => optional($a->deadline_at)->toDateString(),
+                ])->values();
+        };
+
+        $buckets = [
+            'today' => (clone $base())->whereDate('deadline_at', $today),
+            'tomorrow' => (clone $base())->whereDate('deadline_at', $today->copy()->addDay()),
+            'in_7_days' => (clone $base())->whereBetween('deadline_at', [$today->copy()->startOfDay(), $today->copy()->addDays(7)->endOfDay()]),
+            'in_14_days' => (clone $base())->whereBetween('deadline_at', [$today->copy()->startOfDay(), $today->copy()->addDays(14)->endOfDay()]),
+        ];
+
+        $out = [];
+        foreach ($buckets as $key => $query) {
+            $out[$key] = (clone $query)->count();          // unchanged shape for the tab badges
+            $out['items'][$key] = $items(clone $query);
+        }
+
+        return response()->json($out)->header('Cache-Control', 'no-store');
     }
 
     private function present(Application $a): array

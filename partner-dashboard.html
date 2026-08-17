@@ -96,8 +96,10 @@
             <div class="pp-stat pp-stat--pend"><div class="pp-stat__top"><span class="pp-stat__label">Pending from Partner</span></div><div class="pp-stat__value" data-pp-kpi="pending_from_partner">0</div></div>
           </div>
 
-          <!-- assistant -->
-          <div class="pp-assistant pp-anim">
+          <!-- VFI Assistant DISABLED: there is no assistant endpoint in the
+               backend, so the box only toasted. The "100 messages left" quota
+               was equally invented. Hidden until the feature is real. -->
+          <div class="pp-assistant pp-anim" hidden>
             <div class="pp-assistant__bar">
               <span class="pp-assistant__id"><svg class="ic ic--sm"><use href="#pi-spark"/></svg> VFI Assistant</span>
               <span class="pp-assistant__badge">100 messages left</span>
@@ -149,8 +151,11 @@
 
         <!-- ================= right rail ================= -->
         <aside class="pp-rail">
-          <!-- benefits -->
-          <div class="pp-card pp-anim">
+          <!-- Benefits/tier panel DISABLED: every figure in it was hardcoded
+               (tier, 16% progress bar, "0 unique", 100/100, 20/20) and the
+               roadmap link pointed back at this page. Nothing behind it exists
+               yet, so it is hidden rather than shown as a real entitlement. -->
+          <div class="pp-card pp-anim" hidden>
             <div class="pp-benefits__top">
               <div>
                 <div class="pp-eyebrow">Your benefits level</div>
@@ -196,7 +201,7 @@
           <div class="pp-card pp-anim">
             <div class="pp-card__head"><h3 class="pp-card__title">Important Updates</h3><a class="pp-card__link" href="partner-notifications.html">View All</a></div>
             <div class="pp-updates__filters">
-              <button class="pp-chip is-on">All</button><button class="pp-chip">US</button><button class="pp-chip">AUS</button><button class="pp-chip">CAN</button><button class="pp-chip">UK</button>
+              <button class="pp-chip is-on" data-upd-filter="">All</button><button class="pp-chip" data-upd-filter="US">US</button><button class="pp-chip" data-upd-filter="AU">AUS</button><button class="pp-chip" data-upd-filter="CA">CAN</button><button class="pp-chip" data-upd-filter="GB">UK</button>
             </div>
             <div data-ppr="updates">
             <div class="pp-update"><span class="pp-update__flag">🇨🇦</span><div><div class="pp-update__title">Applications now open for May 2027 intake — Canada</div><div class="pp-update__sub">Partner university · Ontario</div><div class="pp-update__date">Update date — 05/08/2026</div></div></div>
@@ -232,7 +237,9 @@
     </div>
   </main>
 
-  <button class="pp-fab" aria-label="Open assistant"><svg class="ic"><use href="#pi-spark"/></svg></button>
+  <!-- Floating assistant button hidden with the assistant panel: it had no
+       handler in any js/ file, so it did nothing when clicked. -->
+  <button class="pp-fab" aria-label="Open assistant" hidden><svg class="ic"><use href="#pi-spark"/></svg></button>
 
   <script src="js/api.js"></script>
   <script src="/api/content/bootstrap.js"></script>
@@ -309,7 +316,8 @@
       function sendAsk() { if (askIn && askIn.value.trim()) { window.VFIToast("Thanks! The assistant would reply here."); askIn.value = ""; } }
       if (ask) ask.addEventListener("click", sendAsk);
       if (askIn) askIn.addEventListener("keydown", function (e) { if (e.key === "Enter") sendAsk(); });
-      $$(".pp-chip").forEach(function (c) { c.addEventListener("click", function () { $$(".pp-chip").forEach(function (x) { x.classList.remove("is-on"); }); c.classList.add("is-on"); }); });
+      /* Chip highlighting is handled by js/portal-render.js, which also
+         filters the list. A second toggler here just fought it. */
     })();
   </script>
 </body>

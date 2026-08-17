@@ -104,14 +104,32 @@
       updates: function (el) {
         var items = VFI.list("ppUpdates");
         if (!items.length) return;
-        el.innerHTML = items.map(function (u) {
-          return '<div class="pp-update"><span class="pp-update__flag">' + esc(u.flag || "") + "</span>" +
-            "<div>" +
-              '<div class="pp-update__title">' + esc(u.title || "") + "</div>" +
-              '<div class="pp-update__sub">' + esc(u.sub || "") + "</div>" +
-              '<div class="pp-update__date">Update date — ' + esc(fmt(u.date)) + "</div>" +
-            "</div></div>";
-        }).join("");
+
+        function draw(filter) {
+          var rows = filter
+            ? items.filter(function (u) { return String(u.flag || "").toUpperCase() === filter; })
+            : items;
+          el.innerHTML = rows.length ? rows.map(function (u) {
+            return '<div class="pp-update"><span class="pp-update__flag">' + esc(u.flag || "") + "</span>" +
+              "<div>" +
+                '<div class="pp-update__title">' + esc(u.title || "") + "</div>" +
+                '<div class="pp-update__sub">' + esc(u.sub || "") + "</div>" +
+                '<div class="pp-update__date">Update date — ' + esc(fmt(u.date)) + "</div>" +
+              "</div></div>";
+          }).join("") : '<p class="pp-datalist__meta">No updates for that country.</p>';
+        }
+
+        /* The country chips only toggled their own highlight and never filtered
+           anything. They now actually narrow the list by the update's flag. */
+        var chips = Array.prototype.slice.call(document.querySelectorAll("[data-upd-filter]"));
+        chips.forEach(function (chip) {
+          chip.addEventListener("click", function () {
+            chips.forEach(function (c) { c.classList.toggle("is-on", c === chip); });
+            draw(chip.getAttribute("data-upd-filter").toUpperCase());
+          });
+        });
+
+        draw("");
       },
 
       /* ---- Learning Resources documents (matches partner-resources.html) ---- */

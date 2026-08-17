@@ -693,3 +693,29 @@ body.pp-collapsed .pp-nav__sub { display: none; }
 }
 .pp-iconbtn[data-unread="0"]::after,
 .pp-iconbtn[data-unread=""]::after{content:none}
+
+/* ==========================================================================
+   QR card + printing
+   The server returns a full <svg>; the wrapper span carries the 96px sizing but
+   the SVG kept its own intrinsic size and spilled over the card title. Constrain
+   it to the wrapper.
+   ========================================================================== */
+.pp-qr__code svg{width:100%;height:100%;display:block}
+
+/* Print QR printed the whole dashboard. Print only the QR card. */
+@media print{
+  body.pp *{visibility:hidden!important}
+  body.pp .pp-qr,body.pp .pp-qr *{visibility:visible!important}
+  body.pp .pp-qr{position:absolute;left:0;top:0;width:100%;display:block;text-align:center}
+  body.pp .pp-qr__code{width:260px;height:260px;margin:0 auto 14px;border:0;padding:0}
+  body.pp .pp-qr__actions{display:none!important}   /* buttons are not worth ink */
+  body.pp .pp-top,body.pp .pp-side,body.pp .pp-fab{display:none!important}
+}
+
+/* Deadline + update lists on the dashboard */
+.pp-dlist{list-style:none;margin:0;padding:0}
+.pp-dlist li{display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+  padding:9px 0;border-top:1px solid var(--pp-line-2);font-size:13.5px}
+.pp-dlist li:first-child{border-top:0}
+.pp-dlist__who{font-weight:600;color:var(--pp-ink)}
+.pp-dlist__when{color:var(--pp-muted);white-space:nowrap;font-size:12.5px}
