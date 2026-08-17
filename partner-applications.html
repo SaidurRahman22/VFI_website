@@ -12,6 +12,58 @@
   <link rel="stylesheet" href="css/partner-portal.css" />
   <script>document.documentElement.className += " js";</script>
   <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
+  <style>
+    /* page-scoped — every selector prefixed .pg-app, so nothing here can reach
+       another console page. The shared sheet has no danger badge and no
+       timeline; both only exist on this screen. */
+    .pg-app__badge--bad { background: #fdecec; color: var(--pp-danger); }
+
+    /* summary block */
+    .pg-app__grid { display: grid; grid-template-columns: 155px 1fr; gap: 9px 18px; margin: 0; }
+    .pg-app__k { color: var(--pp-muted); font-size: 13px; }
+    .pg-app__v { color: var(--pp-ink); font-size: 14px; font-weight: 600; margin: 0; word-break: break-word; }
+
+    /* status history */
+    .pg-app__hist { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 2px solid var(--pp-line); }
+    .pg-app__ev { position: relative; padding: 0 0 16px 14px; }
+    .pg-app__ev:last-child { padding-bottom: 0; }
+    .pg-app__ev::before {
+      content: ""; position: absolute; left: -24px; top: 4px; width: 10px; height: 10px;
+      border-radius: 50%; background: var(--pp-teal); border: 2px solid #fff;
+    }
+    .pg-app__ev-head { font-family: var(--pp-display); font-weight: 700; color: var(--pp-ink); font-size: 14px; }
+    .pg-app__ev-meta { color: var(--pp-muted); font-size: 12.5px; margin-top: 2px; }
+    .pg-app__ev-note { color: var(--pp-slate); font-size: 13.5px; margin-top: 4px; }
+
+    /* readiness banner — the reason this screen exists */
+    .pg-app__banner {
+      border-radius: var(--pp-radius-sm); padding: 12px 14px; font-size: 13.5px; margin-bottom: 14px;
+      background: #fdf3e3; color: var(--pp-warn); border: 1px solid #f6dfb4;
+    }
+    .pg-app__banner--bad { background: #fdecec; color: var(--pp-danger); border-color: #f6cccc; }
+    .pg-app__banner--ok { background: #e7f7ef; color: var(--pp-ok); border-color: #bfe6d4; }
+
+    /* checklist rows */
+    .pg-app__doc { display: flex; align-items: flex-start; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--pp-line-2); }
+    .pg-app__doc:last-child { border-bottom: 0; }
+    .pg-app__doc-main { flex: 1 1 auto; min-width: 0; }
+    .pg-app__doc-name { font-family: var(--pp-display); font-weight: 700; color: var(--pp-ink); font-size: 14px; }
+    .pg-app__doc-meta { color: var(--pp-muted); font-size: 12.5px; margin-top: 3px; word-break: break-word; }
+    .pg-app__doc-why { color: var(--pp-danger); font-size: 12.5px; margin-top: 3px; word-break: break-word; }
+    .pg-app__doc-msg { color: var(--pp-muted); font-size: 12.5px; margin-top: 4px; }
+    .pg-app__doc-act { display: flex; align-items: center; gap: 8px; flex: none; }
+
+    /* the file input covers its own label: one control, still keyboard-reachable
+       (display:none would take it out of the tab order) */
+    .pg-app__up { position: relative; overflow: hidden; margin: 0; }
+    .pg-app__up input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+    @media (max-width: 560px) {
+      .pg-app__grid { grid-template-columns: 1fr; gap: 2px 0; }
+      .pg-app__grid .pg-app__v { margin-bottom: 10px; }
+      .pg-app__doc { flex-wrap: wrap; }
+    }
+  </style>
 </head>
 <body class="pp" data-pp-page="applications">
   <a class="pp-skip" href="#pp-main">Skip to content</a>
@@ -48,6 +100,21 @@
 
     </div>
   </main>
+
+  <!-- Detail panel. Lives outside <main> because .pp-modal is fixed and must not
+       inherit the work surface's stacking. It follows the console's own contract:
+       hidden by visibility until .is-open is added, panel is .pp-modal__card.
+       js/portal-data.js fills #ppAppBody. -->
+  <div class="pp-modal" id="ppAppModal">
+    <div class="pp-modal__backdrop" data-appclose></div>
+    <div class="pp-modal__card pp-modal__card--lg" role="dialog" aria-modal="true" aria-labelledby="ppAppTitle">
+      <div class="pp-modal__head">
+        <h3 class="pp-modal__title" id="ppAppTitle">Application</h3>
+        <button type="button" class="pp-modal__close" data-appclose aria-label="Close">&times;</button>
+      </div>
+      <div class="pp-modal__body" id="ppAppBody"></div>
+    </div>
+  </div>
 
   <script src="js/api.js"></script>
   <script src="/api/content/bootstrap.js"></script>

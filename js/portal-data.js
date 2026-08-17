@@ -271,7 +271,28 @@
   })();
 
   /* ==================================================================
-     APPLICATIONS — partner-applications.html (greenfield pipeline table)
+     APPLICATIONS — partner-applications.html (pipeline table + case detail)
+
+     The agency files ON THE STUDENT'S BEHALF, so the agency is the one who has
+     to supply the paperwork — but the table was six read-only columns with no
+     detail and no sign of what was missing, so a case could sit unprocessable
+     and look perfectly fine. The Documents column and the panel exist to make
+     "what is still outstanding" the first thing on screen.
+
+     What this block reads:
+       GET  /api/partner/applications        -> { data: [ ... ], meta }   (no readiness)
+       GET  /api/partner/applications/{id}   -> { application, events, readiness }
+       GET  /api/partner/students/{sid}/documents -> { data: [ document rows ] }
+       POST /api/partner/students/{sid}/documents/{type}  (multipart, field "file")
+
+     readiness is App\Services\ApplicationReadiness's verdict — lists of document
+     type KEYS ({ ready, required, present, verified, missing, rejected }) — and
+     is never recomputed here: the server is the only thing that knows which
+     types are required (a destination-dependent type does not gate a case).
+     A document row carries what the verdict cannot: the human name, the
+     rejection reason and the file, so both are fetched when a case is opened.
+     The list has no readiness, so the column fills in per opened case rather
+     than costing one request per row on every page view.
      ================================================================== */
   (function applications() {
     if (document.body.getAttribute("data-pp-page") !== "applications") return;
@@ -282,20 +303,103 @@
     host.className = "pp-card pp-datalist";
     main.appendChild(host);
 
+    var modal = $("#ppAppModal");
+    var panel = $("#ppAppBody");
+    var titleEl = $("#ppAppTitle");
+
     var LABEL = {
       submitted: "Submitted", review: "Under Review", offer: "Offer", conditional: "Conditional Offer",
       payment: "Payment", visa_received: "Visa Received", visa_rejected: "Visa Rejected",
       non_enrolment: "Non-Enrolment", deferral: "Deferral", pending_from_partner: "Pending from Partner"
     };
+    var DOC_LABEL = { missing: "Missing", uploaded: "Uploaded", verified: "Verified", rejected: "Rejected" };
+    var DOC_TONE = {
+      missing: "pp-badge--warn", uploaded: "pp-badge--info",
+      verified: "pp-badge--ok", rejected: "pg-app__badge--bad"
+    };
+    var ACTOR = { partner: "your agency", staff: "VFI staff", system: "the system", institution: "the institution" };
+
+    /* Mirrors documents.max_bytes so a 40MB phone scan is refused before it is
+       pushed up a slow link. The server still enforces the real limit. */
+    var MAX_BYTES = 15 * 1024 * 1024;
+
+    /* the case currently in the panel; uploads are addressed to its student */
+    var openCase = { id: null, studentId: null, readiness: null, names: {} };
+
+    function day(v) { return v ? String(v).slice(0, 10) : "—"; }
+    function statusLabel(s) { return LABEL[s] || String(s == null ? "—" : s).replace(/_/g, " "); }
+
+    /* ---- readiness ---------------------------------------------------- */
+
+    /* The student's checklist covers both packs; only the 'application' one is
+       in front of a case. Visa paperwork is collected after an offer and must
+       not make a submitted case read as unready. */
+    function appPack(docs) {
+      var out = [];
+      (docs || []).forEach(function (d) { if (!d.pack || d.pack === "application") out.push(d); });
+      return out;
+    }
+
+    /* The server's verdict, counted — not re-decided. `required`/`present` etc.
+       are lists of type keys, and a type the schema marks destination-dependent
+       is deliberately absent from `required`, so counting rows on screen instead
+       would call a case unready over paperwork nobody asked for. */
+    function readinessFrom(given) {
+      if (!given || !given.required) return null;
+      var required = given.required || [];
+      var present = given.present || [];
+      var have = 0;
+      for (var i = 0; i < required.length; i++) {
+        if (present.indexOf(required[i]) !== -1) have++;
+      }
+      return {
+        have: have,
+        required: required.length,
+        rejected: (given.rejected || []).length,
+        // what the agency still has to do something about, in the server's words
+        outstanding: (given.missing || []).concat(given.rejected || []),
+        ready: !!given.ready
+      };
+    }
+
+    /* Type keys come back from the readiness verdict; their human names only
+       exist on the document rows. The "k:" prefix keeps a key like "constructor"
+       out of Object.prototype. */
+    function nameOf(key) {
+      return openCase.names["k:" + key] || key;
+    }
+
+    function readyChip(r) {
+      if (!r) return '<span class="pp-datalist__meta" title="Open the case to check">—</span>';
+      var tone = r.rejected ? "pg-app__badge--bad" : (r.ready ? "pp-badge--ok" : "pp-badge--warn");
+      var hint = r.rejected ? (r.rejected + " rejected")
+        : (r.ready ? "Ready to process" : (r.required - r.have) + " still outstanding");
+      return '<span class="pp-badge ' + tone + '" title="' + esc(hint) + '">' +
+        esc(r.have + "/" + r.required) + "</span>";
+    }
+
+    /* Readiness learned by opening a case is written back into its row, so the
+       column fills in as cases are reviewed. Fetching it per row on load would
+       be one request per application on every page view. */
+    function paintCell(id, r) {
+      if (id == null || !r) return;
+      $$("[data-docs-for]", host).forEach(function (cell) {
+        if (cell.getAttribute("data-docs-for") === String(id)) cell.innerHTML = readyChip(r);
+      });
+    }
+
+    /* ---- the list ----------------------------------------------------- */
 
     function row(a) {
       return "<tr>" +
         "<td>" + esc(a.student && a.student.name) + "</td>" +
         "<td>" + esc(a.student && a.student.public_ref) + "</td>" +
-        '<td><span class="pp-badge">' + esc(LABEL[a.status] || a.status) + "</span></td>" +
+        '<td><span class="pp-badge">' + esc(statusLabel(a.status)) + "</span></td>" +
         "<td>" + esc(a.intake || "—") + "</td>" +
         "<td>" + esc(a.ack_no || "—") + "</td>" +
-        "<td>" + esc(a.deadline_at ? a.deadline_at.slice(0, 10) : "—") + "</td>" +
+        "<td>" + esc(day(a.deadline_at)) + "</td>" +
+        '<td data-docs-for="' + esc(a.id) + '">' + readyChip(readinessFrom(a.readiness)) + "</td>" +
+        '<td><button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" data-view="' + esc(a.id) + '">View</button></td>' +
         "</tr>";
     }
 
@@ -308,11 +412,313 @@
         if (emptyNotice) emptyNotice.hidden = rows.length > 0;
 
         host.innerHTML = rows.length
-          ? '<table class="pp-table"><thead><tr><th>Student</th><th>Ref</th><th>Status</th><th>Intake</th><th>Ack no.</th><th>Deadline</th></tr></thead><tbody>' +
-            rows.map(row).join("") + "</tbody></table>" +
-            '<p class="pp-datalist__meta">' + res.meta.total + " application(s)</p>"
+          ? '<div class="pp-tablewrap"><table class="pp-table"><thead><tr><th>Student</th><th>Ref</th><th>Status</th>' +
+            "<th>Intake</th><th>Ack no.</th><th>Deadline</th><th>Documents</th><th></th></tr></thead><tbody>" +
+            rows.map(row).join("") + "</tbody></table></div>" +
+            '<p class="pp-datalist__meta">' + esc((res.meta && res.meta.total) || rows.length) + " application(s)</p>"
           : "";   // the static notice already says there are none
       })["catch"](quiet);
+    }
+
+    /* ---- the detail panel --------------------------------------------- */
+
+    function pair(k, v) {
+      return '<dt class="pg-app__k">' + esc(k) + '</dt><dd class="pg-app__v">' + esc(v || "—") + "</dd>";
+    }
+
+    function summary(a, s) {
+      var prog = a.program || {};
+      return pair("Student", s.name) + pair("Email", s.email) +
+        pair("Reference", a.public_ref || s.public_ref) +
+        pair("Programme", prog.title) + pair("University", prog.university) +
+        pair("Intake", a.intake) + pair("Status", statusLabel(a.status)) +
+        pair("Deadline", day(a.deadline_at)) + pair("Ack no.", a.ack_no);
+    }
+
+    /* Rendered in payload order: the endpoint returns the append-only events by
+       id, which is the order they happened even when two moves share a second.
+       Re-sorting them here by timestamp would undo that. */
+    function history(events) {
+      if (!events || !events.length) return '<p class="pp-datalist__meta">No status changes recorded yet.</p>';
+
+      return '<ol class="pg-app__hist">' + events.map(function (e) {
+        var from = e.from != null ? e.from : e.from_status;
+        var to = e.to != null ? e.to : e.to_status;
+        var who = ACTOR[e.actor_type] || e.actor_type || "";
+        var move = from ? statusLabel(from) + " → " + statusLabel(to) : statusLabel(to);
+
+        return '<li class="pg-app__ev">' +
+          '<div class="pg-app__ev-head">' + esc(move) + "</div>" +
+          '<div class="pg-app__ev-meta">' + esc(day(e.occurred_at || e.created_at)) +
+            (who ? " · moved by " + esc(who) : "") + "</div>" +
+          (e.note ? '<div class="pg-app__ev-note">' + esc(e.note) + "</div>" : "") +
+          "</li>";
+      }).join("") + "</ol>";
+    }
+
+    /* The whole point of this screen: what is stopping this case, in one line,
+       above the checklist rather than buried in it. */
+    function banner(r) {
+      if (!r) return "";
+      if (r.ready && !r.rejected) {
+        return '<div class="pg-app__banner pg-app__banner--ok">All ' + esc(r.required) +
+          " required document" + (r.required === 1 ? " is" : "s are") +
+          " in — VFI can process this application.</div>";
+      }
+      var lead = r.rejected
+        ? "VFI rejected " + r.rejected + " document(s): replace them before this case can move."
+        : "Not ready to process — " + (r.required - r.have) + " of " + r.required + " documents still outstanding.";
+      var names = "";
+      if (r.outstanding && r.outstanding.length) {
+        names = " Outstanding: " + r.outstanding.map(nameOf).join(", ") + ".";
+      }
+      return '<div class="pg-app__banner' + (r.rejected ? " pg-app__banner--bad" : "") + '">' +
+        esc(lead + names) + "</div>";
+    }
+
+    function docRow(d) {
+      var st = d.status || "missing";
+      var f = d.file || null;
+      // a blob is on disk but unreadable until the scanner clears it, so nothing
+      // offers to fetch it before then
+      var scanning = !!(f && f.scan_status && f.scan_status !== "clean");
+      var locked = st === "verified";
+
+      return '<div class="pg-app__doc">' +
+        '<div class="pg-app__doc-main">' +
+          '<div class="pg-app__doc-name">' + esc(d.name || d.type) + "</div>" +
+          '<div class="pg-app__doc-meta">' +
+            esc(f ? (f.original_name || "Supplied") + (scanning ? " · being scanned" : "") : "Not supplied yet.") +
+          "</div>" +
+          (d.rejection_reason
+            ? '<div class="pg-app__doc-why">Rejected: ' + esc(d.rejection_reason) + "</div>"
+            : "") +
+          '<div class="pg-app__doc-msg" data-msg hidden></div>' +
+        "</div>" +
+        '<span class="pp-badge ' + (DOC_TONE[st] || "pp-badge--warn") + '">' + esc(DOC_LABEL[st] || st) + "</span>" +
+        '<div class="pg-app__doc-act">' +
+          (locked
+            ? '<span class="pp-datalist__meta">Locked</span>'
+            : '<label class="pp-btn pp-btn--ghost pp-btn--sm pg-app__up">' + (f ? "Replace" : "Upload") +
+              '<input type="file" data-up="' + esc(d.type) + '" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" />' +
+              "</label>") +
+          (f && !scanning
+            ? '<button type="button" class="pp-btn pp-btn--soft pp-btn--sm" data-dl="' + esc(d.type) + '">Download</button>'
+            : "") +
+        "</div>" +
+      "</div>";
+    }
+
+    /* The checklist, its banner and the list's Documents cell all come out of
+       one paint, so they can never drift apart on screen. */
+    function paintDocs(docs) {
+      var box = $("#ppAppDocs", panel);
+      if (!box) return;
+
+      var pack = appPack(docs);
+      openCase.names = {};
+      pack.forEach(function (d) { openCase.names["k:" + d.type] = d.name || d.type; });
+
+      var r = readinessFrom(openCase.readiness);
+      paintCell(openCase.id, r);
+
+      box.innerHTML = (r ? banner(r) : "") + (pack.length
+        ? pack.map(docRow).join("")
+        : '<p class="pp-datalist__meta">No document checklist is configured.</p>');
+    }
+
+    function paintDetail(res) {
+      var a = res.application || res;
+      var s = a.student || {};
+
+      openCase.studentId = (s.id != null) ? s.id : (a.student_id != null ? a.student_id : null);
+      openCase.readiness = res.readiness || a.readiness || null;
+      titleEl.textContent = "Application — " + (s.name || a.public_ref || ("#" + (a.id || "")));
+
+      panel.innerHTML =
+        '<div class="pp-modal__group">Summary</div>' +
+        '<dl class="pg-app__grid">' + summary(a, s) + "</dl>" +
+        '<div class="pp-modal__group">Status history</div>' +
+        history(res.events || a.events || []) +
+        '<div class="pp-modal__group">Documents</div>' +
+        '<div id="ppAppDocs"><p class="pp-datalist__meta">Loading the checklist…</p></div>';
+    }
+
+    /* The checklist lives on the STUDENT, not on the case, so it is a second
+       read — the case answers what is outstanding, the student answers what each
+       document actually is. Both are fetched only when a case is opened. */
+    function loadDocs() {
+      var want = openCase.id;
+
+      /* Without the rows there are no names and no upload controls, but the
+         verdict is still the headline — so the banner is painted anyway, naming
+         the outstanding types by their keys. */
+      function degraded(note) {
+        var r = readinessFrom(openCase.readiness);
+        paintCell(openCase.id, r);
+        var box = $("#ppAppDocs", panel);
+        if (box) box.innerHTML = (r ? banner(r) : "") + '<p class="pp-datalist__meta">' + note + "</p>";
+      }
+
+      if (openCase.studentId == null) { degraded("No student is attached to this case."); return; }
+
+      window.VFIApi.get("/api/partner/students/" + encodeURIComponent(openCase.studentId) + "/documents", {})
+        .then(function (res) {
+          if (openCase.id !== want) return;    // a different case was opened meanwhile
+          paintDocs((res && res.data) || []);
+        })["catch"](function () {
+          if (openCase.id !== want) return;
+          degraded("Could not load the checklist — close and reopen the case to try again.");
+        });
+    }
+
+    function loadCase() {
+      var want = openCase.id;
+      window.VFIApi.get("/api/partner/applications/" + encodeURIComponent(want), {})
+        .then(function (res) {
+          if (openCase.id !== want) return;
+          paintDetail(res);
+          loadDocs();
+        })["catch"](function () {
+          if (openCase.id !== want) return;
+          panel.innerHTML = '<p class="pp-datalist__meta">Could not load this application.</p>';
+        });
+    }
+
+    function openDetail(id) {
+      if (!modal || !panel || !titleEl) return;
+      openCase.id = id;
+      openCase.studentId = null;
+      openCase.readiness = null;
+      openCase.names = {};
+      titleEl.textContent = "Application";
+      panel.innerHTML = '<p class="pp-datalist__meta">Loading…</p>';
+      modal.classList.add("is-open");
+      loadCase();
+    }
+
+    /* ---- uploads ------------------------------------------------------- */
+
+    function uploadError(err) {
+      var b = err && err.body;
+      // Laravel's 422 puts the real sentence under errors.file; 409/422/503 from
+      // the controller put it in message. Either way the server's own words are
+      // the only ones that know why.
+      if (b && b.errors && b.errors.file && b.errors.file.length) return b.errors.file[0];
+      if (b && b.message) return b.message;
+      return "Upload failed. Please try again.";
+    }
+
+    function upload(input, type, file) {
+      var rowEl = input.closest ? input.closest(".pg-app__doc") : null;
+      var msg = rowEl ? $("[data-msg]", rowEl) : null;
+      var label = input.parentNode;
+
+      /* Says it on the row itself. textContent, never innerHTML: this carries a
+         client filename and the server's own error text. VFIToast is only a
+         fallback and it does innerHTML its argument, so that path is escaped. */
+      function say(text, bad) {
+        if (msg) {
+          msg.hidden = false;
+          msg.textContent = text;
+          return;
+        }
+        if (window.VFIToast) window.VFIToast(esc(text), bad ? "bad" : "ok");
+      }
+
+      if (openCase.studentId == null) { say("This case has no student on it — reload the page.", true); return; }
+      if (file.size > MAX_BYTES) {
+        input.value = "";
+        say("That file is over 15 MB. Please send a smaller scan.", true);
+        return;
+      }
+
+      if (label && label.classList) label.classList.add("is-busy");
+      say("Uploading " + file.name + "…");
+
+      var fd = new FormData();
+      fd.append("file", file);      // the field name the API validates
+      // VFIApi passes FormData through untouched so the browser sets its own
+      // multipart boundary; setting Content-Type here would break the parse.
+
+      window.VFIApi.post("/api/partner/students/" + encodeURIComponent(openCase.studentId) +
+        "/documents/" + encodeURIComponent(type), fd, {})
+        .then(function () {
+          // The upload answers with the new checklist but not with a verdict, and
+          // only the server decides whether the case is ready now — so the panel
+          // is refreshed from the case rather than half-updated from this reply.
+          if (window.VFIToast) window.VFIToast("Document uploaded.", "ok");
+          loadCase();
+        })["catch"](function (err) {
+          if (label && label.classList) label.classList.remove("is-busy");
+          input.value = "";           // let the same file be re-picked after a failure
+          say(uploadError(err), true);
+        });
+    }
+
+    /* ---- wiring -------------------------------------------------------- */
+
+    host.addEventListener("click", function (e) {
+      var b = e.target.closest ? e.target.closest("[data-view]") : null;
+      if (b) openDetail(b.getAttribute("data-view"));
+    });
+
+    function closePanel() {
+      if (!modal) return;
+      modal.classList.remove("is-open");
+      openCase.id = null;              // also makes any in-flight paint a no-op
+      openCase.studentId = null;
+      openCase.readiness = null;
+    }
+
+    if (modal) {
+      // walk up: the click may land on an icon inside the button
+      modal.addEventListener("click", function (e) {
+        var n = e.target;
+        while (n && n !== modal) {
+          if (n.getAttribute && n.getAttribute("data-appclose") !== null) { closePanel(); return; }
+          n = n.parentNode;
+        }
+      });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePanel(); });
+
+      // delegated: the checklist is re-rendered after every upload, so per-row
+      // handlers would be re-bound (and leaked) on each repaint
+      modal.addEventListener("change", function (e) {
+        var input = e.target;
+        if (!input || !input.getAttribute || input.getAttribute("data-up") === null) return;
+        var file = input.files && input.files[0];
+        if (file) upload(input, input.getAttribute("data-up"), file);
+      });
+
+      modal.addEventListener("click", function (e) {
+        var b = e.target.closest ? e.target.closest("[data-dl]") : null;
+        if (!b || openCase.studentId == null) return;
+        b.classList.add("is-busy");
+        window.VFIApi.get("/api/partner/students/" + encodeURIComponent(openCase.studentId) +
+          "/documents/" + encodeURIComponent(b.getAttribute("data-dl")) + "/download", {})
+          .then(function (res) {
+            b.classList.remove("is-busy");
+            if (!res || !res.url) return;
+            // Defence in depth: an href follows whatever scheme it is given, so
+            // only the http(s) capability URL the API mints is ever followed.
+            var href = String(res.url);
+            if (!/^https?:\/\//i.test(href) && href.charAt(0) !== "/") return;
+
+            // The token is single-use and lives for seconds: spend it now, and
+            // never keep it anywhere a second reader could find it.
+            var a = document.createElement("a");
+            a.href = href;
+            a.rel = "noopener";
+            a.download = res.name || "document";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          })["catch"](function () {
+            b.classList.remove("is-busy");
+            if (window.VFIToast) window.VFIToast("That document is not available to download.", "bad");
+          });
+      });
     }
 
     paint();
@@ -431,12 +837,100 @@
     var empty = $(".pg-notif__empty");
     var pop = $("#ppNotif");
 
+    var ICON = { application: "pi-doc", enquiry: "pi-enquiry", payment: "pi-wallet", update: "pi-info" };
+
+    /* created_at is ISO from the API, but a broadcast update carries whatever
+       the admin typed ("03 Mar 2026") — only trim the ISO shape, or a hand-typed
+       date gets cut mid-month. */
+    function stamp(v) {
+      var s = String(v == null ? "" : v);
+      return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : s;
+    }
+
+    /* The link is server data going into an href, so it is constrained to a
+       relative console path or an http(s) URL: a stored "javascript:" would
+       otherwise execute on click. */
+    function safeLink(v) {
+      var s = String(v == null ? "" : v).trim();
+      if (!s) return "";
+      if (/^https?:\/\//i.test(s)) return s;
+      if (/^[a-zA-Z][a-zA-Z0-9+.\-]*:/.test(s)) return "";   // any other scheme
+      if (s.slice(0, 2) === "//") return "";                 // protocol-relative — not ours
+      return s;
+    }
+
+    /* The pipeline writes one notification per event, so a partner who files
+       twice in a morning sees two identical "Application submitted" lines and
+       reads them as two separate things happening. Exact matches (title, body
+       and day) fold into one row carrying a count. */
+    function collapse(rows) {
+      var out = [], seen = {};
+      (rows || []).forEach(function (n) {
+        // "k:" prefix so a title of "constructor" cannot hit Object.prototype
+        var key = "k:" + JSON.stringify([n.title || "", n.body || "", stamp(n.created_at)]);
+        var hit = seen[key];
+        if (hit) {
+          hit.count++;
+          if (!n.read) hit.read = false;    // one unread copy keeps the row unread
+          return;
+        }
+        hit = {
+          id: n.id, kind: n.kind, title: n.title, body: n.body, link: n.link,
+          read: !!n.read, created_at: n.created_at, isUpdate: !!n.isUpdate, count: 1
+        };
+        seen[key] = hit;
+        out.push(hit);
+      });
+      return out;
+    }
+
     function item(n) {
-      return '<div class="pg-notif__row' + (n.read ? "" : " is-unread") + '">' +
-        '<div class="pg-notif__title">' + esc(n.title) + "</div>" +
-        (n.body ? '<div class="pg-notif__text">' + esc(n.body) + "</div>" : "") +
-        '<div class="pg-notif__meta">' + esc(n.created_at ? n.created_at.slice(0, 10) : "") + "</div>" +
-        "</div>";
+      var href = safeLink(n.link);
+      var tag = href ? "a" : "div";
+      var icon = ICON[n.isUpdate ? "update" : n.kind] || "pi-bell";
+
+      return "<" + tag + ' class="pg-notif__row' + (n.read ? "" : " pg-notif__row--unread") + '"' +
+        (href ? ' href="' + esc(href) + '"' : "") + ">" +
+        '<div class="pg-notif__ic"><svg class="ic ic--sm"><use href="#' + icon + '"/></svg></div>' +
+        '<div class="pg-notif__body">' +
+          '<div class="pg-notif__title">' + esc(n.title) +
+            (n.count > 1 ? '<span class="pg-notif__count">&times;' + esc(n.count) + "</span>" : "") + "</div>" +
+          (n.body ? '<div class="pg-notif__text">' + esc(n.body) + "</div>" : "") +
+          '<div class="pg-notif__time">' + esc(stamp(n.created_at)) + "</div>" +
+        "</div>" +
+        '<div class="' + (n.read ? "pg-notif__seen" : "pg-notif__dot") + '"></div>' +
+        "</" + tag + ">";
+    }
+
+    /* partner-notifications.html styles pg-notif__* inside its own <style>, so
+       the bell popover — which lives in the chrome on every page — had those
+       classes and no rules at all, and rendered as stacked plain text. These are
+       the popover's copy of them, scoped to .pp-pop so they cannot reach the
+       page's own list — plus the linked row and the duplicate count, which are
+       new here and no page styles at all. */
+    function mountStyles() {
+      if (document.getElementById("ppNotifCss")) return;
+      var css = document.createElement("style");
+      css.id = "ppNotifCss";
+      css.textContent =
+        ".pp-pop .pg-notif__row{display:flex;align-items:flex-start;gap:11px;padding:12px 16px;" +
+          "border-bottom:1px solid var(--pp-line-2)}" +
+        ".pp-pop .pg-notif__row:last-child{border-bottom:0}" +
+        ".pp-pop .pg-notif__row--unread{background:var(--pp-teal-soft)}" +
+        ".pp-pop .pg-notif__ic{width:32px;height:32px;border-radius:9px;flex:none;display:grid;" +
+          "place-items:center;background:#fff;border:1px solid var(--pp-line);color:var(--pp-teal)}" +
+        ".pp-pop .pg-notif__body{flex:1 1 auto;min-width:0}" +
+        ".pp-pop .pg-notif__title{font-family:var(--pp-display);font-weight:700;color:var(--pp-ink);font-size:13.5px}" +
+        ".pp-pop .pg-notif__text{color:var(--pp-muted);font-size:12.5px;margin-top:2px;line-height:1.45}" +
+        ".pp-pop .pg-notif__time{color:var(--pp-faint);font-size:11.5px;margin-top:4px}" +
+        ".pp-pop .pg-notif__dot{width:8px;height:8px;border-radius:50%;background:var(--pp-emerald);flex:none;margin-top:6px}" +
+        ".pp-pop .pg-notif__seen{width:8px;flex:none}" +
+        "a.pg-notif__row{color:inherit;display:flex}" +
+        "a.pg-notif__row:hover{text-decoration:none;background:var(--pp-card-2)}" +
+        ".pg-notif__count{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;" +
+          "background:var(--pp-teal-soft);color:var(--pp-teal-dark);font-size:11px;font-weight:700;" +
+          "font-family:var(--pp-display);vertical-align:middle}";
+      document.head.appendChild(css);
     }
 
     /* Important Updates are staff-authored announcements (the ppUpdates
@@ -462,7 +956,7 @@
     function paint(res) {
       var rows = res.data || [];
       // newest-looking first: agency notifications, then broadcast updates
-      var merged = rows.concat(updateItems());
+      var merged = collapse(rows.concat(updateItems()));
 
       if (list) {
         list.innerHTML = merged.map(item).join("");
@@ -480,6 +974,7 @@
 
     function load() {
       if (!list && !pop) return;
+      mountStyles();
       window.VFIApi.get("/api/partner/notifications", {}).then(function (res) {
         paint(res);
         /* opening the page marks everything read */

@@ -21,6 +21,7 @@ use App\Http\Controllers\Partner\PartnerReferralController;
 use App\Http\Controllers\Partner\PartnerResourceController;
 use App\Http\Controllers\Partner\PartnerShortlistController;
 use App\Http\Controllers\Partner\PartnerStudentController;
+use App\Http\Controllers\Partner\PartnerStudentDocumentController;
 use App\Http\Controllers\Partner\PublicReferralController;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsurePartner;
@@ -205,6 +206,22 @@ Route::prefix('api')->group(function () {
         Route::get('partner/programs/search', [$programs, 'search'])->middleware('throttle:program-search');
         Route::get('partner/programs/compare', [$programs, 'compare'])->middleware('throttle:program-search');
         Route::get('partner/programs/{program}', [$programs, 'show'])->whereNumber('program')->middleware('throttle:program-search');
+
+        /*
+        | Phase 9D — an application is only processable with the student's
+        | paperwork behind it. The agency files on the student's behalf, so the
+        | agency must be able to supply those documents; before this only the
+        | student could, through their own portal.
+        */
+        $pdocs = PartnerStudentDocumentController::class;
+        Route::get('partner/students/{student}/documents', [$pdocs, 'index'])->whereNumber('student');
+        Route::post('partner/students/{student}/documents/{type}', [$pdocs, 'store'])->whereNumber('student');
+        Route::delete('partner/students/{student}/documents/{type}', [$pdocs, 'destroy'])->whereNumber('student');
+        Route::get('partner/students/{student}/documents/{type}/download', [$pdocs, 'download'])->whereNumber('student');
+
+        // Full view of one application: status history + document readiness.
+        Route::get('partner/applications/{application}', [PartnerApplicationController::class, 'show'])
+            ->whereNumber('application');
 
         // Phase 8E — tenant-scoped program shortlist saved to a student.
         $short = PartnerShortlistController::class;
