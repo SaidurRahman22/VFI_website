@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="stylesheet" href="css/admin.css?v=8ebc40b4" />
   <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png" />
   <!-- PHASE 1 admin lockdown: render nothing until an authenticated admin
        session is confirmed. Hidden by default; revealed only on success. -->
@@ -370,7 +370,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="js/api.js"></script>
+<script src="js/api.js?v=95e7c55d"></script>
 <script>
   /* Admin lockdown gate (Phase 1, docs §3.2). The panel's own scripts
      (store.js, admin.js) are NOT loaded until GET /api/admin/me confirms an
@@ -378,7 +378,7 @@
      — no editor DOM initialised, no VFI data touched. */
   (function () {
     function boot() {
-      ["js/store.js", "js/admin.js"].reduce(function (p, src) {
+      ["js/store.js?v=643c4a7a", "js/admin.js?v=49e0e97e"].reduce(function (p, src) {
         return p.then(function () {
           return new Promise(function (res, rej) {
             var s = document.createElement("script");

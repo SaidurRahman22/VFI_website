@@ -323,6 +323,58 @@ These are deferred by choice and only matter as volume grows:
 
 ---
 
+## PRIORITY 7 — Making updates reach returning visitors 🟠 ONE SERVER CHANGE NEEDED
+
+**Why:** nginx serves `css/` and `js/` with a **7-day** public cache and the filenames
+never change, so a returning visitor can run **last week's JavaScript against this week's
+HTML**. That is what broke the partner Applications page — the browser's cached HTML was
+missing elements the newer script expected, so the "no applications" notice sat on top of
+real rows and **View** opened nothing.
+
+**Developer rule (already in place).** Every page now references its assets with a
+content stamp, e.g. `css/style.css?v=beb900c3`. The stamp is a hash of the file's own
+bytes, so a changed asset gets a URL no cache can answer. **Whenever anything under
+`css/` or `js/` changes, run this before committing:**
+
+```bash
+node tools/stamp-assets.mjs      # re-stamps the HTML; safe to run twice
+```
+
+Skip it and the deploy is invisible to returning visitors for up to a week.
+
+### 🔧 TODO for whoever has server access — make nginx revalidate HTML
+
+The stamps only work if the browser fetches fresh HTML to read them from. Today HTML is
+served with **no** `Cache-Control` header at all, so browsers cache it by guesswork. Add
+this block to the live site's nginx config (the repo's own copy is
+`deploy/nginx/production.conf`, which already has the matching `css|js` block):
+
+```nginx
+# HTML carries the ?v= asset stamps, so it must be revalidated every time.
+# "no-cache" does not mean "do not store": the browser keeps its copy but has to
+# check with the server first, which answers 304 Not Modified when nothing changed.
+location ~* \.html$ {
+    try_files $uri @backendpublic;
+    add_header Cache-Control "no-cache" always;
+
+    # nginx stops inheriting the server-level add_header lines as soon as a block
+    # defines one of its own, so the security headers must be repeated here.
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+}
+
+# The web root IS the repo root, so the new build-tooling folder needs the same
+# deny the other non-web folders already have (/backend/, /deploy/, /docs/, /test/).
+location ^~ /tools/ { deny all; }
+```
+
+Apply with `sudo nginx -t && sudo systemctl reload nginx`, then confirm with
+`curl -sI http://103.14.23.151/index.html | grep -i cache-control` — it should say
+`no-cache`. (The bare `/` URL is served as `index.html` and picks up the same rule.)
+
+---
+
 ## Quick summary — what to send, in order
 
 | # | Item | Blocks | What to deliver |

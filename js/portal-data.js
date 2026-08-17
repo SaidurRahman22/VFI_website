@@ -299,6 +299,14 @@
     var main = $(".pp-wrap") || $(".pp-main");
     if (!main) return;
 
+    /* The page's own "you have no applications" panel, resolved before this
+       block puts anything into the wrap so a js-rendered empty state can never
+       be mistaken for it. nginx caches the assets for a week and the html not at
+       all, so a browser can hold a copy of this page from before the id existed
+       next to today's js — and then the notice sat on screen above a table
+       listing five applications. The class outlives the id, so match on either. */
+    var staticNotice = $("#ppAppsEmpty") || $(".pp-notice", main);
+
     var host = document.createElement("div");
     host.className = "pp-card pp-datalist";
     main.appendChild(host);
@@ -306,6 +314,60 @@
     var modal = $("#ppAppModal");
     var panel = $("#ppAppBody");
     var titleEl = $("#ppAppTitle");
+
+    /* Same cache split, worse symptom: the detail panel this block fills lives
+       in partner-applications.html, so a page held from before it was added has
+       no #ppAppModal and View did nothing whatsoever — no panel, no error, and
+       no way to send a document, because the upload controls only exist inside
+       it. Build it instead of trusting the page to carry it. Static markup only:
+       every value below is a literal, and it mirrors the page's copy so the
+       shared sheet's .pp-modal rules dress it identically. */
+    function buildModal() {
+      var el = document.createElement("div");
+      el.className = "pp-modal";
+      el.id = "ppAppModal";
+      el.innerHTML =
+        '<div class="pp-modal__backdrop" data-appclose></div>' +
+        '<div class="pp-modal__card pp-modal__card--lg" role="dialog" aria-modal="true" aria-labelledby="ppAppTitle">' +
+          '<div class="pp-modal__head">' +
+            '<h3 class="pp-modal__title" id="ppAppTitle">Application</h3>' +
+            '<button type="button" class="pp-modal__close" data-appclose aria-label="Close">&times;</button>' +
+          "</div>" +
+          '<div class="pp-modal__body" id="ppAppBody"></div>' +
+        "</div>";
+      document.body.appendChild(el);   // outside <main>: .pp-modal is fixed and must not inherit its stacking
+      fallbackCss();
+      return el;
+    }
+
+    /* The .pg-app__* rules sit in a <style> block inside the html, so a page
+       stale enough to be missing the panel is missing them too. Nearly all of
+       that block is polish the shared sheet already degrades gracefully without
+       — .pp-modal, .pp-modal__card, .pp-btn, .pp-badge and [hidden] are all in
+       css/partner-portal.css, so a built panel opens, scrolls and closes, and an
+       unstyled banner or timeline still reads. One pair is not polish: without
+       .pg-app__up the file input renders at its native width inside a small pill
+       label and .pp-modal__card clips the overflow, so on a narrow screen the
+       partner's only control for sending a document can end up cut off. That
+       pair only — the page's block is deliberately not duplicated here. */
+    function fallbackCss() {
+      if ($("#ppAppFallbackCss")) return;
+      var st = document.createElement("style");
+      st.id = "ppAppFallbackCss";
+      st.textContent =
+        ".pg-app__up{position:relative;overflow:hidden;margin:0}" +
+        ".pg-app__up input{position:absolute;top:0;right:0;bottom:0;left:0;" +
+        "width:100%;height:100%;opacity:0;cursor:pointer}";
+      document.head.appendChild(st);
+    }
+
+    if (!modal || !panel || !titleEl) {
+      // half a panel is no more use than none, and leaving it would duplicate ids
+      if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+      modal = buildModal();
+      panel = $("#ppAppBody", modal);
+      titleEl = $("#ppAppTitle", modal);
+    }
 
     var LABEL = {
       submitted: "Submitted", review: "Under Review", offer: "Offer", conditional: "Conditional Offer",
@@ -403,20 +465,27 @@
         "</tr>";
     }
 
+    /* Only ever used when the page carries no notice of its own. Rendering the
+       empty state here too is what stops this block depending on the html for
+       it at all: whichever copy of the page a browser is holding, "none yet"
+       gets said instead of a blank wrap. Static markup. */
+    var NO_ROWS =
+      '<p class="pp-datalist__meta">You currently have no active applications for any students. ' +
+      'Go to <a href="partner-students.html">Manage Students</a> to create a student and their application.</p>';
+
     function paint() {
       window.VFIApi.get("/api/partner/applications", {}).then(function (res) {
         var rows = res.data || [];
         // the static "you have no applications" panel must not stay on screen
         // above a table that is listing them
-        var emptyNotice = $("#ppAppsEmpty");
-        if (emptyNotice) emptyNotice.hidden = rows.length > 0;
+        if (staticNotice) staticNotice.hidden = rows.length > 0;
 
         host.innerHTML = rows.length
           ? '<div class="pp-tablewrap"><table class="pp-table"><thead><tr><th>Student</th><th>Ref</th><th>Status</th>' +
             "<th>Intake</th><th>Ack no.</th><th>Deadline</th><th>Documents</th><th></th></tr></thead><tbody>" +
             rows.map(row).join("") + "</tbody></table></div>" +
             '<p class="pp-datalist__meta">' + esc((res.meta && res.meta.total) || rows.length) + " application(s)</p>"
-          : "";   // the static notice already says there are none
+          : (staticNotice ? "" : NO_ROWS);   // when the page has a notice it already says this
       })["catch"](quiet);
     }
 
@@ -586,7 +655,13 @@
     }
 
     function openDetail(id) {
-      if (!modal || !panel || !titleEl) return;
+      if (!modal || !panel || !titleEl) {
+        // the panel could not even be built — say something, because a View that
+        // does nothing at all is the failure the client reported
+        var dead = "Could not open this application. Please reload the page.";
+        if (window.VFIToast) window.VFIToast(dead, "bad"); else window.alert(dead);
+        return;
+      }
       openCase.id = id;
       openCase.studentId = null;
       openCase.readiness = null;
@@ -623,7 +698,10 @@
           msg.textContent = text;
           return;
         }
-        if (window.VFIToast) window.VFIToast(esc(text), bad ? "bad" : "ok");
+        if (window.VFIToast) { window.VFIToast(esc(text), bad ? "bad" : "ok"); return; }
+        // last resort: a refused upload must never look like nothing happened.
+        // Progress lines are dropped instead — they are not worth an alert.
+        if (bad) window.alert(text);
       }
 
       if (openCase.studentId == null) { say("This case has no student on it — reload the page.", true); return; }
