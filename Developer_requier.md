@@ -146,6 +146,27 @@ sudo nano /var/www/vfi/backend/.env     # delete the line AUTH_DEMO_OTP=123456
 sudo -u www-data php /var/www/vfi/backend/artisan config:cache
 ```
 
+### ⚠️ TEMPORARY: development settings that must be reverted
+
+While the site is being built (not yet live to real students) the server is set
+up for fast iteration rather than maximum security:
+
+| Setting | Now | Must be before launch |
+|---|---|---|
+| `AUTH_DEMO_OTP` | `123456` | **empty** |
+| `ADMIN_REQUIRE_TOTP` | `false` (password only) | **`true`** |
+| `SESSION_LIFETIME` | `43200` (30 days) | `120` (2 hours) |
+
+The last two exist because signing in, fetching an authenticator code, and then
+being signed out again on every cache clear made development painful. Admin
+sign-in still requires the password — only the second factor is off.
+
+**Revert all three the day real students or partners are onboarded:**
+```bash
+sudo nano /var/www/vfi/backend/.env     # set the "before launch" values above
+sudo -u www-data php /var/www/vfi/backend/artisan config:cache
+```
+
 ### How we confirm email works
 Once set, the developer registers a test account and confirms the OTP arrives in a
 real inbox. You'll be told "email is live".
