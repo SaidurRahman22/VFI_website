@@ -859,6 +859,16 @@
 
     function paintFacets(list, box, key) {
       if (!box) return;
+
+      /* A filter panel offering nothing but "All" filters nothing. Until an
+         admin publishes resources both facet lists come back empty, and the page
+         showed two of these side by side above an empty document list — three
+         panels of furniture and no content. Hide the whole panel, not just the
+         list, so the remaining column keeps the grid's width. */
+      var panel = box.closest ? box.closest(".pg-res__panel") : null;
+      if (panel) panel.hidden = !list.length;
+      if (!list.length) { box.innerHTML = ""; return; }
+
       box.innerHTML = ['<button type="button" class="pg-res__item is-on" data-val="">All</button>']
         .concat(list.map(function (v) {
           return '<button type="button" class="pg-res__item" data-val="' + esc(v) + '">' + esc(v) + "</button>";
@@ -888,7 +898,14 @@
                   '<span class="pg-res__doc-meta">' + esc(d.country || "") + (d.category ? " · " + esc(d.category) : "") +
                   (d.size ? " · " + esc(d.size) : "") + "</span></a>";
               }).join("")
-            : '<p class="pp-datalist__meta">No documents match this filter.</p>';
+            /* "No documents match this filter" is only true when a filter is
+               actually on. With none set it blamed the partner's filtering for
+               an empty catalogue, which is how this page read as broken rather
+               than as not-yet-populated. */
+            : (state.country || state.category || state.q
+                ? '<p class="pp-datalist__meta">No documents match this filter.</p>'
+                : '<p class="pp-datalist__meta">No learning resources have been published yet. ' +
+                  'Your VFI account manager adds them here.</p>');
           if (first) {
             paintFacets(res.countries || [], countriesBox, "country");
             paintFacets(res.categories || [], categoriesBox, "category");

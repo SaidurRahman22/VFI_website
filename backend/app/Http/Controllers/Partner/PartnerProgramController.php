@@ -108,6 +108,18 @@ class PartnerProgramController extends Controller
             $query->where('flags', 'like', '% '.$token.' %');
         }
 
+        // Sample rows go behind the real catalogue, ALWAYS, whatever the sort.
+        // `seed` is fabricated data standing in for the destinations that have no
+        // licensed feed yet (UK/CA/AU/IE/NZ); the real feeds are US Scorecard and
+        // DAAD. There are only 240 seed rows against 41,000 real ones, but they
+        // carry the nearest deadlines, so the default deadline sort put every one
+        // of them ahead of the entire real catalogue — page one of Search was
+        // nothing but sample data. They stay searchable (dropping them would
+        // leave five destinations with no programmes at all) and the card keeps
+        // its "Sample data" badge; they simply must not lead. Written as a CASE
+        // so it sorts identically on Postgres and SQLite.
+        $query->orderByRaw("case when source = 'seed' then 1 else 0 end asc");
+
         [$col, $dir] = self::SORTS[$data['sort'] ?? 'deadline'];
         if ($col !== 'id') {
             // nulls-last (portable: the boolean sorts false<true), then value, then id
@@ -115,12 +127,22 @@ class PartnerProgramController extends Controller
         }
         $query->orderBy('id', 'desc');
 
+        // Cloned BEFORE paginate(): paginate() puts its own limit/offset on the
+        // builder, and counting through that would report a page, not the set.
+        $distinctPrograms = (clone $query)->distinct()->count('program_id');
+
         $page = $query->paginate($data['per_page'] ?? 24)->withQueryString();
 
         return response()->json([
             'data' => collect($page->items())->map(fn (ProgramSearchRow $r) => $this->presentRow($r)),
             'meta' => [
+                // A row is one programme INTAKE, not one programme — a programme
+                // with three intakes owns three rows. Reporting the row count as
+                // "programmes" told the partner there were 123,621 when the
+                // catalogue holds 41,287, so both numbers are returned and named
+                // for what they are.
                 'total' => $page->total(),
+                'programs' => $distinctPrograms,
                 'page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),
                 'per_page' => $page->perPage(),

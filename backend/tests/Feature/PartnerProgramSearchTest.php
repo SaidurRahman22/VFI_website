@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\UserRole;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PartnerProgramSearchTest extends TestCase
@@ -140,5 +141,43 @@ class PartnerProgramSearchTest extends TestCase
     public function test_detail_404_for_unknown_program(): void
     {
         $this->partner()->getJson('/api/partner/programs/99999')->assertStatus(404);
+    }
+
+    /**
+     * Live regression: the seed feed only covers the destinations with no
+     * licensed source, and its fabricated rows carry the nearest deadlines. With
+     * the default deadline-ascending sort that put all 240 of them ahead of
+     * 41,000 real programmes — every card on page one of Search read
+     * "Sample data". Source ranking has to beat the chosen sort, so a real row
+     * with the LATEST possible deadline must still lead.
+     */
+    public function test_sample_rows_never_lead_the_real_catalogue(): void
+    {
+        $promoted = DB::table('program_search')->where('is_stale', false)->first();
+        DB::table('program_search')->where('id', $promoted->id)->update([
+            'source' => 'scorecard',
+            'application_deadline_at' => '2099-12-31',
+        ]);
+
+        $data = $this->partner()->getJson('/api/partner/programs/search')->assertStatus(200)->json('data');
+
+        $this->assertSame('scorecard', $data[0]['source'], 'a real programme must lead the sample ones');
+        $this->assertSame((int) $promoted->program_id, $data[0]['program_id']);
+
+        // and everything behind it is still ordered by the requested sort
+        $this->assertSame('seed', $data[1]['source']);
+    }
+
+    /**
+     * A row is one programme INTAKE. Reporting that count as "programmes" is
+     * what told the partner the catalogue held 123,621 when it holds 41,287.
+     */
+    public function test_meta_counts_programmes_apart_from_intake_rows(): void
+    {
+        // 5 countries x 2 unis x 3 programs = 30 programmes, 3 intakes each = 90 rows
+        $res = $this->partner()->getJson('/api/partner/programs/search?include_stale=1')->assertStatus(200);
+
+        $this->assertSame(90, $res->json('meta.total'));
+        $this->assertSame(30, $res->json('meta.programs'));
     }
 }

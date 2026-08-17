@@ -174,7 +174,14 @@
   function renderResults(data) {
     var rows = (data && data.data) || [], meta = (data && data.meta) || {};
     var res = $("#pgResults");
-    $("#pgResCount").textContent = (meta.total || 0) + " program" + (meta.total === 1 ? "" : "s") + " found";
+    /* meta.total counts INTAKE rows — a programme with three intakes owns three
+       of them — so reporting it as programmes claimed a catalogue of 123,621
+       against a real 41,287. meta.programs is the distinct count; fall back to
+       total only for a cached response from before the API returned it. */
+    var progs = meta.programs != null ? meta.programs : (meta.total || 0);
+    $("#pgResCount").textContent = progs.toLocaleString
+      ? progs.toLocaleString() + " program" + (progs === 1 ? "" : "s") + " found"
+      : progs + " program" + (progs === 1 ? "" : "s") + " found";
     show("#pgResHead", true);
     if (!rows.length) {
       res.innerHTML = '<div class="pg-search__msg">No programs match these filters. Try widening them.</div>';
