@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Http\Middleware\StaffRlsRead;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -60,10 +59,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                // Runs only for AUTHENTICATED panel requests: lets staff screens
-                // read across tenants past Postgres RLS. Reads only — every
-                // policy's WITH CHECK still demands a named tenant on write.
-                StaffRlsRead::class,
             ]);
+        // NOTE: StaffRlsRead is deliberately NOT here. It has to cover
+        // /livewire/update too — every action in this panel goes through that
+        // route — so it is registered on the global web group in bootstrap/app.php
+        // and gates itself on the user holding an admin role.
     }
 }

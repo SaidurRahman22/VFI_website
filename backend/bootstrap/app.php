@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\StaffRlsRead;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -34,6 +35,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // login page — the panel has no Filament login form. (/api/* still
         // renders a JSON 401, not a redirect — see withExceptions below.)
         $middleware->redirectGuestsTo(fn () => '/admin-login.html');
+
+        // Staff read across tenants past Postgres RLS. In the WEB group, not the
+        // Filament panel group, because the panel's buttons act through
+        // /livewire/update which the panel group does not cover. It gates itself
+        // on an admin role, so partner and student requests are unaffected.
+        $middleware->web(append: [StaffRlsRead::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

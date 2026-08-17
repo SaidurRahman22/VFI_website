@@ -39,9 +39,23 @@ class StaffRlsRead
 
     public function handle(Request $request, Closure $next): Response
     {
-        // The panel is already gated by auth + EnsureAdmin; belt and braces here
-        // so an unauthenticated request never turns tenancy off.
-        if ($request->user()) {
+        /*
+         * Gate on WHO the user is, not on which route group they entered by.
+         *
+         * This first hung off the Filament panel's middleware, which covers
+         * /manage but NOT /livewire/update — and every button in the panel acts
+         * through that route. So the page rendered with rows, and the moment
+         * anything was clicked the follow-up request ran without the bypass:
+         * the table re-rendered to "No applications" and the action could not
+         * find its record. No exception, just silently zero rows.
+         *
+         * Keyed on usesAdminPanel() so it can live in the global web group and
+         * still never loosen anything for a partner or a student — they hold no
+         * admin role, so the flag is never set for them and their tenancy net is
+         * untouched.
+         */
+        $user = $request->user();
+        if ($user && $user->usesAdminPanel()) {
             $this->set('on');
         }
 
