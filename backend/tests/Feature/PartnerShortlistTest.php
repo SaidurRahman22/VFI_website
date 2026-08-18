@@ -13,6 +13,7 @@ use App\Models\Student\Student;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Support\TenantContext;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +45,9 @@ class PartnerShortlistTest extends TestCase
         $agency = PartnerAgency::create(['legal_name' => $name, 'country' => 'Bangladesh']);
         $user = User::factory()->create();
         UserRole::create(['user_id' => $user->id, 'role' => Role::PartnerOwner, 'agency_id' => $agency->id, 'granted_at' => now()]);
-        PartnerAgencyMember::create(['agency_id' => $agency->id, 'user_id' => $user->id, 'seat_role' => SeatRole::Owner, 'status' => MemberStatus::Active]);
+        // Bound first, exactly as production does: the members table carries
+        // RLS FORCE, so a cold INSERT is refused on Postgres.
+        TenantScope::runAs((int) $agency->id, fn () => PartnerAgencyMember::create(['agency_id' => $agency->id, 'user_id' => $user->id, 'seat_role' => SeatRole::Owner, 'status' => MemberStatus::Active]));
 
         return [$agency, $user->fresh()];
     }

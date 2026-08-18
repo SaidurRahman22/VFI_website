@@ -16,6 +16,7 @@ use App\Models\Student\Student;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Support\TenantContext;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -56,10 +57,12 @@ class StaffApplicationActionsTest extends TestCase
         UserRole::create(['user_id' => $owner->id, 'role' => Role::PartnerOwner->value, 'agency_id' => $agency->id, 'granted_at' => now()]);
 
         app(TenantContext::class)->setAgencyId($agency->id);
-        PartnerAgencyMember::create([
+        // Bound first, exactly as production does: the members table carries
+        // RLS FORCE, so a cold INSERT is refused on Postgres.
+        TenantScope::runAs((int) $agency->id, fn () => PartnerAgencyMember::create([
             'agency_id' => $agency->id, 'user_id' => $owner->id,
             'seat_role' => SeatRole::Owner, 'status' => MemberStatus::Active,
-        ]);
+        ]));
         $student = Student::create([
             'agency_id' => $agency->id, 'source' => 'partner_modal',
             'email' => 'pupil@acme.test', 'first_name' => 'Pupil', 'student_ref' => 'R-'.uniqid(),

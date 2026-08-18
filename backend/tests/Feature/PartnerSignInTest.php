@@ -12,6 +12,7 @@ use App\Models\Partner\PartnerAgencyMember;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\PasswordResetService;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -30,10 +31,12 @@ class PartnerSignInTest extends TestCase
         $agency = PartnerAgency::create(['legal_name' => 'Acme', 'country' => 'Bangladesh', 'status' => $status->value]);
         $user = User::factory()->create(array_merge(['password' => self::PW], $userOver));
         UserRole::create(['user_id' => $user->id, 'role' => Role::PartnerOwner, 'agency_id' => $agency->id, 'granted_at' => now()]);
-        PartnerAgencyMember::create([
+        // Bound first, exactly as production does: the members table carries
+        // RLS FORCE, so a cold INSERT is refused on Postgres.
+        TenantScope::runAs((int) $agency->id, fn () => PartnerAgencyMember::create([
             'agency_id' => $agency->id, 'user_id' => $user->id, 'seat_role' => SeatRole::Owner,
             'contact_person_name' => 'Owner One', 'status' => MemberStatus::Active,
-        ]);
+        ]));
 
         return [$agency, $user->fresh()];
     }
@@ -114,10 +117,12 @@ class PartnerSignInTest extends TestCase
         $agency = PartnerAgency::create(['legal_name' => 'Acme', 'country' => 'Bangladesh', 'status' => AgencyStatus::Approved->value]);
         $user = User::factory()->create(['password' => self::PW]);
         UserRole::create(['user_id' => $user->id, 'role' => Role::PartnerOwner, 'agency_id' => $agency->id, 'granted_at' => now()]);
-        PartnerAgencyMember::create([
+        // Bound first, exactly as production does: the members table carries
+        // RLS FORCE, so a cold INSERT is refused on Postgres.
+        TenantScope::runAs((int) $agency->id, fn () => PartnerAgencyMember::create([
             'agency_id' => $agency->id, 'user_id' => $user->id, 'seat_role' => SeatRole::Owner,
             'status' => MemberStatus::Disabled,
-        ]);
+        ]));
 
         $this->postJson('/api/partner/signin', ['email' => $user->email, 'password' => self::PW])->assertStatus(403);
     }

@@ -12,6 +12,7 @@ use App\Models\Partner\PartnerAgencyMember;
 use App\Models\Partner\PartnerApplication;
 use App\Models\User;
 use App\Support\TenantContext;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -58,9 +59,13 @@ class PartnerSchemaTest extends TestCase
 
         // create each seat under its own tenant context
         $this->tenant()->setAgencyId($a1->id);
-        PartnerAgencyMember::create(['agency_id' => $a1->id, 'user_id' => $u1->id, 'seat_role' => SeatRole::Owner, 'status' => MemberStatus::Active]);
+        // Bound first, exactly as production does: the members table carries
+        // RLS FORCE, so a cold INSERT is refused on Postgres.
+        TenantScope::runAs((int) $a1->id, fn () => PartnerAgencyMember::create(['agency_id' => $a1->id, 'user_id' => $u1->id, 'seat_role' => SeatRole::Owner, 'status' => MemberStatus::Active]));
         $this->tenant()->setAgencyId($a2->id);
-        PartnerAgencyMember::create(['agency_id' => $a2->id, 'user_id' => $u2->id, 'seat_role' => SeatRole::Owner, 'status' => MemberStatus::Active]);
+        // Bound first, exactly as production does: the members table carries
+        // RLS FORCE, so a cold INSERT is refused on Postgres.
+        TenantScope::runAs((int) $a2->id, fn () => PartnerAgencyMember::create(['agency_id' => $a2->id, 'user_id' => $u2->id, 'seat_role' => SeatRole::Owner, 'status' => MemberStatus::Active]));
 
         // agency 1 context sees only its own seat
         $this->tenant()->setAgencyId($a1->id);
@@ -81,10 +86,12 @@ class PartnerSchemaTest extends TestCase
     {
         $agency = PartnerAgency::create(['legal_name' => 'Cast Co', 'country' => 'Nepal']);
         $this->tenant()->setAgencyId($agency->id);
-        $m = PartnerAgencyMember::create([
-            'agency_id' => $agency->id, 'user_id' => User::factory()->create()->id,
-            'seat_role' => SeatRole::Counsellor, 'status' => MemberStatus::Invited,
-        ]);
+        $m = // Bound first, exactly as production does: the members table carries
+ // RLS FORCE, so a cold INSERT is refused on Postgres.
+ TenantScope::runAs((int) $agency->id, fn () => PartnerAgencyMember::create([
+     'agency_id' => $agency->id, 'user_id' => User::factory()->create()->id,
+     'seat_role' => SeatRole::Counsellor, 'status' => MemberStatus::Invited,
+ ]));
 
         $this->assertInstanceOf(SeatRole::class, $m->refresh()->seat_role);
         $this->assertSame(SeatRole::Counsellor, $m->seat_role);
