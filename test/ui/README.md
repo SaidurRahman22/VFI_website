@@ -127,3 +127,33 @@ Do this again whenever the assertions are edited.
 - If an account has no applications, the View/upload path cannot be exercised
   and the run says so as a warning — treat a console with no data as an
   untested console, not a passing one.
+
+## smoke_admin.py — the staff back-office
+
+```bash
+export VFI_ADMIN_EMAIL=superadmin@vfi-fc.com
+export VFI_ADMIN_PASSWORD=...            # never stored here; this repo is public
+python test/ui/smoke_admin.py
+```
+
+Walks all 22 `/manage` pages, then proves the staff application queue is not
+empty and that each row action (**Documents / Move / Add note / Notes**) opens a
+dialog with real content in it.
+
+It exists because the queue rendered **zero rows on production** while every
+PHPUnit test passed. The console tables carry Postgres RLS FORCE and staff hold
+no tenant, so the panel needs a read bypass on **both** the Filament middleware
+stack (the page render) *and* Laravel's `web` group (`/livewire/update`, where
+every button acts) — a Filament panel does not include the `web` group, and
+`/livewire/update` is not in the panel's stack. Register it in one place only and
+exactly half the panel breaks, silently. Both halves have shipped broken.
+
+Tests run on SQLite, which has no row-level security, so the bypass is a no-op
+there and a rendering test passes whichever way the wiring is wrong. Only a
+browser against real Postgres can see it. `StaffRlsReadRegistrationTest` guards
+the wiring in CI; this suite is what proves it on the live database.
+
+One trap worth knowing if you extend this: `.fi-modal` is always in the DOM and
+permanently hidden — it wraps the visible `.fi-modal-window`. Waiting on a comma
+selector with `state="visible"` resolves to the hidden wrapper and never
+settles, which once made all four working actions look broken.
