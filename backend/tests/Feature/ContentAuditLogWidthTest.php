@@ -34,6 +34,9 @@ class ContentAuditLogWidthTest extends TestCase
 
     private const ENTITY_MAX = 40;
 
+    /** See 2026_08_19_000001. Holds a storage PATH for media, not just an id. */
+    private const ENTITY_ID_MAX = 512;
+
     public function test_every_audit_action_and_entity_literal_fits_its_column(): void
     {
         $calls = $this->auditCalls();
@@ -113,5 +116,37 @@ class ContentAuditLogWidthTest extends TestCase
         }
 
         return $out;
+    }
+
+    /**
+     * entity_id overflowed the same way `action` did, one column over. The media
+     * library writes the stored path into it, and
+     * /storage/media/<64-char hash>.jpg is 82 characters against a varchar(64) —
+     * so on Postgres the audit insert failed and took the upload down with it,
+     * while SQLite accepted it silently.
+     */
+    public function test_a_media_path_fits_in_entity_id(): void
+    {
+        $path = '/storage/media/'.str_repeat('a', 64).'.jpg';
+
+        $this->assertLessThanOrEqual(
+            self::ENTITY_ID_MAX,
+            strlen($path),
+            'A media path no longer fits content_audit_log.entity_id, which would fail the upload it audits.'
+        );
+
+        $row = ContentAuditLog::record('create', 'media', $path, null, ['bytes' => 1]);
+        $this->assertSame($path, $row->fresh()->entity_id);
+    }
+
+    public function test_the_entity_id_width_matches_the_migration(): void
+    {
+        $sql = file_get_contents(database_path('migrations/2026_08_19_000001_widen_content_audit_log_entity_id.php'));
+
+        $this->assertStringContainsString(
+            "string('entity_id', ".self::ENTITY_ID_MAX.')',
+            $sql,
+            'content_audit_log.entity_id was resized without updating ENTITY_ID_MAX here.'
+        );
     }
 }

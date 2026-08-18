@@ -88,10 +88,19 @@ class RoleAssignmentService
             if ($role === Role::SuperAdmin) {
                 // Count inside the transaction with the rows locked, so two
                 // concurrent revokes cannot both believe another owner remains.
+                //
+                // Selected and counted in PHP rather than with ->count(), because
+                // ->lockForUpdate()->count() emits `SELECT count(*) ... FOR UPDATE`
+                // and Postgres rejects that outright:
+                //   SQLSTATE[0A000] FOR UPDATE is not allowed with aggregate functions
+                // SQLite accepts it and ignores the lock, so this guard passed every
+                // test while throwing a 500 on production instead of protecting the
+                // last superadmin. Only ids are selected, and the set is tiny.
                 $remaining = UserRole::where('role', Role::SuperAdmin->value)
                     ->whereNull('revoked_at')
                     ->where('id', '!=', $assignment->id)
                     ->lockForUpdate()
+                    ->pluck('id')
                     ->count();
 
                 if ($remaining === 0) {
