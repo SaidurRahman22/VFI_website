@@ -40,7 +40,10 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
-          extensions: pdo_pgsql, intl, mbstring, bcmath, zip, redis
+          # gd + exif: ImageOptimiser re-encodes uploads and strips EXIF, so its
+          # tests fatal without them. Their absence is why this job failed at the
+          # test step the moment PHPStan stopped failing first and let it get there.
+          extensions: pdo_pgsql, intl, mbstring, bcmath, zip, redis, gd, exif
           coverage: none
       - name: Cache composer
         uses: actions/cache@v4
