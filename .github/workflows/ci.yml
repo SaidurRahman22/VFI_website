@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
+          php-version: "8.4"
           extensions: pdo_pgsql, intl, mbstring, bcmath, zip, redis
           coverage: none
       - name: Cache composer
@@ -55,6 +55,64 @@ jobs:
       - name: Unit + feature tests
         run: php artisan test
 
+  # --- BLOCK: the same suite against the database production actually runs ----
+  # SQLite ignores varchar length and has no row-level security, so the job
+  # above cannot see the two classes of bug that have reached production here.
+  # This one can.
+  tests-postgres:
+    name: tests on postgres 16 (BLOCK)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_pgsql, intl, mbstring, bcmath, zip, redis, gd
+          coverage: none
+      - name: Cache composer
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: composer-pg-${{ hashFiles('backend/composer.lock') }}
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      # The role matters more than the database. Postgres exempts superusers
+      # from RLS entirely and exempts a table's owner unless the table is
+      # FORCE'd, so CI has to connect as an ordinary owner exactly like
+      # production's vfi_app - otherwise the RLS tests pass while proving nothing.
+      - name: Create a non-superuser app role, as production has
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -c "create role vfi_app login password 'vfi_app' nosuperuser nocreatedb nobypassrls;"
+          psql -h 127.0.0.1 -U postgres -c "create database vfi_test owner vfi_app;"
+          psql -h 127.0.0.1 -U postgres -c "select rolname, rolsuper, rolbypassrls from pg_roles where rolname='vfi_app';"
+
+      - name: Migrate and test on postgres
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          DB_DATABASE: vfi_test
+          DB_USERNAME: vfi_app
+          DB_PASSWORD: vfi_app
+          # DatabaseDriverTest fails loudly if the suite ends up on anything
+          # else - phpunit.xml pins DB_CONNECTION=sqlite, and a CI that silently
+          # tests the wrong database is worse than no CI because it is believed.
+          CI_EXPECT_DRIVER: pgsql
+        run: php artisan test
+
   # --- BLOCK: dependency CVEs ------------------------------------------------
   deps:
     name: dependency CVE scan (BLOCK)
@@ -62,7 +120,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: { php-version: "8.3" }
+        with: { php-version: "8.4" }
       - run: composer install --no-interaction --prefer-dist --no-progress
       - name: Roave security advisories / audit
         run: composer audit --no-interaction
@@ -75,14 +133,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: { php-version: "8.3" }
+        with: { php-version: "8.4" }
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: composer licenses
 
   # --- BLOCK: build, sign (cosign keyless), attest ---------------------------
   image:
     name: build + cosign sign + SBOM (BLOCK)
-    needs: [secrets, quality, deps]
+    needs: [secrets, quality, tests-postgres, deps]
     runs-on: ubuntu-latest
     permissions:
       contents: read
