@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\StaffRlsRead;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -56,13 +57,19 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                // Reads across tenants. Required HERE for the page render, and
+                // ALSO on the global web group for /livewire/update, which every
+                // panel button acts through and which is not part of this stack.
+                // Registered in one place only, either page loads render empty
+                // or every button dies — see StaffRlsRead's own notes.
+                StaffRlsRead::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
             ]);
-        // NOTE: StaffRlsRead is deliberately NOT here. It has to cover
-        // /livewire/update too — every action in this panel goes through that
-        // route — so it is registered on the global web group in bootstrap/app.php
-        // and gates itself on the user holding an admin role.
+        // NOTE: StaffRlsRead is registered BOTH above and on the global web
+        // group in bootstrap/app.php. A Filament panel does not include
+        // Laravel's `web` group, and /livewire/update is not in this stack, so
+        // each registration covers a half the other cannot reach.
     }
 }

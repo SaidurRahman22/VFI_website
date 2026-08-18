@@ -30,6 +30,15 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class StaffRlsRead
 {
+    /**
+     * Nesting depth. The middleware is registered on BOTH the Filament panel's
+     * stack and the global web group (see the note in handle()), and if a route
+     * ever picks up both, the inner `finally` must not clear a bypass the outer
+     * one is still relying on. Counted rather than boolean so the flag is only
+     * dropped when the outermost frame unwinds.
+     */
+    private static int $depth = 0;
+
     private function set(string $value): void
     {
         if (DB::connection()->getDriverName() === 'pgsql') {
@@ -49,25 +58,41 @@ class StaffRlsRead
          * the table re-rendered to "No applications" and the action could not
          * find its record. No exception, just silently zero rows.
          *
-         * Keyed on usesAdminPanel() so it can live in the global web group and
-         * still never loosen anything for a partner or a student — they hold no
-         * admin role, so the flag is never set for them and their tenancy net is
-         * untouched.
+         * Moving it to the web group then broke the OTHER half: a Filament panel
+         * declares its own middleware stack and does not include Laravel's `web`
+         * group, so /manage/* stopped getting the bypass and every staff table
+         * rendered empty against live Postgres while the buttons worked. It has
+         * to be registered in BOTH places — the panel stack for the render, the
+         * web group for /livewire/update — which is what StaffRlsReadRegistrationTest
+         * pins down, because SQLite has no RLS and no behavioural test can see this.
+         *
+         * Keyed on usesAdminPanel() so living in the global web group still never
+         * loosens anything for a partner or a student — they hold no admin role,
+         * so the flag is never set for them and their tenancy net is untouched.
          */
         $user = $request->user();
-        if ($user && $user->usesAdminPanel()) {
+        $adopted = $user && $user->usesAdminPanel();
+
+        if ($adopted) {
+            self::$depth++;
             $this->set('on');
         }
 
         try {
             return $next($request);
         } finally {
-            $this->set('');
+            if ($adopted && --self::$depth <= 0) {
+                self::$depth = 0;
+                $this->set('');
+            }
         }
     }
 
     public function terminate(Request $request, Response $response): void
     {
+        // Unconditional: a pooled connection must never carry the flag into the
+        // next request, whatever happened to the depth counter above.
+        self::$depth = 0;
         $this->set('');
     }
 }
