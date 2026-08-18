@@ -20,6 +20,7 @@ use App\Models\Student\StudentDocument;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\ApplicationReadiness;
+use App\Support\RlsBypass;
 use App\Support\TenantContext;
 use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,7 +91,7 @@ class StaffApplicationDocumentsTest extends TestCase
         ]);
         app(TenantContext::class)->clear();
 
-        return $app->withoutGlobalScope(BelongsToAgencyScope::class)->find($app->id);
+        return RlsBypass::run(fn () => $app->withoutGlobalScope(BelongsToAgencyScope::class)->find($app->id));
     }
 
     /** A clean, readable upload sitting in one of the six application slots. */

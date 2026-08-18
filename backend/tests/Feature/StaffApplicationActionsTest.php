@@ -15,6 +15,7 @@ use App\Models\Partner\PartnerAgencyMember;
 use App\Models\Student\Student;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Support\RlsBypass;
 use App\Support\TenantContext;
 use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -73,7 +74,7 @@ class StaffApplicationActionsTest extends TestCase
         ]);
         app(TenantContext::class)->clear();
 
-        return $app->withoutGlobalScope(BelongsToAgencyScope::class)->find($app->id);
+        return RlsBypass::run(fn () => $app->withoutGlobalScope(BelongsToAgencyScope::class)->find($app->id));
     }
 
     public function test_the_applications_page_renders_for_staff(): void

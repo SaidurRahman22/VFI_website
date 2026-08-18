@@ -13,6 +13,7 @@ use App\Models\Partner\ApplicationStatusEvent;
 use App\Models\Partner\PartnerAgency;
 use App\Models\Student\Student;
 use App\Services\SearchIndexer;
+use App\Support\RlsBypass;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -195,7 +196,7 @@ class PurgeDemoCatalogueTest extends TestCase
 
     private function unscoped(int $id): Application
     {
-        return Application::withoutGlobalScope(BelongsToAgencyScope::class)->findOrFail($id);
+        return RlsBypass::run(fn () => Application::withoutGlobalScope(BelongsToAgencyScope::class)->findOrFail($id));
     }
 
     private function seedProgramIn(string $country): Program

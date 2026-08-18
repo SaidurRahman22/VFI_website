@@ -18,6 +18,7 @@ use App\Models\Student\Student;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\ApplicationReviewService;
+use App\Support\RlsBypass;
 use App\Support\TenantContext;
 use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -57,7 +58,7 @@ class ApplicationReviewTest extends TestCase
         ]);
         app(TenantContext::class)->clear();   // staff act with NO tenant
 
-        return $app->withoutGlobalScope(BelongsToAgencyScope::class)->find($app->id);
+        return RlsBypass::run(fn () => $app->withoutGlobalScope(BelongsToAgencyScope::class)->find($app->id));
     }
 
     private function staff(): User
