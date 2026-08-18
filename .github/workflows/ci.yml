@@ -54,6 +54,13 @@ jobs:
       # --memory-limit: the default 128M crashes PHPStan's parallel workers on
       # a codebase this size. Findings that predate the baseline are in
       # phpstan-baseline.neon; this step now catches only what is ADDED.
+      # .env is gitignored, so a fresh checkout has no APP_KEY and every test
+      # that touches an encrypted cookie or session dies with "No application
+      # encryption key has been specified" - 197 errors. Reproduced locally by
+      # moving .env aside; this is what the test step has been failing on since
+      # PHPStan stopped failing before it.
+      - name: Environment file
+        run: cp .env.example .env && php artisan key:generate
       - name: Larastan / PHPStan (level 5, baselined)
         run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
       - name: Pint (code style)
@@ -104,6 +111,14 @@ jobs:
           path: backend/vendor
           key: composer-pg-${{ hashFiles('backend/composer.lock') }}
       - run: composer install --no-interaction --prefer-dist --no-progress
+
+      # .env is gitignored, so a fresh checkout has no APP_KEY and every test
+      # that touches an encrypted cookie or session dies with "No application
+      # encryption key has been specified" - 197 errors. Reproduced locally by
+      # moving .env aside; this is what the test step has been failing on since
+      # PHPStan stopped failing before it.
+      - name: Environment file
+        run: cp .env.example .env && php artisan key:generate
 
       # The role matters more than the database. Postgres exempts superusers
       # from RLS entirely and exempts a table's owner unless the table is
