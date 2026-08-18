@@ -593,4 +593,90 @@ class PurgeDemoCatalogueTest extends TestCase
         $this->assertMatchesRegularExpression('/programs\s*\|\s*scorecard\s*\|\s*1\s*\|\s*1\s*\|\s*\|/', $out);
         $this->assertMatchesRegularExpression('/programs\s*\|\s*daad\s*\|\s*1\s*\|\s*1\s*\|\s*\|/', $out);
     }
+
+    /**
+     * Live regression. Every fabricated programme sits in one of the five
+     * unlicensed destinations and the real catalogue is US + German, so the old
+     * country-first preference never matched and all five citing applications
+     * collapsed onto one global winner: an MSc Software Engineering case was
+     * repointed at "Natural Resources Conservation And Research". A case that
+     * reads as nonsense is not a preserved record - the agency has to recognise
+     * its own application afterwards. Subject must outrank both geography and
+     * raw completeness.
+     */
+    public function test_relink_prefers_the_same_subject_over_the_most_complete_row(): void
+    {
+        // The subject match is deliberately the SPARSEST real row in the
+        // catalogue, and denseProgram() outscores everything on completeness
+        // while sitting in a different subject. Without the subject preference
+        // the dense row wins, which is the bug.
+        $sparseMatch = $this->realProgramInArea('scorecard', 'United States', 'Sparse Business School', 'business', 'finance');
+        $this->denseProgram('daad', 'Germany', 'Dense Unrelated');
+
+        $demo = Program::where('source', 'seed')->where('study_area', 'business')->orderBy('id')->firstOrFail();
+        $application = $this->applicationCiting($demo);
+
+        $this->artisan('catalogue:purge-demo', ['--force' => true, '--relink' => true])->assertSuccessful();
+
+        $this->assertSame(
+            $sparseMatch->id,
+            (int) $this->unscoped($application->id)->program_id,
+            'the case should land in its own subject, not on the most complete row'
+        );
+        $this->assertSame(
+            $sparseMatch->institution_id,
+            (int) $this->unscoped($application->id)->institution_id,
+            'the university must travel with the programme'
+        );
+    }
+
+    /** No subject match anywhere: it still falls back rather than leaving a dangle. */
+    public function test_relink_still_falls_back_when_no_subject_match_exists(): void
+    {
+        // Chosen by exclusion rather than by name: setUp only fabricates 10
+        // programmes, so no single study area is guaranteed to be present. The
+        // only real subjects in this test are realUs' (it_computing / software),
+        // so anything outside both has no match at either preference level.
+        $demo = Program::where('source', 'seed')
+            ->where('study_area', '<>', 'it_computing')
+            ->where('discipline_area', '<>', 'software')
+            ->orderBy('id')
+            ->firstOrFail();
+        $application = $this->applicationCiting($demo);
+
+        $this->artisan('catalogue:purge-demo', ['--force' => true, '--relink' => true])->assertSuccessful();
+
+        $landed = (int) $this->unscoped($application->id)->program_id;
+        $this->assertContains($landed, [$this->realUs->id, $this->realDe->id],
+            'with no subject match it must still land on a real programme');
+        $this->assertSame('scorecard', Program::find($landed)->source,
+            'the global fallback is scorecard-first');
+    }
+
+    /** A real institution + programme in a NAMED subject, deliberately sparse. */
+    private function realProgramInArea(string $source, string $country, string $name,
+        string $studyArea, string $disciplineArea): Program
+    {
+        $inst = Institution::create([
+            'name' => $name, 'country' => $country,
+            'source' => $source, 'external_ref' => $source.':'.md5($name),
+        ]);
+
+        $program = Program::create([
+            'institution_id' => $inst->id,
+            'title' => $name.' programme',
+            'level' => 'master',
+            'study_area' => $studyArea,
+            'discipline_area' => $disciplineArea,
+            'source' => $source,
+            'external_ref' => $source.':p:'.md5($name),
+        ]);
+
+        $program->intakes()->create([
+            'intake_month' => 9, 'intake_year' => 2027, 'season_label' => 'fall',
+            'application_deadline_at' => '2027-05-01', 'status' => 'open',
+        ]);
+
+        return $program->fresh();
+    }
 }

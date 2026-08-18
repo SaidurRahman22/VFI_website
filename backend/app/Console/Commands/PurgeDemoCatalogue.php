@@ -288,7 +288,7 @@ class PurgeDemoCatalogue extends Command
                 'institution_id' => $app->institution_id !== null ? (int) $app->institution_id : null,
                 'cites_program' => $citesProgram,
                 'target' => $citesProgram
-                    ? $this->targetFor($this->countryOfProgram((int) $app->program_id))
+                    ? $this->targetFor(...array_values($this->subjectOfProgram((int) $app->program_id)))
                     : null,
                 // A university-only citation keeps the programme it already names,
                 // so the honest replacement is that programme's real university —
@@ -329,14 +329,55 @@ class PurgeDemoCatalogue extends Command
     }
 
     /**
-     * The programme a dangling application should point at instead: a real one in
-     * the same country if the catalogue has one, else the most complete scorecard
-     * programme anywhere. Deterministic — ties break on the lowest id.
+     * Country plus subject for the doomed programme, read while it still exists.
+     *
+     * @return array{country:?string,study_area:?string,discipline_area:?string}
      */
-    private function targetFor(?string $country): ?object
+    private function subjectOfProgram(int $programId): array
     {
-        if ($country !== null && ($sameCountry = $this->bestRealProgram($country)) !== null) {
-            return $sameCountry;
+        $row = DB::table('programs')
+            ->join('institutions', 'institutions.id', '=', 'programs.institution_id')
+            ->where('programs.id', $programId)
+            ->select('institutions.country', 'programs.study_area', 'programs.discipline_area')
+            ->first();
+
+        return [
+            'country' => $row->country ?? null,
+            'study_area' => $row->study_area ?? null,
+            'discipline_area' => $row->discipline_area ?? null,
+        ];
+    }
+
+    /**
+     * The programme a dangling application should point at instead.
+     *
+     * SUBJECT comes before geography. The first version of this preferred the
+     * same country and then simply the most complete row anywhere, which on live
+     * data repointed an MSc Software Engineering case at "Natural Resources
+     * Conservation And Research" — every demo programme is in New Zealand, the
+     * real catalogue is US and German, so the country preference never matched
+     * and everything collapsed onto one global winner. A case that reads as
+     * nonsense is not a preserved record; the agency has to recognise its own
+     * application afterwards.
+     *
+     * Order: same study area AND country -> same study area -> same discipline
+     * area -> same country -> most complete anywhere. Deterministic throughout,
+     * ties breaking on the lowest id, so a re-run picks the same target.
+     */
+    private function targetFor(?string $country, ?string $studyArea = null, ?string $disciplineArea = null): ?object
+    {
+        foreach ([
+            [$country, $studyArea, null],
+            [null, $studyArea, null],
+            [null, null, $disciplineArea],
+            [$country, null, null],
+        ] as [$c, $sa, $da]) {
+            if ($sa === null && $da === null && $c === null) {
+                continue;   // that is the global fallback below, not a preference
+            }
+            if (($hit = $this->bestRealProgram($c, $sa, $da)) !== null) {
+                return $hit;
+            }
         }
 
         if (! $this->fallbackResolved) {
@@ -347,7 +388,7 @@ class PurgeDemoCatalogue extends Command
         return $this->fallbackTarget;
     }
 
-    private function bestRealProgram(?string $country): ?object
+    private function bestRealProgram(?string $country, ?string $studyArea = null, ?string $disciplineArea = null): ?object
     {
         $query = DB::table('programs')
             ->join('institutions', 'institutions.id', '=', 'programs.institution_id')
@@ -366,6 +407,12 @@ class PurgeDemoCatalogue extends Command
 
         if ($country !== null) {
             $query->where('institutions.country', $country);
+        }
+        if ($studyArea !== null) {
+            $query->where('programs.study_area', $studyArea);
+        }
+        if ($disciplineArea !== null) {
+            $query->where('programs.discipline_area', $disciplineArea);
         }
 
         return $query->first();
