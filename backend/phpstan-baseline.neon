@@ -1,0 +1,1645 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^PHPDoc tag @var with type App\\Models\\Content\\ContentItem is not subtype of native type App\\Models\\Content\\Blog\|App\\Models\\Content\\Event\|App\\Models\\Content\\NewsItem\|App\\Models\\Content\\Photo\|App\\Models\\Content\\PpDoc\|App\\Models\\Content\\PpEmail\|App\\Models\\Content\\PpManager\|App\\Models\\Content\\PpNotif\|App\\Models\\Content\\PpQuicklink\|App\\Models\\Content\\PpUpdate\.$#'
+			identifier: varTag.nativeType
+			count: 1
+			path: app/Console/Commands/ImportContent.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Console/Commands/ImportUniversityProfiles.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-list\<string\|null\> and array\{\} will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Console/Commands/ImportUniversityProfiles.php
+
+		-
+			message: '#^Property App\\Console\\Commands\\IngestPrograms\:\:\$allow \(array\<string, array\<string, true\>\>\) does not accept non\-empty\-array\<string, array\<bool\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Console/Commands/IngestPrograms.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-list\<mixed\>\|string and array\{\} will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Console/Commands/IngestPrograms.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Console/Commands/PurgeDemoCatalogue.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\UniversityDefaults\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Pages/UniversityDefaults.php
+
+		-
+			message: '#^Call to function in_array\(\) with arguments string, array\{App\\Enums\\AgencyStatus\:\:Approved, App\\Enums\\AgencyStatus\:\:Suspended\} and true will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Filament/Resources/Agencies/Tables/AgenciesTable.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\AgencyStatus\:\:Approved will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Filament/Resources/Agencies/Tables/AgenciesTable.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\AgencyStatus\:\:Suspended will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Filament/Resources/Agencies/Tables/AgenciesTable.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isReadable\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/DocumentReviews/Tables/DocumentReviewsTable.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\DocumentStatus\:\:Uploaded will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: app/Filament/Resources/DocumentReviews/Tables/DocumentReviewsTable.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\DocumentStatus\:\:Verified will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Filament/Resources/DocumentReviews/Tables/DocumentReviewsTable.php
+
+		-
+			message: '#^Call to function in_array\(\) with arguments string, array\{App\\Enums\\ApplicationReviewStatus\:\:Pending, App\\Enums\\ApplicationReviewStatus\:\:MoreInfo\} and true will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Filament/Resources/PartnerApplications/PartnerApplicationResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$original_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$scan_status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$size\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isReadable\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Match arm comparison between App\\Enums\\DocumentStatus\:\:Missing\|string and App\\Enums\\DocumentStatus\:\:Rejected is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Match arm comparison between App\\Enums\\DocumentStatus\:\:Missing\|string and App\\Enums\\DocumentStatus\:\:Uploaded is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Match arm comparison between App\\Enums\\DocumentStatus\:\:Missing\|string and App\\Enums\\DocumentStatus\:\:Verified is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Parameter \#1 \$at of static method App\\Filament\\Resources\\StaffApplications\\Tables\\StaffApplicationsTable\:\:on\(\) expects DateTimeInterface\|null, string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Parameter \#1 \$from of method App\\Services\\ApplicationReviewService\:\:allowedNextStatuses\(\) expects App\\Enums\\ApplicationStatus, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Parameter \#1 \$student of method App\\Services\\ApplicationReadiness\:\:for\(\) expects App\\Models\\Student\\Student, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between App\\Enums\\DocumentStatus\:\:Missing\|string and App\\Enums\\DocumentStatus\:\:Rejected will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Student\\StudentDocument\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/UserRoles/Tables/UserRolesTable.php
+
+		-
+			message: '#^Instanceof between string and App\\Enums\\Role will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 3
+			path: app/Filament/Resources/UserRoles/Tables/UserRolesTable.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: string, Closure\(App\\Models\\UserRole\)\: string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/UserRoles/Tables/UserRolesTable.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:mapWithKeys\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\<int, string\>, Closure\(App\\Models\\UserRole\)\: non\-empty\-array\<int, string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/UserRoles/Tables/UserRolesTable.php
+
+		-
+			message: '#^Right side of && is always false\.$#'
+			identifier: booleanAnd.rightAlwaysFalse
+			count: 1
+			path: app/Http/Controllers/Admin/AdminAuthController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\UserStatus\:\:Active will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Admin/AdminAuthController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Http/Controllers/Admin/AdminAuthController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Admin/AdminContentController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>version" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Admin/AdminContentController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Admin/AdminPageController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/StaffDocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$mime\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/StaffDocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$original_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/StaffDocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$storage_key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/StaffDocumentController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isReadable\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/StaffDocumentController.php
+
+		-
+			message: '#^Cannot call method canStudentSignIn\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/Auth/StudentAuthController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\UserStatus\:\:Suspended will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Auth/StudentAuthController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\UserStatus\:\:PendingVerification will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Auth/StudentAuthController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Me/DocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$original_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Me/DocumentController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isReadable\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Me/DocumentController.php
+
+		-
+			message: '#^Parameter \#1 \$file of method App\\Http\\Controllers\\Me\\DocumentController\:\:log\(\) expects App\\Models\\Student\\DocumentFile, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/Me/DocumentController.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Me/DocumentController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\DocumentStatus\:\:Verified will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: app/Http/Controllers/Me/DocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$student_ref\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:displayName\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 4
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{from\: string\|null, to\: string, actor_type\: mixed, note\: string\|null, occurred_at\: mixed\}, Closure\(App\\Models\\Partner\\ApplicationStatusEvent\)\: array\{from\: string\|null, to\: string, actor_type\: mixed, note\: string\|null, occurred_at\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Parameter \#1 \$student of method App\\Services\\ApplicationReadiness\:\:for\(\) expects App\\Models\\Student\\Student, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 4
+			path: app/Http/Controllers/Partner/PartnerApplicationController.php
+
+		-
+			message: '#^Cannot call method canOperate\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerAuthController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\UserStatus\:\:Suspended will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerAuthController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Partner/PartnerConsoleController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Partner\\PartnerAgencyMember\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerConsoleController.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerConsoleController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerEnquiryController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerEnquiryController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: int, name\: string, scan\: mixed, readable\: bool\}, Closure\(App\\Models\\Partner\\ProgramRequestDocument\)\: array\{id\: int, name\: string, scan\: mixed, readable\: bool\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerEnquiryController.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerEnquiryController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$affordability_band\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$application_deadline_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$country\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$has_own_english_test\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake_month\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake_year\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$interview_required\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_major_city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_required\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$maths_required\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$min_overall\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$offer_acceptance_band\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$offer_tat_band\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$province_state\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$season_label\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$test\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$vfi_represented\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$waiver_available\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 5
+			path: app/Http/Controllers/Partner/PartnerProgramController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$institution\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerShortlistController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intakes\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerShortlistController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$level\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerShortlistController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$study_area\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerShortlistController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerShortlistController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tuition_currency\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerShortlistController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tuition_fee_minor\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerShortlistController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentController.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$mime\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$original_name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$scan_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$size\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isReadable\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Student\\DocumentType\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Parameter \#1 \$file of method App\\Http\\Controllers\\Partner\\PartnerStudentDocumentController\:\:log\(\) expects App\\Models\\Student\\DocumentFile, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\DocumentStatus\:\:Verified will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: app/Http/Controllers/Partner/PartnerStudentDocumentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Catalogue\\Institution\:\:\$n\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$duration_band\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intakes\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_stem\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$level\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$requirements\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$scholarship_available\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$study_area\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tuition_currency\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tuition_fee_minor\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Offset ''image'' does not exist on string\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Offset ''image'' on string in empty\(\) does not exist\.$#'
+			identifier: empty.offset
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Offset ''month'' on string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Offset ''name'' on string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Offset ''note'' on string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\) to function array_filter is empty, call has no effect\.$#'
+			identifier: arrayFilter.empty
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\) to function array_values is empty, call has no effect\.$#'
+			identifier: arrayValues.empty
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\|string\) to function array_values is empty, call has no effect\.$#'
+			identifier: arrayValues.empty
+			count: 8
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/PublicUniversityController.php
+
+		-
+			message: '#^Anonymous function should return Illuminate\\Support\\Collection\<int, array\{value\: string, label\: string\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{value\: string, label\: string\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/TaxonomyController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\TaxonomyTerm\>\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\TaxonomyTerm\>, int\|string\)\: Illuminate\\Support\\Collection\<int, array\{value\: string, label\: string\|null\}\>, Closure\(mixed\)\: Illuminate\\Support\\Collection\<int, array\{value\: string, label\: string\|null\}\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/TaxonomyController.php
+
+		-
+			message: '#^Cannot call method isFuture\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/AdminInvite.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Content\\ContentItem\:\:\$legacy_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Content/ContentItem.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Content\\ContentItem\:\:\$position\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Content/ContentItem.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:auditEntity\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Models/Content/ContentItem.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:auditId\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Models/Content/ContentItem.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/EmailVerificationCode.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Models/EmailVerificationCode.php
+
+		-
+			message: '#^Cannot call method isReadable\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Partner/ProgramRequestDocument.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/PasswordResetToken.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Models/PasswordResetToken.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:auditEntity\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Models/SiteContent.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:auditId\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Models/SiteContent.php
+
+		-
+			message: '#^Cannot call method isReadable\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Student/DocumentFile.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Student/StudentAction.php
+
+		-
+			message: '#^Cannot call method isFuture\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:activeRoles\(\) should return Illuminate\\Support\\Collection\<int, App\\Enums\\Role\> but returns Illuminate\\Support\\Collection\<int, string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: string, Closure\(App\\Models\\UserRole\)\: string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 2
+			path: app/Models/User.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\UserStatus\:\:Active will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Instanceof between string and App\\Enums\\Role will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Models/UserRole.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/AgencySuspensionService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\AgencyStatus will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/AgencySuspensionService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\AgencyStatus\:\:Closed will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/AgencySuspensionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ApplicationReadiness.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/ApplicationReadiness.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Services/ApplicationReviewService.php
+
+		-
+			message: '#^Offset ''conditional''\|''deferral''\|''non_enrolment''\|''offer''\|''payment''\|''pending_from_partner''\|''review''\|''submitted''\|''visa_received''\|''visa_rejected'' on array\{submitted\: array\{''review'', ''pending_from_partner'', ''non_enrolment''\}, review\: array\{''offer'', ''conditional'', ''pending_from_partner'', ''deferral'', ''non_enrolment''\}, conditional\: array\{''offer'', ''pending_from_partner'', ''deferral'', ''non_enrolment''\}, offer\: array\{''payment'', ''conditional'', ''deferral'', ''non_enrolment''\}, payment\: array\{''visa_received'', ''visa_rejected'', ''deferral'', ''non_enrolment''\}, visa_received\: array\{''deferral'', ''non_enrolment''\}, visa_rejected\: array\{''deferral'', ''payment'', ''non_enrolment''\}, pending_from_partner\: array\{''review'', ''deferral'', ''non_enrolment''\}, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/ApplicationReviewService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:Payment, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Offer, App\\Enums\\ApplicationStatus\:\:Conditional, App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Offer, App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Payment, App\\Enums\\ApplicationStatus\:\:Conditional, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Review, App\\Enums\\ApplicationStatus\:\:Deferral\|App\\Enums\\ApplicationStatus\:\:Offer\|App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Review\}\|array\{App\\Enums\\ApplicationStatus\:\:VisaReceived, App\\Enums\\ApplicationStatus\:\:VisaRejected, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Services/ApplicationReviewService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:Payment, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Offer, App\\Enums\\ApplicationStatus\:\:Conditional, App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Offer, App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Payment, App\\Enums\\ApplicationStatus\:\:Conditional, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Review, App\\Enums\\ApplicationStatus\:\:Deferral\|App\\Enums\\ApplicationStatus\:\:Offer\|App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Review\}\|array\{App\\Enums\\ApplicationStatus\:\:VisaReceived, App\\Enums\\ApplicationStatus\:\:VisaRejected, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 1
+			path: app/Services/ApplicationReviewService.php
+
+		-
+			message: '#^Parameter \#1 \$from of method App\\Services\\ApplicationReviewService\:\:canTransition\(\) expects App\\Enums\\ApplicationStatus, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ApplicationReviewService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\ApplicationStatus will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/ApplicationReviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$file\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/DocumentChecklist.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$rejection_reason\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DocumentChecklist.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/DocumentChecklist.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Student\\DocumentType\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/DocumentChecklist.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>original_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/DocumentChecklist.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DocumentReviewService.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Services/DocumentReviewService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\DocumentStatus\:\:Uploaded will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/DocumentReviewService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\DocumentStatus\:\:Verified will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/DocumentReviewService.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 2
+			path: app/Services/DocumentReviewService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Services/DocumentReviewService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/DocumentReviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Gdpr/DataSubjectErasureService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Services/Gdpr/DataSubjectErasureService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Services/Gdpr/DataSubjectErasureService.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 5
+			path: app/Services/Gdpr/DataSubjectExportService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 5
+			path: app/Services/Gdpr/DataSubjectExportService.php
+
+		-
+			message: '#^Offset ''lawful_basis'' on array\{document_file_id\?\: int\|null, student_id\?\: int\|null, recipient_name\: string, recipient_type\: string, lawful_basis\: string, note\?\: string\|null, disclosed_at\?\: DateTimeInterface\|string\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Gdpr/DisclosureService.php
+
+		-
+			message: '#^Offset ''recipient_name'' on array\{document_file_id\?\: int\|null, student_id\?\: int\|null, recipient_name\: string, recipient_type\: string, lawful_basis\: string, note\?\: string\|null, disclosed_at\?\: DateTimeInterface\|string\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Gdpr/DisclosureService.php
+
+		-
+			message: '#^Offset ''recipient_type'' on array\{document_file_id\?\: int\|null, student_id\?\: int\|null, recipient_name\: string, recipient_type\: string, lawful_basis\: string, note\?\: string\|null, disclosed_at\?\: DateTimeInterface\|string\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Gdpr/DisclosureService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/ImageOptimiser.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/ImageService.php
+
+		-
+			message: '#^Offset ''Australia''\|''Canada''\|''Ireland''\|''New Zealand''\|''United Kingdom'' on array\{''United Kingdom''\: 18000, Canada\: 22000, Australia\: 30000, Ireland\: 16000, ''New Zealand''\: 28000\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Ingest/SeedSource.php
+
+		-
+			message: '#^Cannot call method diffInSeconds\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/OtpService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/OtpService.php
+
+		-
+			message: '#^Method App\\Services\\PartnerReview\:\:approve\(\) should return App\\Models\\Partner\\PartnerAgency but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/PartnerReview.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: app/Services/PartnerReview.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\ApplicationReviewStatus\:\:Approved will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/PartnerReview.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/PasswordResetService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/PasswordResetService.php
+
+		-
+			message: '#^Method App\\Services\\PasswordResetService\:\:consume\(\) should return array\{status\: string, user\?\: App\\Models\\User\} but returns array\{status\: ''ok'', user\: Illuminate\\Database\\Eloquent\\Model\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/PasswordResetService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\PasswordResetService\:\:revokeAllSessions\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/PasswordResetService.php
+
+		-
+			message: '#^Parameter \#2 \$from of method App\\Services\\PipelineService\:\:writeEvent\(\) expects App\\Enums\\ApplicationStatus\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/PipelineService.php
+
+		-
+			message: '#^Instanceof between string and App\\Enums\\Role will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Services/RoleAssignmentService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$affordability_band\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$application_deadline_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$country\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$has_own_english_test\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake_month\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake_year\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$interview_required\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_major_city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_required\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$maths_required\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$offer_acceptance_band\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$offer_tat_band\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$province_state\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$season_label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$test\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tuition_deposit_policy\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$vfi_represented\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$waiver_available\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Parameter \#2 \$intake of method App\\Services\\SearchIndexer\:\:isStale\(\) expects App\\Models\\Catalogue\\ProgramIntake, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/SearchIndexer.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Services/StaffAccessService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$budget\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$country\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$district\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$dob\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email_verified_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$field\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$first\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$grade\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$institution\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$last\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$line1\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nationality\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$postcode\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$qualification\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$score_raw\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$taken_on\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$test\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$year\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/StudentProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$body\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$course\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$due_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$icon\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$note\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$occurred_on\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$pct\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$place\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sent_on\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$stage\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$state\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$university\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$when_label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isOverdue\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 4
+			path: app/Services/TrackingService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Support/StepUp.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: database/seeders/SuperAdminSeeder.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\Command\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: database/seeders/SuperAdminSeeder.php

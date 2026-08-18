@@ -48,8 +48,11 @@ jobs:
           path: backend/vendor
           key: composer-${{ hashFiles('backend/composer.lock') }}
       - run: composer install --no-interaction --prefer-dist --no-progress
-      - name: Larastan / PHPStan (moderate)
-        run: vendor/bin/phpstan analyse --no-progress || vendor/bin/phpstan analyse --level=5 --no-progress
+      # --memory-limit: the default 128M crashes PHPStan's parallel workers on
+      # a codebase this size. Findings that predate the baseline are in
+      # phpstan-baseline.neon; this step now catches only what is ADDED.
+      - name: Larastan / PHPStan (level 5, baselined)
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
       - name: Pint (code style)
         run: vendor/bin/pint --test
       - name: Unit + feature tests

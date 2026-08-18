@@ -1,0 +1,30 @@
+# Static analysis. The CI step for this has existed since Phase 0 but larastan
+# was never actually a dependency, so `vendor/bin/phpstan` did not exist and the
+# step failed on every run - which also meant Pint and the TEST step after it
+# never executed. CI has therefore never run this project's tests.
+#
+# Level 5 to start, with a baseline: the point is to catch what is added from
+# here on, not to stop the world over pre-existing findings in a codebase this
+# size. Lower the baseline over time; do not raise it.
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+
+    paths:
+        - app
+        - database
+        - routes
+
+    # Generated code and framework glue - analysing these reports on Laravel's
+    # own shape rather than on ours.
+    excludePaths:
+        - app/Filament/**/Pages/*
+        - bootstrap/cache/*
+
+    # No ignoreErrors block: level 5 does not emit the missing-type identifiers
+    # those would have covered, and PHPStan reports an unmatched ignore rule as
+    # an error of its own. The baseline carries the pre-existing findings
+    # instead - 274 of them, almost all Eloquent/Filament PHPDoc drift.

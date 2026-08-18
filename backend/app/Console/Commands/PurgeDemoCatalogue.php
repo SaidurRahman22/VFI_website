@@ -320,14 +320,6 @@ class PurgeDemoCatalogue extends Command
         return $id !== null ? (int) $id : null;
     }
 
-    private function countryOfProgram(int $programId): ?string
-    {
-        return DB::table('programs')
-            ->join('institutions', 'institutions.id', '=', 'programs.institution_id')
-            ->where('programs.id', $programId)
-            ->value('institutions.country');
-    }
-
     /**
      * Country plus subject for the doomed programme, read while it still exists.
      *
