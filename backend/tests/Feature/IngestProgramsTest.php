@@ -118,4 +118,73 @@ class IngestProgramsTest extends TestCase
         $this->assertSame(0, Program::where('level', 'bachelor')->count());
         $this->assertLessThan(30, Program::count()); // the Bachelor records were dropped
     }
+
+    /**
+     * The client's requirement, as a test: every figure a feed writes must be an
+     * ordinary editable field, and typing over it in the admin must stick.
+     *
+     * These are the detail-page sections that rendered EMPTY on live while the
+     * published figures sat one API field away - Cost to study, Admissions and
+     * the About paragraph. They are soft-filled, so the feed writes them once and
+     * never again touches them after a human has.
+     */
+    public function test_cost_admissions_and_overview_are_soft_filled_and_then_staff_owned(): void
+    {
+        $this->artisan('programs:ingest', ['--source' => 'seed'])->assertSuccessful();
+        $inst = Institution::query()->firstOrFail();
+
+        // The seed feed supplies none of these, so they start empty - which is
+        // itself the point: an empty field is honest, a fabricated one is not.
+        $this->assertNull($inst->cost_note);
+        $this->assertNull($inst->living_cost_note);
+        $this->assertNull($inst->admission_academic);
+
+        // Staff fill them in the admin panel.
+        $inst->forceFill([
+            'overview' => 'Written by the VFI content team.',
+            'cost_note' => 'Confirmed with the admissions office, March 2026.',
+            'cost_rows_json' => [['label' => 'Tuition', 'value' => 'GBP 18,000']],
+            'living_cost_note' => 'GBP 1,100 per month',
+            'admission_academic' => 'Second class upper honours or equivalent',
+            'admission_english' => 'IELTS 6.5 with no band below 6.0',
+        ])->save();
+
+        $this->artisan('programs:ingest', ['--source' => 'seed'])->assertSuccessful();
+        $inst->refresh();
+
+        $this->assertSame('Written by the VFI content team.', $inst->overview);
+        $this->assertSame('Confirmed with the admissions office, March 2026.', $inst->cost_note);
+        $this->assertSame([['label' => 'Tuition', 'value' => 'GBP 18,000']], $inst->cost_rows_json);
+        $this->assertSame('GBP 1,100 per month', $inst->living_cost_note);
+        $this->assertSame('Second class upper honours or equivalent', $inst->admission_academic);
+        $this->assertSame('IELTS 6.5 with no band below 6.0', $inst->admission_english);
+    }
+
+    /**
+     * Every field a feed can write must exist on the admin form, or the client
+     * cannot see or correct it. Asserted against the form source rather than a
+     * rendered page, because a missing component is a wiring mistake, not a
+     * rendering one - and this is the check that would have caught the Cost to
+     * Study section being unreachable.
+     */
+    public function test_every_feed_written_field_is_editable_in_the_admin(): void
+    {
+        $form = file_get_contents(app_path('Filament/Resources/Universities/Schemas/UniversityForm.php'));
+
+        foreach ([
+            'overview', 'overview_stats_json', 'cost_note', 'cost_rows_json',
+            'living_cost_note', 'admission_academic', 'admission_english',
+            'salary_note', 'placement_note', 'website',
+        ] as $field) {
+            $this->assertStringContainsString(
+                "make('".$field."')",
+                $form,
+                "{$field} is written by a feed but has no input on the university form, so nobody can correct it."
+            );
+        }
+
+        // and each block must say where on the public site it appears
+        $this->assertGreaterThanOrEqual(13, substr_count($form, '->description('),
+            'every Section needs a description telling the editor which part of the site it drives');
+    }
 }

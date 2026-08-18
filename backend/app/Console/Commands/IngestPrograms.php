@@ -196,6 +196,17 @@ class IngestPrograms extends Command
             'overview_stats_json' => ! empty($inst['overview_stats']) && is_array($inst['overview_stats'])
                 ? array_values($inst['overview_stats'])
                 : null,
+            // Cost to study / Admissions / About. The detail page rendered these
+            // sections empty while the published figures sat one API field away.
+            // Every one is soft, so the moment staff type their own text the feed
+            // stops touching it.
+            'overview' => $this->str($inst['overview'] ?? null, 4000),
+            'cost_note' => $this->str($inst['cost_note'] ?? null, 2000),
+            'cost_rows_json' => ! empty($inst['cost_rows']) && is_array($inst['cost_rows'])
+                ? array_values($inst['cost_rows'])
+                : null,
+            'living_cost_note' => $this->str($inst['living_cost_note'] ?? null, 190),
+            'admission_academic' => $this->str($inst['admission_academic'] ?? null, 2000),
         ], fn ($v) => $v !== null && $v !== []);
 
         $program = [

@@ -71,8 +71,26 @@ class CollegeScorecardSource implements IngestSource
                 // Request ONLY the sub-fields we use — the full cip_4_digit object
                 // carries dozens of earnings/debt fields and makes each school
                 // ~700KB; this trims it ~90% so the throttle can deliver a page.
+                // Every one of these is published by the U.S. Department of
+                // Education and is public domain. The cost/admissions block was
+                // added because the university detail page was rendering empty
+                // Cost-to-study and Admissions sections while the real figures
+                // sat one API field away. Still narrow on purpose: the full
+                // cip_4_digit object carries dozens of earnings/debt fields and
+                // makes each school ~700KB.
                 'fields' => 'id,school.name,school.city,school.state,school.school_url,'
-                    .'latest.cost.tuition.out_of_state,latest.student.size,'
+                    .'school.locale,school.ownership,school.price_calculator_url,'
+                    .'latest.cost.tuition.in_state,latest.cost.tuition.out_of_state,'
+                    .'latest.cost.attendance.academic_year,latest.cost.booksupply,'
+                    .'latest.cost.roomboard.oncampus,latest.cost.roomboard.offcampus,'
+                    .'latest.cost.avg_net_price.public,latest.cost.avg_net_price.private,'
+                    .'latest.admissions.sat_scores.25th_percentile.critical_reading,'
+                    .'latest.admissions.sat_scores.75th_percentile.critical_reading,'
+                    .'latest.admissions.sat_scores.25th_percentile.math,'
+                    .'latest.admissions.sat_scores.75th_percentile.math,'
+                    .'latest.admissions.act_scores.25th_percentile.cumulative,'
+                    .'latest.admissions.act_scores.75th_percentile.cumulative,'
+                    .'latest.student.size,'
                     .'latest.admissions.admission_rate.overall,'
                     .'latest.completion.completion_rate_4yr_150nt,'
                     .'latest.earnings.10_yrs_after_entry.median,'
@@ -154,6 +172,85 @@ class CollegeScorecardSource implements IngestSource
             $stats[] = ['value' => number_format((int) $size), 'label' => 'Students enrolled'];
         }
 
+        // ---- Cost to study, Admissions, and campus -------------------------
+        // All of it straight from the feed and attributed on screen. Anything the
+        // feed does not report is left NULL for staff to fill from the university's
+        // own site — an invented tuition figure is worse than an empty row, because
+        // a counsellor will quote it.
+        $money = static fn ($v) => is_numeric($v) && $v > 0 ? 'USD '.number_format((int) $v) : null;
+
+        $costRows = [];
+        foreach ([
+            ['latest.cost.tuition.in_state', 'Tuition (in-state)'],
+            ['latest.cost.tuition.out_of_state', 'Tuition (out-of-state / international)'],
+            ['latest.cost.booksupply', 'Books and supplies'],
+            ['latest.cost.roomboard.oncampus', 'Room and board (on campus)'],
+            ['latest.cost.roomboard.offcampus', 'Room and board (off campus)'],
+            ['latest.cost.attendance.academic_year', 'Total cost of attendance'],
+        ] as [$key, $label]) {
+            if (($v = $money($school[$key] ?? null)) !== null) {
+                $costRows[] = ['label' => $label, 'value' => $v];
+            }
+        }
+        // The net price is what students actually pay after aid, which is the more
+        // honest headline — but it is split across two columns by school type.
+        $netPrice = $money($school['latest.cost.avg_net_price.public'] ?? null)
+            ?? $money($school['latest.cost.avg_net_price.private'] ?? null);
+        if ($netPrice !== null) {
+            $costRows[] = ['label' => 'Average net price paid (after aid)', 'value' => $netPrice];
+        }
+
+        // Room and board doubles as the living-cost line: it is the only
+        // accommodation figure the feed publishes, and it is a real one.
+        $roomBoard = $money($school['latest.cost.roomboard.oncampus'] ?? null)
+            ?? $money($school['latest.cost.roomboard.offcampus'] ?? null);
+
+        // SAT/ACT ranges are the real admission requirement this feed carries.
+        // English-test requirements (IELTS/TOEFL) are NOT published here, so
+        // admission_english stays empty rather than guessed.
+        $satLow = ($school['latest.admissions.sat_scores.25th_percentile.critical_reading'] ?? null)
+            + ($school['latest.admissions.sat_scores.25th_percentile.math'] ?? null);
+        $satHigh = ($school['latest.admissions.sat_scores.75th_percentile.critical_reading'] ?? null)
+            + ($school['latest.admissions.sat_scores.75th_percentile.math'] ?? null);
+        $actLow = $school['latest.admissions.act_scores.25th_percentile.cumulative'] ?? null;
+        $actHigh = $school['latest.admissions.act_scores.75th_percentile.cumulative'] ?? null;
+
+        $admission = [];
+        if ($satLow > 0 && $satHigh > 0) {
+            $admission[] = 'SAT '.$satLow.'–'.$satHigh.' (middle 50% of admitted students)';
+        }
+        if (is_numeric($actLow) && is_numeric($actHigh)) {
+            $admission[] = 'ACT '.(int) $actLow.'–'.(int) $actHigh.' (middle 50%)';
+        }
+
+        // A factual sentence assembled from feed values only — no adjectives, no
+        // marketing. LOCALE and OWNERSHIP are coded integers in the feed.
+        $localeText = match (true) {
+            in_array((int) ($school['school.locale'] ?? 0), [11, 12, 13], true) => 'in a city',
+            in_array((int) ($school['school.locale'] ?? 0), [21, 22, 23], true) => 'in a suburban area',
+            in_array((int) ($school['school.locale'] ?? 0), [31, 32, 33], true) => 'in a town',
+            in_array((int) ($school['school.locale'] ?? 0), [41, 42, 43], true) => 'in a rural area',
+            default => null,
+        };
+        $ownerText = match ((int) ($school['school.ownership'] ?? 0)) {
+            1 => 'public',
+            2 => 'private not-for-profit',
+            3 => 'private for-profit',
+            default => null,
+        };
+        $overview = null;
+        if ($ownerText !== null || $localeText !== null || is_numeric($size)) {
+            $overview = trim(sprintf(
+                '%s is a %s institution%s%s%s. Figures on this page are published by the '
+                .'U.S. Department of Education (College Scorecard).',
+                $name,
+                $ownerText ?? 'higher education',
+                $localeText !== null ? ' '.$localeText : '',
+                $city !== '' ? ' in '.$city.($state !== '' ? ', '.$state : '') : '',
+                is_numeric($size) ? ', with '.number_format((int) $size).' students enrolled' : ''
+            ));
+        }
+
         $institution = [
             'name' => $name,
             'country' => 'United States',
@@ -171,6 +268,13 @@ class CollegeScorecardSource implements IngestSource
                 ? ('Graduate earnings for this institution are published by the U.S. Department of Education. '
                     .'The figure below is the median for former students ten years after they first enrolled, across all programs.')
                 : null,
+            'overview' => $overview,
+            'cost_rows' => $costRows,
+            'cost_note' => $costRows === [] ? null
+                : 'Published by the U.S. Department of Education (College Scorecard), most recent reporting year. '
+                    .'Figures are institution-wide averages — confirm the exact cost of a specific programme with the university.',
+            'living_cost_note' => $roomBoard !== null ? $roomBoard.' per year (room and board)' : null,
+            'admission_academic' => $admission === [] ? null : implode(' · ', $admission),
             'external_ref' => $instRef,
         ];
 
