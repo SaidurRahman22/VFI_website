@@ -1,0 +1,11 @@
+# Server backups live here. NOTHING in this directory may ever be committed.
+#
+# Two reasons, both load-bearing:
+#   1. This repo is PUBLIC on GitHub, and vfi-config-*.tgz contains backend/.env
+#      — the APP_KEY, the database password and the mail credentials.
+#   2. The repo root IS the web root on the VPS, so a committed dump would be
+#      downloadable at http://<host>/res/<file> the moment it deployed.
+#
+# Ignore everything except this file.
+*
+!.gitignore
