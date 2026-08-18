@@ -86,6 +86,7 @@ class StudentRegistrationTest extends TestCase
         $code = null;
         Mail::assertSent(OtpMail::class, function (OtpMail $m) use (&$code) {
             $code = $m->code;
+
             return true;
         });
 

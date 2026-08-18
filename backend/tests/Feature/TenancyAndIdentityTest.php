@@ -4,10 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\Role;
 use App\Models\AuthEvent;
+use App\Models\Concerns\BelongsToAgencyScope;
 use App\Models\SyntheticPartnerRow;
 use App\Models\User;
 use App\Models\UserRole;
-use App\Models\Concerns\BelongsToAgencyScope;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

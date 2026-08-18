@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\DocumentStatus;
 use App\Enums\Role;
 use App\Enums\ScanStatus;
-use App\Models\Student\DocumentAccessLog;
 use App\Models\Student\DocumentFile;
 use App\Models\Student\DocumentType;
 use App\Models\Student\Student;

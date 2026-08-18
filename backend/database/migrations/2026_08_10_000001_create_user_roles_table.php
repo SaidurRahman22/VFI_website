@@ -30,7 +30,7 @@ return new class extends Migration
         // Postgres-only second net: a role marked tenant-bound cannot exist with
         // a NULL agency_id, and a non-tenant role cannot carry one.
         if (Schema::getConnection()->getDriverName() === 'pgsql') {
-            \DB::statement(<<<'SQL'
+            DB::statement(<<<'SQL'
                 ALTER TABLE user_roles ADD CONSTRAINT user_roles_agency_ck CHECK (
                     (role IN ('partner_owner','partner_counsellor') AND agency_id IS NOT NULL)
                     OR (role NOT IN ('partner_owner','partner_counsellor') AND agency_id IS NULL)

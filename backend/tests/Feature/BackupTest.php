@@ -27,7 +27,7 @@ class BackupTest extends TestCase
     {
         $u = User::factory()->create();
         UserRole::create(['user_id' => $u->id, 'role' => $role, 'agency_id' => null, 'granted_at' => now()]);
-        $u->forceFill(['mfa_secret' => (new Google2FA())->generateSecretKey(), 'mfa_enrolled_at' => now()])->save();
+        $u->forceFill(['mfa_secret' => (new Google2FA)->generateSecretKey(), 'mfa_enrolled_at' => now()])->save();
 
         return $u->fresh();
     }

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Catalogue\Institution;
-use App\Models\Catalogue\Program;
 use App\Models\Catalogue\ProgramSearchRow;
 use App\Models\Catalogue\ProgramShortlist;
 use App\Models\Concerns\BelongsToAgencyScope;

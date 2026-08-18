@@ -78,7 +78,7 @@ return new class extends Migration
             DB::statement('ALTER TABLE program_shortlists ENABLE ROW LEVEL SECURITY');
             DB::statement('ALTER TABLE program_shortlists FORCE ROW LEVEL SECURITY');
             DB::statement(
-                "CREATE POLICY program_shortlists_tenant ON program_shortlists ".
+                'CREATE POLICY program_shortlists_tenant ON program_shortlists '.
                 "USING (agency_id = NULLIF(current_setting('app.agency_id', true), '')::bigint) ".
                 "WITH CHECK (agency_id = NULLIF(current_setting('app.agency_id', true), '')::bigint)"
             );

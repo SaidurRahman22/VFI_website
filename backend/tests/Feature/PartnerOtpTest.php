@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\UserStatus;
 use App\Mail\OtpMail;
 use App\Models\EmailVerificationCode;
-use App\Models\Partner\PartnerApplication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -31,6 +30,7 @@ class PartnerOtpTest extends TestCase
         $code = null;
         Mail::assertSent(OtpMail::class, function (OtpMail $m) use (&$code) {
             $code = $m->code;
+
             return true;
         });
 
@@ -95,6 +95,7 @@ class PartnerOtpTest extends TestCase
         $newCode = null;
         Mail::assertSent(OtpMail::class, function (OtpMail $m) use (&$newCode) {
             $newCode = $m->code;   // last captured = the reissued one
+
             return true;
         });
         $this->postJson('/api/partner/email/verify', ['flow_id' => $flow, 'code' => $newCode])->assertJsonPath('ok', true);

@@ -30,7 +30,7 @@ return new class extends Migration
             DB::statement('ALTER TABLE partner_notifications ENABLE ROW LEVEL SECURITY');
             DB::statement('ALTER TABLE partner_notifications FORCE ROW LEVEL SECURITY');
             DB::statement(
-                "CREATE POLICY partner_notifications_tenant ON partner_notifications ".
+                'CREATE POLICY partner_notifications_tenant ON partner_notifications '.
                 "USING (agency_id = NULLIF(current_setting('app.agency_id', true), '')::bigint) ".
                 "WITH CHECK (agency_id = NULLIF(current_setting('app.agency_id', true), '')::bigint)"
             );

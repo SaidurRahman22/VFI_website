@@ -37,7 +37,7 @@ class FilamentGateTest extends TestCase
         $admin = User::factory()->create();
         UserRole::create(['user_id' => $admin->id, 'role' => Role::ContentEditor, 'agency_id' => null, 'granted_at' => now()]);
         $admin->forceFill([
-            'mfa_secret' => (new Google2FA())->generateSecretKey(),
+            'mfa_secret' => (new Google2FA)->generateSecretKey(),
             'mfa_enrolled_at' => now(),
         ])->save();
         $this->assertTrue($admin->fresh()->canAccessPanel($panel));

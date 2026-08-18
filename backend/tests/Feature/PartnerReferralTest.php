@@ -50,6 +50,7 @@ class PartnerReferralTest extends TestCase
         $code = null;
         Mail::assertSent(OtpMail::class, function (OtpMail $m) use (&$code) {
             $code = $m->code;
+
             return true;
         });
         $this->postJson('/api/verify', ['flow_id' => $flow, 'code' => $code])->assertJsonPath('ok', true);
@@ -99,6 +100,7 @@ class PartnerReferralTest extends TestCase
         $code = null;
         Mail::assertSent(OtpMail::class, function (OtpMail $m) use (&$code) {
             $code = $m->code;
+
             return true;
         });
         $this->postJson('/api/verify', ['flow_id' => $flow, 'code' => $code])->assertJsonPath('ok', true);
@@ -155,6 +157,7 @@ class PartnerReferralTest extends TestCase
         $code = null;
         Mail::assertSent(OtpMail::class, function (OtpMail $m) use (&$code) {
             $code = $m->code;
+
             return true;
         });
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\TaxonomyTerm;
 use Database\Seeders\TaxonomySeeder;
 use Illuminate\Database\Migrations\Migration;
 
@@ -19,7 +20,7 @@ return new class extends Migration
     {
         // Leave content-taxonomy terms (blog_category etc.) intact; only remove
         // the search vocabularies this seeder owns.
-        \App\Models\TaxonomyTerm::query()->whereIn('kind', [
+        TaxonomyTerm::query()->whereIn('kind', [
             'country', 'level', 'study_area', 'discipline_area', 'duration_band',
             'intake', 'study_level', 'nationality', 'test',
         ])->delete();

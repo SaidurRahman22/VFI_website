@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Student\DocumentType;
 use Database\Seeders\DocumentTypeSeeder;
 use Illuminate\Database\Migrations\Migration;
 
@@ -17,6 +18,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        \App\Models\Student\DocumentType::query()->delete();
+        DocumentType::query()->delete();
     }
 };

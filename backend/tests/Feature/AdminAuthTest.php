@@ -19,7 +19,7 @@ class AdminAuthTest extends TestCase
         UserRole::create(['user_id' => $user->id, 'role' => $role, 'agency_id' => null, 'granted_at' => now()]);
 
         if ($withMfa) {
-            $secret = (new Google2FA())->generateSecretKey();
+            $secret = (new Google2FA)->generateSecretKey();
             $user->forceFill(['mfa_secret' => $secret, 'mfa_enrolled_at' => now()])->save();
         }
 
@@ -28,7 +28,7 @@ class AdminAuthTest extends TestCase
 
     private function otp(string $secret): string
     {
-        return (new Google2FA())->getCurrentOtp($secret);
+        return (new Google2FA)->getCurrentOtp($secret);
     }
 
     /** HARD GATE: no admin route is reachable without an authenticated session. */
