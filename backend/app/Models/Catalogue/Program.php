@@ -12,7 +12,7 @@ class Program extends Model
 {
     protected $fillable = [
         'institution_id', 'title', 'level', 'study_area', 'discipline_area', 'duration_band',
-        'esl_elp_available', 'tuition_fee_minor', 'tuition_currency', 'application_fee_minor',
+        'esl_elp_available', 'tuition_fee_minor', 'tuition_currency', 'tuition_basis', 'application_fee_minor',
         'application_fee_currency', 'is_stem', 'has_coop_internship', 'scholarship_available',
         'application_fee_waiver', 'moi_acceptable', 'job_demand_band', 'is_open', 'source', 'external_ref',
     ];

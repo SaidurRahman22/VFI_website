@@ -388,3 +388,45 @@ Apply with `sudo nginx -t && sudo systemctl reload nginx`, then confirm with
 | 6 | R2/S3, ClamAV, payments | scale/later | keys if/when you choose |
 
 **Start with #1** — send the email settings and OTP codes will arrive immediately.
+
+---
+
+## Images — compressing everything under `assets/`
+
+```bash
+node tools/optimise-images.mjs            # rewrite assets/ in place
+node tools/optimise-images.mjs --dry-run  # show the table, write nothing
+```
+
+No npm packages and no external binaries — the VPS has no `cwebp`, `jpegoptim`, `pngquant` or
+ImageMagick, so the PNG and JPEG codecs are built on `node:zlib`. It runs the same on Windows
+and on the server. Add `--webp` and it will emit `.webp` siblings **only if** a real `cwebp`
+happens to be on `PATH`; nothing in the HTML points at them, so wiring up `<picture>` is a
+separate, opt-in job.
+
+**It is safe to run as often as you like.** PNG work is strictly lossless, so a second pass
+regenerates byte-identical output and reports "already minimal". JPEG work only ever coarsens
+the quantisation tables *towards* a fixed target quality (`--jpeg-quality`, default 80) and
+never past it, so a file already at the target is left alone rather than degraded a second
+time. That guarantee comes from the tables themselves, not from the
+`assets/.image-optimised.json` skip list — deleting that file costs you time, not quality.
+
+Every file is decoded again before it is written: PNGs must come back pixel-for-pixel identical,
+and JPEGs must come back with every DCT coefficient matching what was intended. A file that
+fails is left untouched and reported, and nothing is ever replaced by a *larger* file.
+
+Filenames and pixel dimensions never change, so no page needs editing. Note that `assets/` is
+served with the same 7-day cache as everything else and image URLs are not fingerprinted the way
+`css/` and `js/` are by `tools/stamp-assets.mjs` — a returning browser may hold the old bytes for
+up to a week. That is fine for a recompression (the picture is the same) but worth remembering if
+you ever swap an image for a *different* one.
+
+### 🔴 Never point this tool at `backend/storage`
+
+It refuses any `--dir` outside `assets/`, and that guard is deliberate.
+`backend/storage/app/private` holds student passports, transcripts and other uploaded
+documents. Every row in `document_files` carries a **sha256 used for dedupe and for an
+append-only access log**, so re-encoding those bytes would invalidate the hash, break the audit
+trail, and degrade the legibility of documents that get submitted to visa officers. Student
+documents are never compressed, resized, or stripped of metadata — not by this tool, not by
+anything else.

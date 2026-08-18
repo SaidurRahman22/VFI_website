@@ -1,0 +1,155 @@
+{
+  "tool": 1,
+  "files": {
+    "assets/img/advisor.jpg": {
+      "sha256": "63ad471f2089f6dcff191a8b3d2653d9dfbc3e6c7e35c46dfa37e1611e6df2f2",
+      "quality": 80,
+      "bytes": 194501
+    },
+    "assets/img/banner-travel.jpg": {
+      "sha256": "0ecc104a88d50f20e97b76086507cfb90b0bcc9da934139dedfa0b8b9ab9743f",
+      "quality": 80,
+      "bytes": 135508
+    },
+    "assets/img/campus.jpg": {
+      "sha256": "a60825dcc7031d9dd9d01fe8555a6a7e8a4086df194feeb2d959c0fde629c177",
+      "quality": 80,
+      "bytes": 378453
+    },
+    "assets/img/city-australia.jpg": {
+      "sha256": "618c6f2e66db2a3e5e908ee9c9a5da946e285826870937aa0901a1759d9d7fdc",
+      "quality": 80,
+      "bytes": 374932
+    },
+    "assets/img/city-canada.jpg": {
+      "sha256": "60a371c65451f556d4937bfb43ca1da3b9b870550f856015d81cb7936171fa80",
+      "quality": 80,
+      "bytes": 614400
+    },
+    "assets/img/city-ireland.jpg": {
+      "sha256": "72537851aae7acc67a48ce018ba14e1aec98c990efb05f71f0a4db29b58f4400",
+      "quality": 80,
+      "bytes": 343706
+    },
+    "assets/img/city-newzealand.jpg": {
+      "sha256": "30911ce9ac4a1dca5a3b2ee7769452d7734fc4363db5ec7f0c069b53aa67138e",
+      "quality": 80,
+      "bytes": 229009
+    },
+    "assets/img/city-uk.jpg": {
+      "sha256": "bbe2b712413fb217b200206507f4605941a4f5d90f547ee37291c22fd79d8eca",
+      "quality": 80,
+      "bytes": 409635
+    },
+    "assets/img/city-usa.jpg": {
+      "sha256": "ae4b65b5df3a1d514f957eb7b8e624f3bfa3efcad2703ce8acc9cc9dd4f59740",
+      "quality": 80,
+      "bytes": 276201
+    },
+    "assets/img/handshake.jpg": {
+      "sha256": "a987f6d7bde35b8dad6bea5b1f221b38c39b774d2ab650b1681b3028de85c6be",
+      "quality": 80,
+      "bytes": 88102
+    },
+    "assets/img/library.jpg": {
+      "sha256": "5aedf9143fab9af246e64488436df37fdea70eab9aceb31a861ed4a074cda4ec",
+      "quality": 80,
+      "bytes": 189550
+    },
+    "assets/img/meeting.jpg": {
+      "sha256": "fc33545d37d34509fe40350947da8388212194527da6bc0a5e8ca1a659e5b954",
+      "quality": 80,
+      "bytes": 81898
+    },
+    "assets/img/office-desk.jpg": {
+      "sha256": "e31ff375fba114a4022b83c891dc808e312ea2822f13c168615e97f30e8ec450",
+      "quality": 80,
+      "bytes": 69580
+    },
+    "assets/img/office.jpg": {
+      "sha256": "a688bd67ec186b929a556c3d3e1987011007849edafbe49ecc8463e57b4e827f",
+      "quality": 80,
+      "bytes": 166405
+    },
+    "assets/img/students-collab.jpg": {
+      "sha256": "f06ba6019a463bc2231d6b4ec3292834d04cdb4c0cdee8c818ffb2ec674fb06e",
+      "quality": 80,
+      "bytes": 103614
+    },
+    "assets/img/students-diverse.jpg": {
+      "sha256": "3084ddaa816577c9d1ea718108d616081247e5f6fb4c6e3b4af2c49f575dc3d9",
+      "quality": 80,
+      "bytes": 102088
+    },
+    "assets/img/students-friends.jpg": {
+      "sha256": "fa31ae36607dee1be742fe18a965f233006a17f6a0211629020a482dfe4ad187",
+      "quality": 80,
+      "bytes": 132250
+    },
+    "assets/img/students-group.jpg": {
+      "sha256": "87bf35d7741f3afa6fd93a5451d2e928e8454ec75ec6c1225cb4e8030c323c54",
+      "quality": 80,
+      "bytes": 237410
+    },
+    "assets/img/students-study.jpg": {
+      "sha256": "c3ddd816f868eba07731ebcd24fff4d65f55ec1a3d60de4fe35c5b458985ff59",
+      "quality": 80,
+      "bytes": 73220
+    },
+    "assets/img/study-room.jpg": {
+      "sha256": "024c3795be0d94b19dd8c182f23b1e7daf0c9b9f4dead41b92080f07a7fe22c8",
+      "quality": 80,
+      "bytes": 114396
+    },
+    "assets/img/support-contact.jpg": {
+      "sha256": "c07294fca2c6b288d8eef89e82d5cf40c0d52f1571c880c13f0ee0fe7bd008c0",
+      "quality": 80,
+      "bytes": 93968
+    },
+    "assets/img/team-collab.jpg": {
+      "sha256": "1445addd6699e7adaf2772f7b2bb1c19dc8d174ebda03531ea47ff8b1e9e3f37",
+      "quality": 80,
+      "bytes": 98152
+    },
+    "assets/img/team-meeting.jpg": {
+      "sha256": "0b4c2ded6eb092406d6a5dc3f6201dd7706e9c1dc05dc46e778d8e841a009f2d",
+      "quality": 80,
+      "bytes": 102716
+    },
+    "assets/img/team-member.jpg": {
+      "sha256": "e73151e2f368e1ac9d2a584716b2ebc898d66b3acfb6fde550183adaca0ad727",
+      "quality": 80,
+      "bytes": 91852
+    },
+    "assets/img/team-office.jpg": {
+      "sha256": "148182cbe5272f2c90984e841796078812a8cec7e31620e6e61828e89dda40ba",
+      "quality": 80,
+      "bytes": 104554
+    },
+    "assets/img/unity.jpg": {
+      "sha256": "f52893ceae0d9520cbe008eabbceb266564ae5238497a0d14ea86d0f0d9428c1",
+      "quality": 80,
+      "bytes": 168630
+    },
+    "assets/img/vfi-emblem.png": {
+      "sha256": "6d9b6c4820faf9b6e167d21679d8977fda502d5953fcf40c721c76757ee758a2",
+      "quality": 80,
+      "bytes": 44870
+    },
+    "assets/img/vfi-logo-t.png": {
+      "sha256": "e6abcc544c2c243e4092bb1511ffc3d9ed012ee63d7dbb862543101c4d9da3a9",
+      "quality": 80,
+      "bytes": 338943
+    },
+    "assets/img/vfi-logo.png": {
+      "sha256": "51d112f0dd83b5c5d1ed11fcdd1e1a6bfa57a0e10454aa3de8e0f954fee32fde",
+      "quality": 80,
+      "bytes": 433166
+    },
+    "assets/img/workshop.jpg": {
+      "sha256": "43b17b36a95870d129b754f096390ef39fd3e350b40de7f620c329169122a7b3",
+      "quality": 80,
+      "bytes": 70052
+    }
+  }
+}

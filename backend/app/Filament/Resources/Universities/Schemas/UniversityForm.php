@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Universities\Schemas;
 
+use App\Services\ImageOptimiser;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -35,9 +36,13 @@ class UniversityForm
             Section::make('Branding')->columns(2)->schema([
                 FileUpload::make('logo_key')->label('Logo')->image()->imageEditor()
                     ->disk('public')->directory('media/universities')->visibility('public')->maxSize(2048)
+                    // Re-encoded on save (downscale + EXIF strip). The cap is per surface: a
+                    // logo rendered at ~120px has no use for a 2000px original.
+                    ->saveUploadedFileUsing(ImageOptimiser::storeOptimised(800))
                     ->helperText('Square logo works best. Leave empty to show an initials badge.'),
                 FileUpload::make('hero_image_key')->label('Hero image')->image()->imageEditor()
-                    ->disk('public')->directory('media/universities')->visibility('public')->maxSize(4096),
+                    ->disk('public')->directory('media/universities')->visibility('public')->maxSize(4096)
+                    ->saveUploadedFileUsing(ImageOptimiser::storeOptimised(2400)),
             ]),
 
             Section::make('At a glance')->columns(2)->schema([
@@ -81,6 +86,7 @@ class UniversityForm
                         Textarea::make('note')->rows(2)->columnSpanFull(),
                         FileUpload::make('image')->label('Card image')->image()->imageEditor()
                             ->disk('public')->directory('media/universities/intakes')->visibility('public')->maxSize(3072)
+                            ->saveUploadedFileUsing(ImageOptimiser::storeOptimised(1200))
                             ->columnSpanFull()->helperText('Optional. Falls back to the season image set in University page defaults.'),
                     ])->columnSpanFull()
                     ->helperText('Leave empty to build the cards automatically from the course catalogue’s intakes.'),
@@ -150,7 +156,8 @@ class UniversityForm
 
             Section::make('Gallery')->schema([
                 FileUpload::make('gallery_json')->label('Photos')->image()->multiple()->reorderable()
-                    ->disk('public')->directory('media/universities/gallery')->visibility('public')->maxSize(4096)->columnSpanFull(),
+                    ->disk('public')->directory('media/universities/gallery')->visibility('public')->maxSize(4096)->columnSpanFull()
+                    ->saveUploadedFileUsing(ImageOptimiser::storeOptimised(2000)),
             ]),
 
             Section::make('FAQs')->schema([

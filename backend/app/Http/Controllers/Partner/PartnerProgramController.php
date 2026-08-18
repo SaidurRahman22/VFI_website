@@ -190,8 +190,10 @@ class PartnerProgramController extends Controller
             'study_area' => $p->study_area,
             'discipline_area' => $p->discipline_area,
             'duration_band' => $p->duration_band,
+            // see presentRow(): the detail panel is what a counsellor reads
+            // immediately before quoting a fee, so it needs the basis too
             'tuition' => $p->tuition_fee_minor !== null
-                ? ['minor' => $p->tuition_fee_minor, 'currency' => $p->tuition_currency]
+                ? ['minor' => $p->tuition_fee_minor, 'currency' => $p->tuition_currency, 'basis' => $p->tuition_basis]
                 : null,
             'application_fee' => $p->application_fee_minor !== null
                 ? ['minor' => $p->application_fee_minor, 'currency' => $p->application_fee_currency]
@@ -249,7 +251,7 @@ class PartnerProgramController extends Controller
             'discipline_area' => $p->discipline_area,
             'duration_band' => $p->duration_band,
             'tuition' => $p->tuition_fee_minor !== null
-                ? ['minor' => $p->tuition_fee_minor, 'currency' => $p->tuition_currency]
+                ? ['minor' => $p->tuition_fee_minor, 'currency' => $p->tuition_currency, 'basis' => $p->tuition_basis]
                 : null,
             'application_fee' => $p->application_fee_minor !== null
                 ? ['minor' => $p->application_fee_minor, 'currency' => $p->application_fee_currency]
@@ -283,8 +285,14 @@ class PartnerProgramController extends Controller
             'study_area' => $r->study_area,
             'discipline_area' => $r->discipline_area,
             'duration_band' => $r->duration_band,
+            // `basis` qualifies the figure: 'programme' is this course's own fee,
+            // 'institution_average' is one annual number the feed publishes for
+            // the whole university (US Scorecard has no per-course price, so all
+            // ~40k of its programmes carry the same value). It rides along with
+            // the amount rather than sitting in a sibling key so no client can
+            // render the money and miss the qualifier.
             'tuition' => $r->tuition_fee_minor !== null
-                ? ['minor' => $r->tuition_fee_minor, 'currency' => $r->tuition_currency]
+                ? ['minor' => $r->tuition_fee_minor, 'currency' => $r->tuition_currency, 'basis' => $r->tuition_basis]
                 : null,
             'intake' => ['month' => $r->intake_month, 'year' => $r->intake_year, 'season' => $r->season_label],
             'deadline' => optional($r->application_deadline_at)->toDateString(),

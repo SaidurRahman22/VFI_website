@@ -207,6 +207,11 @@ class IngestPrograms extends Command
             'esl_elp_available' => (bool) ($prog['esl_elp_available'] ?? false),
             'tuition_fee_minor' => $this->intOrNull($prog['tuition_fee_minor'] ?? null),
             'tuition_currency' => $this->str($prog['tuition_currency'] ?? null, 3),
+            // Only the source knows whether its tuition is a real course price or
+            // one institution-wide figure stamped onto every course (Scorecard).
+            // A source that does not say is taken at face value as per-programme,
+            // which is how DAAD and the seed keep behaving as they always have.
+            'tuition_basis' => $this->enum($prog['tuition_basis'] ?? null, ['programme', 'institution_average']) ?? 'programme',
             'application_fee_minor' => $this->intOrNull($prog['application_fee_minor'] ?? null),
             'application_fee_currency' => $this->str($prog['application_fee_currency'] ?? null, 3),
             'is_stem' => (bool) ($prog['is_stem'] ?? false),

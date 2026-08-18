@@ -49,6 +49,10 @@ class SearchIndexer
                         'duration_band' => $program->duration_band,
                         'tuition_fee_minor' => $program->tuition_fee_minor,
                         'tuition_currency' => $program->tuition_currency,
+                        // Carried onto the flat row so search can say whether the
+                        // figure is a course fee or an institution-wide average
+                        // without joining back to programs.
+                        'tuition_basis' => $program->tuition_basis,
                         'application_deadline_at' => optional($intake->application_deadline_at)->toDateString(),
                         'offer_tat_days' => $tat,
                         'intake_month' => $intake->intake_month,

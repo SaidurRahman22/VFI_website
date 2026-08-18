@@ -203,6 +203,12 @@ class CollegeScorecardSource implements IngestSource
                     'duration_band' => in_array($level, ['master', 'pg_certificate'], true) ? '1_5yr' : ($level === 'phd' ? '4yr_plus' : '4yr_plus'),
                     'tuition_fee_minor' => is_numeric($tuitionAnnual) ? (int) round($tuitionAnnual * 100) : null,
                     'tuition_currency' => 'USD',
+                    // Scorecard has no per-programme price: the only tuition it
+                    // publishes is `latest.cost.tuition.out_of_state`, one annual
+                    // figure for the whole school, which is why every programme
+                    // here carries the same number. Declaring the basis is what
+                    // stops the search card presenting it as this course's fee.
+                    'tuition_basis' => 'institution_average',
                     'is_stem' => $isStem,
                     'is_open' => true,
                     'external_ref' => 'scorecard:'.($school['id'] ?? md5($name)).':'.$key,

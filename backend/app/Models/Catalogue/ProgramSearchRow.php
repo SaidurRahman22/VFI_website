@@ -15,7 +15,7 @@ class ProgramSearchRow extends Model
     protected $fillable = [
         'program_id', 'institution_id', 'title', 'university_name', 'country', 'province_state',
         'level', 'study_area', 'discipline_area', 'duration_band', 'tuition_fee_minor',
-        'tuition_currency', 'application_deadline_at', 'offer_tat_days', 'intake_month',
+        'tuition_currency', 'tuition_basis', 'application_deadline_at', 'offer_tat_days', 'intake_month',
         'intake_year', 'season_label', 'search_blob', 'flags', 'is_stale', 'source',
     ];
 

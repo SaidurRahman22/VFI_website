@@ -139,9 +139,25 @@
       : '';
   }
 
+  /* A tuition figure that is really an institution-wide average must not read as
+     this programme's price — that is the number a counsellor quotes to a student.
+     The US College Scorecard publishes one annual tuition per school and nothing
+     per course, so ~40,000 programmes carry the same value; tuition.basis is set
+     by the feed that knows which kind of number it is, so the card never has to
+     ask where a row came from. The amber --stale pill is reused on purpose: it is
+     already this page's "check this before you trust the row" styling. */
+  function isAvgTuition(t) { return !!(t && t.basis === "institution_average"); }
+  function tuitionLabel(t) { return isAvgTuition(t) ? "Uni. average" : "Tuition"; }
+  function basisBadge(t) {
+    return isAvgTuition(t)
+      ? '<span class="pg-badge pg-badge--stale" title="Institution-wide average annual tuition, not a programme fee. Confirm the exact programme cost with the university before quoting it.">Institution average</span>'
+      : '';
+  }
+
   function badgesHtml(r) {
     var b = r.badges || [], out = "", n = 0, key;
     out += sourceBadge(r.source);
+    out += basisBadge(r.tuition);
     for (key in BADGE) {
       if (BADGE.hasOwnProperty(key) && b.indexOf(key) !== -1 && n < 4) {
         var cls = (key === "scholarship" || key === "fee_waiver" || key === "waive_english") ? " pg-badge--coral" : "";
@@ -163,7 +179,7 @@
       + '<div class="pg-card__meta">'
       + "<span><b>" + esc(cap(r.level)) + "</b></span>"
       + "<span>" + esc(intakeText(r.intake)) + "</span>"
-      + "<span>Tuition <b>" + money(r.tuition) + "</b></span>"
+      + "<span>" + tuitionLabel(r.tuition) + " <b>" + money(r.tuition) + "</b></span>"
       + "<span>Deadline <b>" + esc(r.deadline || "Rolling") + "</b></span>"
       + "</div>"
       + badgesHtml(r)
@@ -206,6 +222,14 @@
 
   /* --------------------------------------------------------------- detail */
   function drow(k, v) { return "<dt>" + esc(k) + "</dt><dd>" + v + "</dd>"; }
+  /* The card gets a badge; the detail panel gets the sentence, because this is
+     the screen a counsellor is looking at when the student asks what it costs. */
+  function basisNote(t) {
+    return isAvgTuition(t)
+      ? "<br><small>Institution-wide average annual tuition &mdash; the source publishes one figure per university, not per programme."
+        + " Do not quote it as the programme fee; confirm the exact cost with the university.</small>"
+      : "";
+  }
   function flagLabels(p) {
     var out = [];
     if (p.is_stem) out.push("STEM");
@@ -241,7 +265,7 @@
       + drow("Study area", esc(p.study_area || "—"))
       + drow("Discipline", esc(p.discipline_area || "—"))
       + drow("Duration", esc(p.duration_band || "—"))
-      + drow("Tuition", money(p.tuition))
+      + drow(tuitionLabel(p.tuition), money(p.tuition) + basisNote(p.tuition))
       + drow("Application fee", p.application_fee ? money(p.application_fee) : "—")
       + drow("Intakes", esc(intakes))
       + drow("Requirements", reqs)
@@ -293,7 +317,10 @@
       ["Level", function (p) { return esc(cap(p.level)); }],
       ["Study area", function (p) { return esc(p.study_area || "—"); }],
       ["Duration", function (p) { return esc(p.duration_band || "—"); }],
-      ["Tuition", function (p) { return money(p.tuition); }],
+      /* The compare grid puts a real course fee and an institution average in
+         adjacent columns, so the qualifier travels with the value — the row
+         label is shared by every column and cannot say it. */
+      ["Tuition", function (p) { return money(p.tuition) + (isAvgTuition(p.tuition) ? " <small>(uni. average)</small>" : ""); }],
       ["App. fee", function (p) { return p.application_fee ? money(p.application_fee) : "—"; }],
       ["STEM", function (p) { return p.is_stem ? "Yes" : "—"; }],
       ["Scholarship", function (p) { return p.scholarship_available ? "Yes" : "—"; }],

@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\SiteContent;
+use App\Services\ImageOptimiser;
 use BackedEnum;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -58,7 +59,8 @@ class UniversityDefaults extends Page
                                 Textarea::make('note')->rows(2)->columnSpanFull(),
                                 FileUpload::make('image')->label('Card image')->image()
                                     ->disk('public')->directory('media/universities/intakes')->visibility('public')
-                                    ->maxSize(3072)->columnSpanFull(),
+                                    ->maxSize(3072)->columnSpanFull()
+                                    ->saveUploadedFileUsing(ImageOptimiser::storeOptimised(1200)),
                             ])->columnSpanFull(),
                         Textarea::make('intake_footnote')->label('Footnote under the intake cards')->rows(2)->columnSpanFull(),
                     ]),

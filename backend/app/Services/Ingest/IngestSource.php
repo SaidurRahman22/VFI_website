@@ -17,6 +17,9 @@ namespace App\Services\Ingest;
  *                     'tuition_deposit_policy'?,'interview_required'?,'external_ref'],
  *   'program'     => ['title','level','study_area'?,'discipline_area'?,'duration_band'?,
  *                     'tuition_fee_minor'?,'tuition_currency'?,'application_fee_minor'?,
+ *                     'tuition_basis'? ('programme'|'institution_average' — say
+ *                       'institution_average' when the feed publishes one figure
+ *                       per school rather than per course; defaults to 'programme'),
  *                     'application_fee_currency'?,'is_stem'?,'has_coop_internship'?,
  *                     'scholarship_available'?,'application_fee_waiver'?,'moi_acceptable'?,
  *                     'esl_elp_available'?,'job_demand_band'?,'is_open'?,'external_ref'],
