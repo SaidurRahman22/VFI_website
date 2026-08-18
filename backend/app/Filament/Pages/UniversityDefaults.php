@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\SiteContent;
 use App\Services\ImageOptimiser;
+use App\Support\StaffAbilities;
 use BackedEnum;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -38,8 +39,21 @@ class UniversityDefaults extends Page
 
     public const KEY = 'universityPage';
 
+    /**
+     * Same ability as the Universities resource this page sits beside: whoever
+     * curates the catalogue curates the copy its pages fall back to. Without
+     * this the screen was reachable by every admin-panel role - a counsellor
+     * hired to process applications could rewrite the public site.
+     */
+    public static function canAccess(): bool
+    {
+        return StaffAbilities::current('catalogue.manage');
+    }
+
     public function mount(): void
     {
+        abort_unless(static::canAccess(), 403);
+
         $this->form->fill(SiteContent::value(self::KEY, []) ?: []);
     }
 
@@ -98,6 +112,11 @@ class UniversityDefaults extends Page
 
     public function save(): void
     {
+        // Re-checked here, not just on the route: save() is a Livewire action
+        // and is reachable as its own request, so a route-only gate would leave
+        // the write open.
+        abort_unless(static::canAccess(), 403);
+
         SiteContent::query()->updateOrCreate(
             ['key' => self::KEY],
             ['value' => $this->form->getState()],
