@@ -89,7 +89,7 @@ class RoleAssignmentService
                 // Count inside the transaction with the rows locked, so two
                 // concurrent revokes cannot both believe another owner remains.
                 //
-                // Selected and counted in PHP rather than with ->count(), because
+                // Fetched and tested for emptiness rather than counted, because
                 // ->lockForUpdate()->count() emits `SELECT count(*) ... FOR UPDATE`
                 // and Postgres rejects that outright:
                 //   SQLSTATE[0A000] FOR UPDATE is not allowed with aggregate functions
@@ -100,10 +100,9 @@ class RoleAssignmentService
                     ->whereNull('revoked_at')
                     ->where('id', '!=', $assignment->id)
                     ->lockForUpdate()
-                    ->pluck('id')
-                    ->count();
+                    ->get(['id']);
 
-                if ($remaining === 0) {
+                if ($remaining->isEmpty()) {
                     throw new RuntimeException('This is the last superadmin — grant another before removing this one.');
                 }
             }
