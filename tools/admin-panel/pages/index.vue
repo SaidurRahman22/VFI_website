@@ -10,7 +10,7 @@
 definePageMeta({ title: 'Dashboard' })
 
 const api = useVfiApi()
-const { user, can } = useVfiUser()
+const { user, can, load: loadUser } = useVfiUser()
 
 const loading = ref(true)
 const error = ref(null)
@@ -50,9 +50,18 @@ async function load() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  /*
+    AWAIT the user before asking what they may do. The layout loads it too, and
+    useVfiUser de-duplicates, so this costs nothing - but checking can() without
+    waiting is a race the page loses every time: abilities are still null, the
+    deny-by-default answer comes back false, and the screen renders "no access"
+    while the API would have returned everything.
+  */
+  await loadUser()
+
   if (can('applications.process'))
-    load()
+    await load()
   else
     loading.value = false
 })

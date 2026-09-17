@@ -24,7 +24,7 @@ definePageMeta({ title: 'Applications' })
 const api = useVfiApi()
 const route = useRoute()
 const router = useRouter()
-const { can } = useVfiUser()
+const { can, load: loadUser } = useVfiUser()
 
 const loading = ref(true)
 const error = ref(null)
@@ -180,6 +180,13 @@ watch(search, () => {
 watch([statusFilter, waitingOnly], loadList)
 
 onMounted(async () => {
+  /*
+    AWAIT the user first - see the note in pages/index.vue. Checking can() before
+    /api/admin/me has answered made this screen render "no access" while the API
+    was returning all seven applications.
+  */
+  await loadUser()
+
   if (!can('applications.process')) {
     loading.value = false
 
