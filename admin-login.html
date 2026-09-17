@@ -87,7 +87,7 @@
     </div>
   </main>
 
-  <script src="js/api.js?v=95e7c55d"></script>
+  <script src="js/api.js?v=51967f55"></script>
   <script>
     (function () {
       var $ = function (s) { return document.querySelector(s); };
@@ -103,7 +103,7 @@
 
       // If already signed in, go straight to the panel.
       window.VFIApi.get("/api/admin/me", { noRedirect: true })
-        .then(function () { window.location.href = "admin.html"; })
+        .then(function () { window.location.href = "/admin-panel/"; })
         .catch(function () { /* stay on login */ });
 
       // step 1 — password
@@ -123,7 +123,7 @@
       $("#stepTotp").addEventListener("submit", function (e) {
         e.preventDefault(); clearMsg(); busy(this, true);
         window.VFIApi.post("/api/admin/login/totp", { code: $("#alCode").value }, { noRedirect: true })
-          .then(function () { window.location.href = "admin.html"; })
+          .then(function () { window.location.href = "/admin-panel/"; })
           .catch(function () { say("Invalid or reused code."); })
           .finally(function () { busy($("#stepTotp"), false); });
       });
@@ -141,7 +141,7 @@
       $("#stepEnroll").addEventListener("submit", function (e) {
         e.preventDefault(); clearMsg(); busy(this, true);
         window.VFIApi.post("/api/admin/mfa/confirm", { code: $("#alEnrollCode").value }, { noRedirect: true })
-          .then(function () { window.location.href = "admin.html"; })
+          .then(function () { window.location.href = "/admin-panel/"; })
           .catch(function () { say("Code did not match. Re-scan and try again."); })
           .finally(function () { busy($("#stepEnroll"), false); });
       });

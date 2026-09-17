@@ -15,6 +15,13 @@
   <style id="ad-gate-style">html{visibility:hidden}</style>
 </head>
 <body>
+    <!-- Added when the new console went live: this page is the legacy panel and
+         still owns the website-content editors until those screens are rebuilt. -->
+    <div style="background:#0e1b2c;color:#fff;padding:12px 18px;font:500 14px/1.5 system-ui,sans-serif;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;text-align:center">
+      <span>The new VFI staff console is at <strong>/admin-panel/</strong>. This page keeps the website-content editors until they are rebuilt there.</span>
+      <a href="/admin-panel/" style="background:#fff;color:#0e1b2c;padding:7px 16px;border-radius:8px;text-decoration:none;font-weight:700;white-space:nowrap">Open the new console</a>
+    </div>
+
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="a-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></symbol>
@@ -148,8 +155,8 @@
         <div class="panel">
           <h2>How this works</h2>
           <ul class="hintlist">
-            <li><svg class="ai"><use href="#a-check"/></svg> No login — this panel is meant to run on your own machine or a private URL.</li>
-            <li><svg class="ai"><use href="#a-check"/></svg> Content is saved in this browser. Use <b>Backup</b> to export a file and restore it on another computer.</li>
+            <li><svg class="ai"><use href="#a-check"/></svg> Signing in is required — this panel checks your admin session and returns you to the login page without one.</li>
+            <li><svg class="ai"><use href="#a-check"/></svg> Content is saved on the server and shared by every staff account. Use <b>Backup</b> to export a file and restore it on another computer.</li>
             <li><svg class="ai"><use href="#a-check"/></svg> Images are resized automatically before saving, so the site stays fast.</li>
             <li><svg class="ai"><use href="#a-check"/></svg> Use <b>Pages On/Off</b> to hide a page from the menus without deleting it.</li>
           </ul>
@@ -370,7 +377,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="js/api.js?v=95e7c55d"></script>
+<script src="js/api.js?v=51967f55"></script>
 <script>
   /* Admin lockdown gate (Phase 1, docs §3.2). The panel's own scripts
      (store.js, admin.js) are NOT loaded until GET /api/admin/me confirms an

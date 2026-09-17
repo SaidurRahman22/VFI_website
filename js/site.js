@@ -203,7 +203,7 @@
     '</div>' +
     '<div class="footer__bar"><div class="container footer__bar-inner">' +
       '<p>© <span id="year">2026</span> VFI Overseas Education. All rights reserved.</p>' +
-      '<nav class="footer__legal" aria-label="Legal"><a href="terms.html">Terms &amp; Conditions</a><a href="privacy.html">Privacy Policy</a><a href="payment-terms.html">Payment Terms</a><a href="admin.html">Admin</a></nav>' +
+      '<nav class="footer__legal" aria-label="Legal"><a href="terms.html">Terms &amp; Conditions</a><a href="privacy.html">Privacy Policy</a><a href="payment-terms.html">Payment Terms</a><a href="admin-login.html">Admin</a></nav>' +
     '</div></div>' +
   '</footer>' +
   '<button class="totop" id="toTop" aria-label="Back to top"><svg class="ic"><use href="#i-chevron"/></svg></button>';

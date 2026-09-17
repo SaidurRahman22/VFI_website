@@ -26,7 +26,9 @@
     if (typeof window.VFI_401_URL === "string") return window.VFI_401_URL;
     var p = location.pathname;
     if (p.indexOf("partner") !== -1) return "vfi-partner-login.html";
-    if (p.indexOf("admin") !== -1) return "admin.html";
+    // admin-login.html, not admin.html: the latter is the PANEL, and sending
+    // an expired session there just bounced the user a second time.
+    if (p.indexOf("admin") !== -1) return "admin-login.html";
     return "login.html";
   }
 

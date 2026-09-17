@@ -7,18 +7,8 @@ import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
 
   The Filament panel this replaces exposed 21 sidebar entries - one per Eloquent
   resource, because that is what generating an admin from models gives you. Ten
-  were separate content collections (Blogs, Events, News, Photos and six
-  partner-console ones), which puts a database schema on screen instead of a
-  tool someone can work in.
-
-  These are the actual jobs: process an application, look after a student, look
-  after an agency, keep the catalogue right, edit the website, and - superadmin
-  only - manage who can do what. Everything the old panel could reach is still
-  reachable; the ten content collections are TABS inside Website content rather
-  than sidebar items.
-
-  Nothing links off-site. The stock template's nav was mostly upsell links to
-  the vendor's own demo pages.
+  were separate content collections, which puts a database schema on screen
+  instead of a tool someone can work in.
 
   `ability` hides a link the person cannot use. That is a courtesy, not a
   security boundary - the endpoint and the screen both refuse independently.
@@ -26,13 +16,12 @@ import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
 const { can } = useVfiUser()
 
 /*
-  ONLY BUILT SCREENS APPEAR HERE.
+  BUILT HERE, natively.
 
-  Students, Partner agencies, Universities and Website content are the remaining
-  four, and each is added to this list in the same commit that adds its page and
-  its API. A sidebar link that leads to an empty screen is the exact thing the
-  client has spent days finding and calling decoration - so the sidebar grows as
-  the panel does, and never ahead of it.
+  The remaining screens (Students, Partner agencies, Universities, Website
+  content, Staff & roles) join this list in the commit that adds their page AND
+  their API. A link to an empty screen is exactly the decoration the client has
+  spent days finding.
 */
 const sections = [
   {
@@ -44,10 +33,36 @@ const sections = [
   },
 ]
 
-/* A section with nothing visible in it must not leave a stray heading behind. */
-const visible = computed(() => sections
-  .map(s => ({ ...s, items: s.items.filter(i => !i.ability || can(i.ability)) }))
-  .filter(s => s.items.length > 0))
+/*
+  NOT YET REBUILT HERE, so these point at the screens that still own them.
+
+  Signing in now lands on this console, which means anything it cannot reach is
+  effectively gone - and the legacy panel still owns every website-content
+  editor (events, blogs, news, photos, home images, Pages On/Off, backup) while
+  /manage still owns document review, agencies and GDPR requests.
+
+  Linking out is not decoration: these go somewhere that works today. They are
+  labelled and grouped apart so it is obvious which parts of the console are
+  finished, and each disappears from here as its native screen lands.
+*/
+const external = [
+  {
+    heading: 'Not yet rebuilt here',
+    items: [
+      { title: 'Website content', icon: 'ri-pages-line', href: '/admin.html', ability: 'content.manage' },
+      { title: 'Staff tools', icon: 'ri-tools-line', href: '/manage', ability: 'documents.review' },
+    ],
+  },
+]
+
+function usable(list) {
+  return list
+    .map(s => ({ ...s, items: s.items.filter(i => !i.ability || can(i.ability)) }))
+    .filter(s => s.items.length > 0)
+}
+
+const visible = computed(() => usable(sections))
+const legacy = computed(() => usable(external))
 </script>
 
 <template>
@@ -63,8 +78,15 @@ const visible = computed(() => sections
     />
   </template>
 
-  <!--
-    Staff & roles (superadmin only) lands with its own screen and API. Kept out
-    until then for the same reason as the four above.
-  -->
+  <template
+    v-for="section in legacy"
+    :key="section.heading"
+  >
+    <VerticalNavSectionTitle :item="{ heading: section.heading }" />
+    <VerticalNavLink
+      v-for="item in section.items"
+      :key="item.href"
+      :item="item"
+    />
+  </template>
 </template>
