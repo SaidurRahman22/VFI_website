@@ -36,7 +36,15 @@ watch(() => props.item.open, v => {
         class="nav-item-icon"
       />
       <span class="nav-item-title">{{ item.title }}</span>
+      <!--
+        Only when there IS a badge. The template rendered this span
+        unconditionally, and an empty one still costs its padding-inline
+        (0.75rem each side) plus the item's flex gap - about 32px of dead width
+        on every row. On the nav group, which also carries a chevron, that was
+        enough to truncate "Website content" to "Website cont...".
+      -->
       <span
+        v-if="item.badgeContent"
         class="nav-item-badge"
         :class="item.badgeClass"
       >

@@ -161,6 +161,13 @@ with sync_playwright() as p:
         # clipped to nothing. A click then hits the group label behind them.
         opened = "open" in (group.get_attribute("class") or "")
         check(opened, "the group is already open, so both entries are in sight")
+        # scrollWidth vs clientWidth, because a CSS ellipsis does not change
+        # text_content - the label read "Website cont..." on screen while the
+        # DOM still said "Website content".
+        overflow = group.locator(".nav-item-title").first.evaluate(
+            "el => el.scrollWidth - el.clientWidth"
+        )
+        check(overflow <= 1, "its label is not cut off by the chevron", f"overflow={overflow}px")
         if not opened:
             group.locator(".nav-group-label").first.click()
             page.wait_for_timeout(700)
