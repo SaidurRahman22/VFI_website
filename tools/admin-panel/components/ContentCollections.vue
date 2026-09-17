@@ -1,11 +1,18 @@
 <script setup>
 /*
-  Website content: the ten collections that fill the public site.
+  One group of website-content collections: the tabs, the list and the editor.
 
-  This is the screen that lets admin.html go. That page had a tab per
-  collection but was READ-ONLY - its "New event" buttons deep-linked into the
-  Filament panel - so this is the first place in the project where a person can
-  actually write website content without leaving the console.
+  This is the screen that lets admin.html go. That page had a tab per collection
+  but was READ-ONLY - its "New event" buttons deep-linked into the Filament
+  panel - so this is the first place in the project where a person can actually
+  write website content without leaving the console.
+
+  It takes a `group` and shows only that group's collections, because the
+  sidebar - not a tab strip - is where the two groups are chosen. Ten tabs in
+  one strip overflowed a 1500px screen and hid six of them behind a scroll
+  arrow. The two routes that use this are pages/content/public.vue and
+  pages/content/partner.vue; everything else about the screen is identical, so
+  it lives here once.
 
   Four deliberate choices:
 
@@ -24,10 +31,20 @@
   3. Delete asks first and says what it does. The API soft-deletes, so this is
      recoverable, and the confirmation says so rather than implying it is final.
 
-  4. Tabs are in the URL (?tab=blogs) so a particular collection is linkable and
-     a refresh does not dump you back on Events.
+  4. The collection is in the URL (?tab=blogs) so a particular one is linkable
+     and a refresh does not dump you back on the first tab.
 */
-definePageMeta({ title: 'Website content' })
+const props = defineProps({
+  /* The API's group slug: 'public-website' or 'partner-console'. */
+  group: { type: String, required: true },
+
+  /* What to call it on screen. Comes from the route, not from the API, because
+     the heading has to render before the first request answers. */
+  heading: { type: String, required: true },
+
+  /* One line saying where this group's content comes out. */
+  blurb: { type: String, default: '' },
+})
 
 const api = useVfiApi()
 const route = useRoute()
@@ -65,39 +82,14 @@ function labelOf(slug) {
 }
 
 /*
-  Two strips, not one of ten.
-
-  Ten tabs overflow a 1500px screen, which left the six partner-console
-  collections permanently behind a scroll arrow. Split by where the content
-  comes out - the public marketing site, or the console agencies sign in to -
-  each strip fits, and the heading tells whoever is editing where their words
-  are about to appear.
+  Only this group's collections. The endpoint returns all ten with their group,
+  so the filter happens here rather than in a second endpoint per group - the
+  counts on the other group's tabs are the same request either way.
 */
-const groups = computed(() => {
-  const order = []
-
-  for (const t of tabs.value) {
-    let g = order.find(x => x.name === t.group)
-
-    if (!g) {
-      g = { name: t.group, items: [] }
-      order.push(g)
-    }
-    g.items.push(t)
-  }
-
-  return order
-})
-
-/* Where the current collection lives, for the strip that owns it. */
-function groupOf(slug) {
-  return tabs.value.find(t => t.slug === slug)?.group || null
-}
-
 async function loadTabs() {
   const res = await api.get('/api/admin/content/collections')
 
-  tabs.value = res.data
+  tabs.value = res.data.filter(t => t.group === props.group)
 }
 
 async function loadList(slug) {
@@ -347,10 +339,13 @@ onMounted(async () => {
       <div class="d-flex flex-wrap align-center justify-space-between gap-4 mb-4">
         <div>
           <h4 class="text-h4 mb-1">
-            Website content
+            {{ heading }}
           </h4>
-          <p class="text-body-2 mb-0 text-medium-emphasis">
-            Everything here appears on the public site. Changes are live as soon as you save.
+          <p
+            v-if="blurb"
+            class="text-body-2 mb-0 text-medium-emphasis"
+          >
+            {{ blurb }}
           </p>
         </div>
 
@@ -365,40 +360,28 @@ onMounted(async () => {
       </div>
 
       <VCard>
-        <div
-          v-for="(g, gi) in groups"
-          :key="g.name"
-          class="px-4 pt-3"
-          :class="gi > 0 ? 'border-t' : ''"
+        <!--
+          One strip, of at most six. The other group is a separate sidebar entry
+          and a separate route, so nothing here scrolls out of reach.
+        -->
+        <VTabs
+          v-model="tab"
+          show-arrows
         >
-          <p class="text-overline text-medium-emphasis mb-0">
-            {{ g.name }}
-          </p>
-          <!--
-            One VTabs per group, and only the strip holding the current
-            collection carries the v-model - otherwise each strip fights the
-            other to select a value it does not contain.
-          -->
-          <VTabs
-            :model-value="groupOf(tab) === g.name ? tab : null"
-            show-arrows
-            @update:model-value="v => { if (v) tab = v }"
+          <VTab
+            v-for="t in tabs"
+            :key="t.slug"
+            :value="t.slug"
           >
-            <VTab
-              v-for="t in g.items"
-              :key="t.slug"
-              :value="t.slug"
+            {{ t.label }}
+            <VChip
+              size="x-small"
+              class="ms-2"
             >
-              {{ t.label }}
-              <VChip
-                size="x-small"
-                class="ms-2"
-              >
-                {{ t.count }}
-              </VChip>
-            </VTab>
-          </VTabs>
-        </div>
+              {{ t.count }}
+            </VChip>
+          </VTab>
+        </VTabs>
 
         <VDivider />
 

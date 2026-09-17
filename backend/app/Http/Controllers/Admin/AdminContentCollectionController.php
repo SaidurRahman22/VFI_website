@@ -63,6 +63,17 @@ class AdminContentCollectionController extends Controller
     ];
 
     /**
+     * Where a collection's content comes out, as a slug the console routes on
+     * plus the words a person reads. Two groups rather than one list of ten:
+     * these fill two different products for two different audiences, and the
+     * console gives each its own sidebar entry.
+     */
+    private const GROUPS = [
+        'public-website' => 'Public website',
+        'partner-console' => 'Partner console',
+    ];
+
+    /**
      * The three card gradients the stylesheets define (`blog__media--a` …
      * `news__media--b`), used when a card has no image. Stored in a varchar(8),
      * hence the single-letter keys.
@@ -93,15 +104,15 @@ class AdminContentCollectionController extends Controller
      *    one and is what a screen reader reads out in place of the photo.
      *
      * `group` says WHERE the collection comes out: four of these fill the public
-     * marketing site, six fill the partner console that agencies sign in to. Ten
-     * tabs in one strip overflow a 1500px screen, which put the six partner ones
-     * permanently behind a scroll arrow; grouped, each strip fits, and the
-     * heading answers the question the client asked — where does this text
-     * actually appear.
+     * marketing site, six fill the partner console that agencies sign in to. The
+     * console gives each group its own sidebar entry and its own URL, so ten
+     * collections never share one tab strip — ten tabs overflow a 1500px screen
+     * and put six of them behind a scroll arrow. It also answers, on screen, the
+     * question the client asked of every field: where does this text appear.
      */
     private const SCHEMA = [
         'events' => [
-            'group' => 'Public website',
+            'group' => 'public-website',
             'label' => 'Events',
             'singular' => 'Event',
             'title_key' => 'title',
@@ -125,7 +136,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'blogs' => [
-            'group' => 'Public website',
+            'group' => 'public-website',
             'label' => 'Blog posts',
             'singular' => 'Blog post',
             'title_key' => 'title',
@@ -152,7 +163,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'news' => [
-            'group' => 'Public website',
+            'group' => 'public-website',
             'label' => 'News & updates',
             'singular' => 'News item',
             'title_key' => 'title',
@@ -166,7 +177,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'photos' => [
-            'group' => 'Public website',
+            'group' => 'public-website',
             'label' => 'Photo gallery',
             'singular' => 'Photo',
             'title_key' => 'caption',
@@ -179,7 +190,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-managers' => [
-            'group' => 'Partner console',
+            'group' => 'partner-console',
             'label' => 'Regional managers',
             'singular' => 'Regional manager',
             'title_key' => 'name',
@@ -197,7 +208,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-updates' => [
-            'group' => 'Partner console',
+            'group' => 'partner-console',
             'label' => 'Important updates',
             'singular' => 'Update',
             'title_key' => 'title',
@@ -214,7 +225,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-quicklinks' => [
-            'group' => 'Partner console',
+            'group' => 'partner-console',
             'label' => 'Quick links',
             'singular' => 'Quick link',
             'title_key' => 'label',
@@ -228,7 +239,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-docs' => [
-            'group' => 'Partner console',
+            'group' => 'partner-console',
             'label' => 'Learning documents',
             'singular' => 'Document',
             'title_key' => 'title',
@@ -248,7 +259,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-emails' => [
-            'group' => 'Partner console',
+            'group' => 'partner-console',
             'label' => 'Email updates',
             'singular' => 'Email update',
             'title_key' => 'subject',
@@ -261,7 +272,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-notifs' => [
-            'group' => 'Partner console',
+            'group' => 'partner-console',
             'label' => 'Notifications',
             'singular' => 'Notification',
             'title_key' => 'title',
@@ -310,6 +321,7 @@ class AdminContentCollectionController extends Controller
             $out[] = [
                 'slug' => $slug,
                 'group' => self::SCHEMA[$slug]['group'],
+                'group_label' => self::GROUPS[self::SCHEMA[$slug]['group']],
                 'label' => self::SCHEMA[$slug]['label'],
                 'count' => $model::query()->count(),
             ];
@@ -332,6 +344,7 @@ class AdminContentCollectionController extends Controller
         return $this->fresh([
             'collection' => $collection,
             'group' => $meta['group'],
+            'group_label' => self::GROUPS[$meta['group']],
             'label' => $meta['label'],
             'singular' => $meta['singular'],
             'title_key' => $meta['title_key'],

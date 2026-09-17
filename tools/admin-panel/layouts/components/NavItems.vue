@@ -1,5 +1,6 @@
 <script setup>
 import VerticalNavSectionTitle from '@/@layouts/components/VerticalNavSectionTitle.vue'
+import VerticalNavGroup from '@layouts/components/VerticalNavGroup.vue'
 import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
 
 /*
@@ -14,6 +15,7 @@ import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
   security boundary - the endpoint and the screen both refuse independently.
 */
 const { can } = useVfiUser()
+const route = useRoute()
 
 /*
   BUILT HERE, natively.
@@ -22,6 +24,13 @@ const { can } = useVfiUser()
   roles) join this list in the commit that adds their page AND their API. A link
   to an empty screen is exactly the decoration the client has spent days
   finding.
+
+  Website content is a GROUP of two, because its ten collections fill two
+  different products: the public marketing site, and the console partner
+  agencies sign in to. Those two labels are written here rather than fetched,
+  because the sidebar has to render before any request answers; the server holds
+  the authoritative copy in AdminContentCollectionController::GROUPS and decides
+  which collection belongs to which.
 */
 const sections = [
   {
@@ -34,12 +43,15 @@ const sections = [
   {
     heading: 'The website',
     items: [
-      /*
-        All ten content collections behind one entry, with tabs. The panel this
-        replaces spent ten sidebar rows on them - one per Eloquent model - which
-        is a database schema on screen rather than a tool.
-      */
-      { title: 'Website content', icon: 'ri-pages-line', to: '/content', ability: 'content.manage' },
+      {
+        title: 'Website content',
+        icon: 'ri-pages-line',
+        ability: 'content.manage',
+        children: [
+          { title: 'Public website', icon: 'ri-global-line', to: '/content/public' },
+          { title: 'Partner console', icon: 'ri-briefcase-line', to: '/content/partner' },
+        ],
+      },
     ],
   },
 ]
@@ -76,6 +88,11 @@ function usable(list) {
 
 const visible = computed(() => usable(sections))
 const legacy = computed(() => usable(external))
+
+/* A group holding the current page opens itself - see VerticalNavGroup. */
+function holdsCurrentPage(item) {
+  return (item.children || []).some(c => route.path.startsWith(c.to))
+}
 </script>
 
 <template>
@@ -84,11 +101,27 @@ const legacy = computed(() => usable(external))
     :key="section.heading"
   >
     <VerticalNavSectionTitle :item="{ heading: section.heading }" />
-    <VerticalNavLink
+
+    <template
       v-for="item in section.items"
-      :key="item.to"
-      :item="item"
-    />
+      :key="item.to || item.title"
+    >
+      <VerticalNavGroup
+        v-if="item.children"
+        :item="{ ...item, open: holdsCurrentPage(item) }"
+      >
+        <VerticalNavLink
+          v-for="child in item.children"
+          :key="child.to"
+          :item="child"
+        />
+      </VerticalNavGroup>
+
+      <VerticalNavLink
+        v-else
+        :item="item"
+      />
+    </template>
   </template>
 
   <template

@@ -67,7 +67,11 @@ export default defineNuxtConfig({
       routes: [
         '/',
         '/applications',
+        // /content itself is only a redirect to /content/public, but it is
+        // prerendered so an old link or a typed URL is not a 404.
         '/content',
+        '/content/public',
+        '/content/partner',
       ],
     },
   },

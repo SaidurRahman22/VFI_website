@@ -6,7 +6,20 @@ const props = defineProps({
   },
 })
 
-const isOpen = ref(false)
+/*
+  Open when it holds the page you are on.
+
+  The template shipped this hardcoded to false, so a nav group was always
+  collapsed on load - land on /content/public from a link or a refresh and the
+  sidebar showed a closed "Website content" with no indication that the page you
+  are looking at is inside it. `item.open` lets the caller say so.
+*/
+const isOpen = ref(Boolean(props.item.open))
+
+watch(() => props.item.open, v => {
+  if (v)
+    isOpen.value = true
+})
 </script>
 
 <template>

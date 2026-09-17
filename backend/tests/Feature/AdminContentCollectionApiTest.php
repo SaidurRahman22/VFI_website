@@ -106,9 +106,10 @@ class AdminContentCollectionApiTest extends TestCase
 
     /**
      * Ten tabs in one strip overflow a 1500px screen, which is how the six
-     * partner-console collections ended up behind a scroll arrow. The group
-     * also answers the question the client actually asked of every field —
-     * where does this text come out on the site?
+     * partner-console collections ended up behind a scroll arrow. Each group is
+     * now its own sidebar entry and its own route, so the group a collection
+     * belongs to decides where it is reachable — and it answers the question the
+     * client asked of every field: where does this text come out on the site?
      */
     public function test_each_collection_says_where_its_content_appears(): void
     {
@@ -116,16 +117,28 @@ class AdminContentCollectionApiTest extends TestCase
 
         $byslug = collect($this->getJson('/api/admin/content/collections')->json('data'))->keyBy('slug');
 
-        $this->assertSame('Public website', $byslug['events']['group']);
-        $this->assertSame('Public website', $byslug['photos']['group']);
-        $this->assertSame('Partner console', $byslug['pp-managers']['group']);
-        $this->assertSame('Partner console', $byslug['pp-notifs']['group']);
+        $this->assertSame('public-website', $byslug['events']['group']);
+        $this->assertSame('public-website', $byslug['photos']['group']);
+        $this->assertSame('partner-console', $byslug['pp-managers']['group']);
+        $this->assertSame('partner-console', $byslug['pp-notifs']['group']);
 
-        // Two groups, so two strips that each fit.
-        $this->assertSame(['Public website', 'Partner console'], $byslug->pluck('group')->unique()->values()->all());
+        // The console routes on the slug (/content/public) and prints the label,
+        // so both travel together - a client that had to derive one from the
+        // other would be the second place these names are written down.
+        $this->assertSame('Public website', $byslug['events']['group_label']);
+        $this->assertSame('Partner console', $byslug['pp-managers']['group_label']);
+
+        // Exactly two groups, each small enough for one tab strip.
+        $this->assertSame(
+            ['public-website', 'partner-console'],
+            $byslug->pluck('group')->unique()->values()->all()
+        );
+        $this->assertLessThanOrEqual(6, $byslug->groupBy('group')->map->count()->max());
 
         // A screen entered directly on one collection still knows its group.
-        $this->assertSame('Partner console', $this->getJson('/api/admin/content/pp-docs')->json('group'));
+        $res = $this->getJson('/api/admin/content/pp-docs');
+        $this->assertSame('partner-console', $res->json('group'));
+        $this->assertSame('Partner console', $res->json('group_label'));
     }
 
     /**

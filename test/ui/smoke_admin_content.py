@@ -149,13 +149,26 @@ with sync_playwright() as p:
             raise SystemExit(1)
 
         # ------------------------------------------- 2. reach it from the nav
-        print("\n=== 2. find Website content in the sidebar and click it ===")
-        nav_link = page.locator('a:has-text("Website content")').first
-        check(on_screen(nav_link), "the sidebar shows a Website content link")
-        nav_link.click()
-        page.wait_for_url("**/content**", timeout=20000)
+        print("\n=== 2. open Website content in the sidebar and click through ===")
+        # Website content is a nav GROUP of two now, so the parent has to be
+        # expanded before either child is reachable.
+        group = page.locator('.nav-group:has-text("Website content")').first
+        check(on_screen(group), "the sidebar shows a Website content group")
+
+        child = page.locator('.nav-group a[href$="/content/public"]').first
+        if not child.is_visible():
+            group.locator(".nav-group-label").first.click()
+            page.wait_for_timeout(600)
+        check(on_screen(child), "expanding it reveals Public website")
+        check(
+            on_screen(page.locator('.nav-group a[href$="/content/partner"]').first),
+            "and Partner console",
+        )
+
+        child.click()
+        page.wait_for_url("**/content/public**", timeout=20000)
         page.wait_for_timeout(2500)
-        check("/content" in page.url, "it navigates to the content screen", page.url)
+        check("/content/public" in page.url, "it navigates to the public group", page.url)
 
         body = page.inner_text("body")
         check(
@@ -165,28 +178,50 @@ with sync_playwright() as p:
         check("Could not load" not in body, "the collections loaded")
 
         # ------------------------------------------------------- 3. the tabs
-        print("\n=== 3. all ten collections, as tabs ===")
-        tabs = page.locator(".v-card .v-tab")
-        # text_content, not inner_text: ten tabs overflow 1500px so the strip
-        # scrolls, and inner_text returns "" for whatever is currently scrolled
-        # out of view - which says nothing about whether the tab exists.
-        names = [
-            (tabs.nth(i).text_content() or "").split("\n")[0].strip()
-            for i in range(tabs.count())
-        ]
-        check(tabs.count() == 10, "ten tabs, not ten sidebar entries", str(tabs.count()))
-        for expected in ["Events", "Blog posts", "Photo gallery", "Quick links"]:
-            check(any(expected in n for n in names), f'tab "{expected}" is present')
+        print("\n=== 3. each group's collections, all on screen ===")
+        check(
+            "Public website" in page.inner_text("h4"),
+            "the heading names the group you chose",
+            page.inner_text("h4"),
+        )
 
-        # Grouped into two strips so all ten fit. Ten in one strip pushed four
-        # of them off the end, reachable only by finding the scroll arrow.
-        card = page.inner_text(".v-card")
-        check("PUBLIC WEBSITE" in card.upper(), "the strips say which content is public")
-        check("PARTNER CONSOLE" in card.upper(), "and which fills the partner console")
-        for t in ["Quick links", "Learning documents", "Email updates", "Notifications"]:
-            tabloc = page.locator(f'.v-tab:has-text("{t}")').first
-            check(on_screen(tabloc), f'"{t}" is on screen without scrolling the strip')
+        # text_content, not inner_text: a tab scrolled out of a strip returns ""
+        # from inner_text, which says nothing about whether it exists.
+        def tab_names():
+            t = page.locator(".v-card .v-tab")
+
+            return [(t.nth(i).text_content() or "").split("\n")[0].strip() for i in range(t.count())]
+
+        public_tabs = tab_names()
+        check(len(public_tabs) == 4, "four public-site collections", str(public_tabs))
+        for expected in ["Events", "Blog posts", "News & updates", "Photo gallery"]:
+            check(on_screen(page.locator(f'.v-tab:has-text("{expected}")').first),
+                  f'"{expected}" is on screen without scrolling')
         page.screenshot(path=f"{OUT}/20-content-tabs.png", full_page=True)
+
+        # The other group, through the sidebar, with all six on screen at once -
+        # which is the whole reason these are two routes and not one strip.
+        page.locator('.nav-group a[href$="/content/partner"]').first.click()
+        page.wait_for_url("**/content/partner**", timeout=20000)
+        page.wait_for_timeout(2500)
+        partner_tabs = tab_names()
+        check(len(partner_tabs) == 6, "six partner-console collections", str(partner_tabs))
+        for expected in ["Regional managers", "Quick links", "Learning documents", "Notifications"]:
+            check(on_screen(page.locator(f'.v-tab:has-text("{expected}")').first),
+                  f'"{expected}" is on screen without scrolling')
+        page.screenshot(path=f"{OUT}/20b-content-partner.png", full_page=True)
+
+        # A refresh has to land back here rather than on the first group. That
+        # is the point of giving each group its own URL.
+        page.reload(wait_until="networkidle")
+        page.wait_for_timeout(3000)
+        check("/content/partner" in page.url, "a refresh stays in this group", page.url)
+        check("Partner console" in page.inner_text("h4"), "and still names it")
+
+        # Back to the public group for the editing checks below.
+        page.locator('.nav-group a[href$="/content/public"]').first.click()
+        page.wait_for_url("**/content/public**", timeout=20000)
+        page.wait_for_timeout(2500)
 
         # ------------------------------------------------------- 4. create
         print("\n=== 4. add an event ===")
@@ -319,6 +354,10 @@ with sync_playwright() as p:
 
         # ------------------------------------- 7. the display-date collections
         print("\n=== 7. a display date is a text box, not a picker ===")
+        # Learning documents is in the other group now.
+        page.locator('.nav-group a[href$="/content/partner"]').first.click()
+        page.wait_for_url("**/content/partner**", timeout=20000)
+        page.wait_for_timeout(2500)
         page.locator('.v-tab:has-text("Learning documents")').first.click()
         page.wait_for_timeout(2000)
         click_when_ready(page, 'button:has-text("New document")', "New document")
@@ -334,6 +373,9 @@ with sync_playwright() as p:
 
         # ------------------------------------------------ 8. blog body safety
         print("\n=== 8. a script tag in a blog body does not survive ===")
+        page.locator('.nav-group a[href$="/content/public"]').first.click()
+        page.wait_for_url("**/content/public**", timeout=20000)
+        page.wait_for_timeout(2500)
         page.locator('.v-tab:has-text("Blog posts")').first.click()
         page.wait_for_timeout(2000)
         click_when_ready(page, 'button:has-text("New blog post")', "New blog post")
@@ -378,6 +420,9 @@ with sync_playwright() as p:
 
         # ---------------------------------------------------- 10. clean up
         print("\n=== 10. remove everything this run created ===")
+        page.locator('.nav-group a[href$="/content/public"]').first.click()
+        page.wait_for_url("**/content/public**", timeout=20000)
+        page.wait_for_timeout(2500)
         page.locator('.v-tab:has-text("Events")').first.click()
         page.wait_for_timeout(2000)
         for _ in range(6):
