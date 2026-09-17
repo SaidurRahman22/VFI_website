@@ -14,7 +14,7 @@ import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
   `ability` hides a link the person cannot use. That is a courtesy, not a
   security boundary - the endpoint and the screen both refuse independently.
 */
-const { can } = useVfiUser()
+const { can, isSuperAdmin } = useVfiUser()
 const route = useRoute()
 
 /*
@@ -61,6 +61,14 @@ const sections = [
           { title: 'Partner console', icon: 'ri-briefcase-line', to: '/content/partner' },
         ],
       },
+      { title: 'Site settings', icon: 'ri-settings-3-line', to: '/settings', ability: 'content.manage' },
+
+      /*
+        Owner only, and the nav says so by asking `isSuperAdmin` rather than an
+        ability: AdminPageController requires isSuperAdmin(), so a content editor
+        can write every word on the site and still not remove a page from it.
+      */
+      { title: 'Pages', icon: 'ri-file-list-line', to: '/pages', owner: true },
     ],
   },
 ]
@@ -70,9 +78,13 @@ const sections = [
 
   Signing in lands on this console, which means anything it cannot reach is
   effectively gone. The ten content collections are now native (above), so what
-  is left on the legacy page is the fixed page furniture - which pages are
-  switched on, the home-page images, and the backup export/import - while
-  /manage still owns document review, agencies and GDPR requests.
+  is left on the legacy page is the home-page images, the backup export/import
+  and the per-country / per-region page text - while /manage still owns document
+  review, agencies and GDPR requests.
+
+  Worth knowing about that page: it saves to the EDITOR'S OWN localStorage, not
+  to the server. Everything moved off it here is server-backed for the first
+  time.
 
   Linking out is not decoration: these go somewhere that works today. They are
   labelled and grouped apart so it is obvious which parts of the console are
@@ -82,8 +94,7 @@ const external = [
   {
     heading: 'Not yet rebuilt here',
     items: [
-      // Short enough not to be truncated by the sidebar at its own width.
-      { title: 'Pages & backup', icon: 'ri-layout-4-line', href: '/admin.html', ability: 'content.manage' },
+      { title: 'Images & backup', icon: 'ri-layout-4-line', href: '/admin.html', ability: 'content.manage' },
       { title: 'Staff tools', icon: 'ri-tools-line', href: '/manage', ability: 'documents.review' },
     ],
   },
@@ -91,7 +102,11 @@ const external = [
 
 function usable(list) {
   return list
-    .map(s => ({ ...s, items: s.items.filter(i => !i.ability || can(i.ability)) }))
+    .map(s => ({
+      ...s,
+      items: s.items.filter(i =>
+        (!i.ability || can(i.ability)) && (!i.owner || isSuperAdmin.value)),
+    }))
     .filter(s => s.items.length > 0)
 }
 

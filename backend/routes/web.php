@@ -58,6 +58,9 @@ Route::prefix('api/admin')->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout']);
 
         // Phase 3C — override-singleton editor (optimistic concurrency).
+        // `singletons` lists the ones the console offers as a form; it is
+        // declared before the {key} route so the literal is not eaten as a key.
+        Route::get('content/singletons', [AdminContentController::class, 'index']);
         Route::get('content/singleton/{key}', [AdminContentController::class, 'show']);
         Route::put('content/singleton/{key}', [AdminContentController::class, 'update']);
 

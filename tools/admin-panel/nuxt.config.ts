@@ -72,6 +72,8 @@ export default defineNuxtConfig({
         '/content',
         '/content/public',
         '/content/partner',
+        '/settings',
+        '/pages',
       ],
     },
   },
