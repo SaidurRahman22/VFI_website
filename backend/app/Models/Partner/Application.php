@@ -5,11 +5,42 @@ namespace App\Models\Partner;
 use App\Enums\ApplicationStatus;
 use App\Models\Concerns\BelongsToAgency;
 use App\Models\Student\Student;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
-/** Phase 7 — a student's application in the partner pipeline (tenant-scoped). */
+/**
+ * Phase 7 — a student's application in the partner pipeline (tenant-scoped).
+ *
+ * The @property block is not decoration. Larastan cannot see through the
+ * casts() METHOD form, so without it `status` is inferred as a plain string and
+ * every `$app->status->value` in the codebase is reported as "cannot access
+ * property on string" - correct at runtime, noise in the analyser, and it
+ * buries the findings that are real. Declaring the types here fixes the cause
+ * rather than silencing the symptom.
+ *
+ * @property int $id
+ * @property int $agency_id
+ * @property int $student_id
+ * @property int|null $program_id
+ * @property int|null $institution_id
+ * @property string|null $intake_month
+ * @property int|null $intake_year
+ * @property ApplicationStatus $status
+ * @property string|null $ack_no
+ * @property Carbon|null $submitted_at
+ * @property Carbon|null $deadline_at
+ * @property string|null $deferred_to_intake
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Student|null $student
+ * @property-read PartnerAgency|null $agency
+ * @property-read Collection<int, ApplicationNote> $notes
+ * @property-read Collection<int, ApplicationStatusEvent> $events
+ * @property-read int|null $notes_count
+ */
 class Application extends Model
 {
     use BelongsToAgency;

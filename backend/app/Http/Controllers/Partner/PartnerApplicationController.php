@@ -95,7 +95,7 @@ class PartnerApplicationController extends Controller
                     'name' => trim(($s->first_name ?? '').' '.($s->last_name ?? '')) ?: $s->displayName(),
                     'email' => $s->email,
                 ],
-                'status' => $app->status?->value,
+                'status' => $app->status->value,
                 'intake' => trim(($app->intake_month ?? '').' '.($app->intake_year ?? '')),
                 'ack_no' => $app->ack_no,
                 'deadline_at' => optional($app->deadline_at)->toIso8601String(),
@@ -189,7 +189,7 @@ class PartnerApplicationController extends Controller
                     'id' => $a->id,
                     'student' => trim(($a->student->first_name ?? '').' '.($a->student->last_name ?? ''))
                         ?: ($a->student->email ?? 'Student'),
-                    'status' => $a->status?->value,
+                    'status' => $a->status->value,
                     'deadline' => optional($a->deadline_at)->toDateString(),
                 ])->values();
         };
@@ -234,7 +234,7 @@ class PartnerApplicationController extends Controller
                 'name' => $s ? (trim(($s->first_name ?? '').' '.($s->last_name ?? '')) ?: $s->displayName()) : null,
                 'public_ref' => $s?->student_ref,
             ],
-            'status' => $a->status?->value,
+            'status' => $a->status->value,
             'intake' => trim(($a->intake_month ?? '').' '.($a->intake_year ?? '')),
             'ack_no' => $a->ack_no,
             'deadline_at' => optional($a->deadline_at)->toIso8601String(),

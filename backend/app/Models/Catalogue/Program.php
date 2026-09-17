@@ -2,12 +2,17 @@
 
 namespace App\Models\Catalogue;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Phase 8 — a program offered by an institution (public reference data). */
+/**
+ * @property-read Institution|null $institution
+ * @property-read Collection<int, ProgramIntake> $intakes
+ */
 class Program extends Model
 {
     protected $fillable = [

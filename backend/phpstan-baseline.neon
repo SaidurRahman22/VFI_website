@@ -31,12 +31,6 @@ parameters:
 			path: app/Console/Commands/IngestPrograms.php
 
 		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Console/Commands/PurgeDemoCatalogue.php
-
-		-
 			message: '#^Access to an undefined property App\\Filament\\Pages\\UniversityDefaults\:\:\$form\.$#'
 			identifier: property.notFound
 			count: 2
@@ -85,12 +79,6 @@ parameters:
 			path: app/Filament/Resources/PartnerApplications/PartnerApplicationResource.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$original_name\.$#'
 			identifier: property.notFound
 			count: 1
@@ -136,18 +124,6 @@ parameters:
 			message: '#^Parameter \#1 \$at of static method App\\Filament\\Resources\\StaffApplications\\Tables\\StaffApplicationsTable\:\:on\(\) expects DateTimeInterface\|null, string\|null given\.$#'
 			identifier: argument.type
 			count: 3
-			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
-
-		-
-			message: '#^Parameter \#1 \$from of method App\\Services\\ApplicationReviewService\:\:allowedNextStatuses\(\) expects App\\Enums\\ApplicationStatus, string given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
-
-		-
-			message: '#^Parameter \#1 \$student of method App\\Services\\ApplicationReadiness\:\:for\(\) expects App\\Models\\Student\\Student, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
 			path: app/Filament/Resources/StaffApplications/Tables/StaffApplicationsTable.php
 
 		-
@@ -313,63 +289,9 @@ parameters:
 			path: app/Http/Controllers/Me/DocumentController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$student_ref\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:displayName\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 4
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{from\: string\|null, to\: string, actor_type\: mixed, note\: string\|null, occurred_at\: mixed\}, Closure\(App\\Models\\Partner\\ApplicationStatusEvent\)\: array\{from\: string\|null, to\: string, actor_type\: mixed, note\: string\|null, occurred_at\: mixed\} given\.$#'
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{from\: string\|null, to\: string, actor_type\: ''institution''\|''partner''\|''staff''\|''system''\|null, note\: string\|null, occurred_at\: mixed\}, Closure\(App\\Models\\Partner\\ApplicationStatusEvent\)\: array\{from\: string\|null, to\: string, actor_type\: ''institution''\|''partner''\|''staff''\|''system''\|null, note\: string\|null, occurred_at\: mixed\} given\.$#'
 			identifier: argument.type
 			count: 1
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Parameter \#1 \$student of method App\\Services\\ApplicationReadiness\:\:for\(\) expects App\\Models\\Student\\Student, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerApplicationController.php
-
-		-
-			message: '#^Using nullsafe property access on non\-nullable type string\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 4
 			path: app/Http/Controllers/Partner/PartnerApplicationController.php
 
 		-
@@ -427,67 +349,7 @@ parameters:
 			path: app/Http/Controllers/Partner/PartnerEnquiryController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$affordability_band\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$application_deadline_at\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$city\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$country\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$has_own_english_test\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake_month\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake_year\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$interview_required\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_major_city\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/Partner/PartnerProgramController.php
@@ -517,51 +379,9 @@ parameters:
 			path: app/Http/Controllers/Partner/PartnerProgramController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$offer_acceptance_band\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$offer_tat_band\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$province_state\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$season_label\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$test\.$#'
 			identifier: property.notFound
 			count: 2
-			path: app/Http/Controllers/Partner/PartnerProgramController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$vfi_represented\.$#'
-			identifier: property.notFound
-			count: 1
 			path: app/Http/Controllers/Partner/PartnerProgramController.php
 
 		-
@@ -573,7 +393,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
-			count: 5
+			count: 3
 			path: app/Http/Controllers/Partner/PartnerProgramController.php
 
 		-
@@ -985,12 +805,6 @@ parameters:
 			path: app/Services/ApplicationReadiness.php
 
 		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Services/ApplicationReviewService.php
-
-		-
 			message: '#^Offset ''conditional''\|''deferral''\|''non_enrolment''\|''offer''\|''payment''\|''pending_from_partner''\|''review''\|''submitted''\|''visa_received''\|''visa_rejected'' on array\{submitted\: array\{''review'', ''pending_from_partner'', ''non_enrolment''\}, review\: array\{''offer'', ''conditional'', ''pending_from_partner'', ''deferral'', ''non_enrolment''\}, conditional\: array\{''offer'', ''pending_from_partner'', ''deferral'', ''non_enrolment''\}, offer\: array\{''payment'', ''conditional'', ''deferral'', ''non_enrolment''\}, payment\: array\{''visa_received'', ''visa_rejected'', ''deferral'', ''non_enrolment''\}, visa_received\: array\{''deferral'', ''non_enrolment''\}, visa_rejected\: array\{''deferral'', ''payment'', ''non_enrolment''\}, pending_from_partner\: array\{''review'', ''deferral'', ''non_enrolment''\}, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 2
@@ -1005,18 +819,6 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$array \(array\{App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:Payment, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Offer, App\\Enums\\ApplicationStatus\:\:Conditional, App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Offer, App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Payment, App\\Enums\\ApplicationStatus\:\:Conditional, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Review, App\\Enums\\ApplicationStatus\:\:Deferral\|App\\Enums\\ApplicationStatus\:\:Offer\|App\\Enums\\ApplicationStatus\:\:PendingFromPartner, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\|array\{App\\Enums\\ApplicationStatus\:\:Review\}\|array\{App\\Enums\\ApplicationStatus\:\:VisaReceived, App\\Enums\\ApplicationStatus\:\:VisaRejected, App\\Enums\\ApplicationStatus\:\:Deferral, App\\Enums\\ApplicationStatus\:\:NonEnrolment\}\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
 			identifier: arrayFilter.same
-			count: 1
-			path: app/Services/ApplicationReviewService.php
-
-		-
-			message: '#^Parameter \#1 \$from of method App\\Services\\ApplicationReviewService\:\:canTransition\(\) expects App\\Enums\\ApplicationStatus, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/ApplicationReviewService.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\ApplicationStatus will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
 			count: 1
 			path: app/Services/ApplicationReviewService.php
 
@@ -1113,13 +915,13 @@ parameters:
 		-
 			message: '#^Cannot access property \$value on string\.$#'
 			identifier: property.nonObject
-			count: 5
+			count: 3
 			path: app/Services/Gdpr/DataSubjectExportService.php
 
 		-
 			message: '#^Using nullsafe property access on non\-nullable type string\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
-			count: 5
+			count: 2
 			path: app/Services/Gdpr/DataSubjectExportService.php
 
 		-
@@ -1213,64 +1015,10 @@ parameters:
 			path: app/Services/PasswordResetService.php
 
 		-
-			message: '#^Parameter \#2 \$from of method App\\Services\\PipelineService\:\:writeEvent\(\) expects App\\Enums\\ApplicationStatus\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/PipelineService.php
-
-		-
 			message: '#^Instanceof between string and App\\Enums\\Role will always evaluate to false\.$#'
 			identifier: instanceof.alwaysFalse
 			count: 1
 			path: app/Services/RoleAssignmentService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$affordability_band\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$application_deadline_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$country\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$has_own_english_test\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake_month\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$intake_year\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$interview_required\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_major_city\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_required\.$#'
@@ -1285,51 +1033,9 @@ parameters:
 			path: app/Services/SearchIndexer.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$offer_acceptance_band\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$offer_tat_band\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$province_state\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$season_label\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$test\.$#'
 			identifier: property.notFound
 			count: 3
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tuition_deposit_policy\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$vfi_represented\.$#'
-			identifier: property.notFound
-			count: 1
 			path: app/Services/SearchIndexer.php
 
 		-
@@ -1341,12 +1047,6 @@ parameters:
 		-
 			message: '#^Cannot call method isPast\(\) on string\.$#'
 			identifier: method.nonObject
-			count: 1
-			path: app/Services/SearchIndexer.php
-
-		-
-			message: '#^Parameter \#2 \$intake of method App\\Services\\SearchIndexer\:\:isStale\(\) expects App\\Models\\Catalogue\\ProgramIntake, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
 			count: 1
 			path: app/Services/SearchIndexer.php
 

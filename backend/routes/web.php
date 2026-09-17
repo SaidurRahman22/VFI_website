@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminApplicationController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminBackupController;
 use App\Http\Controllers\Admin\AdminContentController;
@@ -70,6 +71,19 @@ Route::prefix('api/admin')->group(function () {
         // Phase 3G — backup export / guarded restore (owner-only, snapshotted).
         Route::get('backup/export', [AdminBackupController::class, 'export']);
         Route::post('backup/import', [AdminBackupController::class, 'import']);
+
+        /*
+         * The staff application queue as JSON, for the replacement admin panel.
+         * The same data already exists as a Filament resource; the new panel is
+         * a static Vue app, so it needs it over HTTP. Every handler re-checks
+         * StaffAbilities itself — this group only proves an admin session with
+         * TOTP, not which staff role is on the other end.
+         */
+        $apps = AdminApplicationController::class;
+        Route::get('applications', [$apps, 'index']);
+        Route::get('applications/{application}', [$apps, 'show'])->whereNumber('application');
+        Route::post('applications/{application}/transition', [$apps, 'transition'])->whereNumber('application');
+        Route::post('applications/{application}/notes', [$apps, 'addNote'])->whereNumber('application');
     });
 });
 

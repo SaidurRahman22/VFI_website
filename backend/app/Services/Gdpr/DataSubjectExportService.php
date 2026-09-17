@@ -237,7 +237,7 @@ class DataSubjectExportService
                 fn (StudentDocument $d) => [
                     'id' => $d->id,
                     'document_type' => $typeKeys[$d->document_type_id] ?? null,
-                    'status' => $d->status?->value,
+                    'status' => $d->status->value,
                     'file_id' => $d->file_id,
                     'uploaded_at' => $this->iso($d->uploaded_at),
                     'verified_by_user_id' => $d->verified_by,
@@ -394,7 +394,7 @@ class DataSubjectExportService
                     'institution_id' => $a->institution_id,
                     'intake_month' => $a->intake_month,
                     'intake_year' => $a->intake_year,
-                    'status' => $a->status?->value,
+                    'status' => $a->status->value,
                     'ack_no' => $a->ack_no,
                     'submitted_at' => $this->iso($a->submitted_at),
                     'deadline_at' => $this->iso($a->deadline_at),

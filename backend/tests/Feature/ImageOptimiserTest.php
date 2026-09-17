@@ -205,7 +205,12 @@ class ImageOptimiserTest extends TestCase
     {
         // Over the cap, so the output is definitely our re-encode and not the
         // never-larger fallback.
-        $out = $this->optimiser()->optimise($this->transparentPng(1200, 1200), 400);
+        //
+        // 800 and not 1200: transparentPng() writes at compression level 0 by
+        // design, so the source is raw pixels, and at 1200x1200 the source, the
+        // PNG buffer and GD's decode of it together tipped PHP's default 128MB
+        // limit and fataled. Anything over 400 proves the same thing.
+        $out = $this->optimiser()->optimise($this->transparentPng(800, 800), 400);
         $this->assertSame([400, 400], $this->dimensions($out));
 
         $im = imagecreatefromstring($out);
@@ -337,7 +342,7 @@ class ImageOptimiserTest extends TestCase
      */
     public function test_a_transparent_gif_over_the_cap_keeps_its_transparency(): void
     {
-        $out = $this->optimiser()->optimise($this->transparentGif(1200, 1200), 400);
+        $out = $this->optimiser()->optimise($this->transparentGif(800, 800), 400);
         $this->assertSame([400, 400], $this->dimensions($out));
 
         $im = imagecreatefromstring($out);
@@ -356,9 +361,9 @@ class ImageOptimiserTest extends TestCase
     {
         // The mirror of the test above: nominating a transparent index on a GIF
         // that never had one would punch a hole straight through the picture.
-        $im = imagecreatetruecolor(1200, 1200);
-        imagefilledrectangle($im, 0, 0, 1199, 1199, imagecolorallocate($im, 12, 12, 12));
-        imagefilledellipse($im, 600, 600, 800, 800, imagecolorallocate($im, 250, 250, 250));
+        $im = imagecreatetruecolor(800, 800);
+        imagefilledrectangle($im, 0, 0, 799, 799, imagecolorallocate($im, 12, 12, 12));
+        imagefilledellipse($im, 400, 400, 520, 520, imagecolorallocate($im, 250, 250, 250));
         ob_start();
         imagegif($im);
         $gif = (string) ob_get_clean();

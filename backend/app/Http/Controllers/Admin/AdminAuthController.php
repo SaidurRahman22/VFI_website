@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuthEvent;
 use App\Models\User;
 use App\Services\TotpService;
+use App\Support\StaffAbilities;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -182,7 +183,12 @@ class AdminAuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'roles' => $user->activeRoles()->map(fn ($r) => $r->value)->values(),
-        ]);
+            'is_superadmin' => $user->isSuperAdmin(),
+            // Resolved server-side so the admin panel's navigation never has to
+            // carry its own copy of the role-to-ability map. Hiding a link is a
+            // courtesy; every screen still refuses the request on its own.
+            'abilities' => StaffAbilities::forUser($user),
+        ])->header('Cache-Control', 'no-store');
     }
 
     public function logout(Request $request): JsonResponse

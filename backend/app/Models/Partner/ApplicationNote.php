@@ -5,6 +5,7 @@ namespace App\Models\Partner;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Phase 9A — a STAFF-INTERNAL note on an application.
@@ -16,6 +17,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * leak, not a feature.
  *
  * Append-only: no updated_at, no edit path. Corrections are new notes.
+ */
+/**
+ * @property int $id
+ * @property int $application_id
+ * @property int|null $author_user_id
+ * @property string|null $author_name
+ * @property string $body
+ * @property-read User|null $author
+ * @property-read Application|null $application
+ * @property Carbon|null $created_at
  */
 class ApplicationNote extends Model
 {

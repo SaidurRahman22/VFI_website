@@ -64,6 +64,31 @@ class StaffAbilities
         return false;
     }
 
+    /**
+     * Every ability, resolved for one user.
+     *
+     * The admin panel's navigation has to know which screens a person may open,
+     * and the only safe way to tell it is to answer here. The alternative -
+     * shipping the role-to-ability map to the browser and evaluating it there -
+     * would mean two copies of the permission rules, and the client copy would
+     * drift the first time a role changed. The server stays the only place that
+     * decides; the client only decides what to DRAW.
+     *
+     * This is not an authorisation boundary. Hiding a link is a courtesy, and
+     * every screen still refuses the request on its own.
+     *
+     * @return array<string, bool>
+     */
+    public static function forUser(?User $user): array
+    {
+        $out = [];
+        foreach (array_keys(self::MAP) as $ability) {
+            $out[$ability] = self::allows($user, $ability);
+        }
+
+        return $out;
+    }
+
     /** Convenience for Filament canAccess(). */
     public static function current(string $ability): bool
     {
