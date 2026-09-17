@@ -155,11 +155,22 @@ with sync_playwright() as p:
         group = page.locator('.nav-group:has-text("Website content")').first
         check(on_screen(group), "the sidebar shows a Website content group")
 
-        child = page.locator('.nav-group a[href$="/content/public"]').first
-        if not child.is_visible():
+        # `.open` on the group, not is_visible() on the child: the children live
+        # in a grid-rows:0fr + overflow:hidden wrapper, so collapsed they still
+        # have a bounding box and still report themselves visible while being
+        # clipped to nothing. A click then hits the group label behind them.
+        opened = "open" in (group.get_attribute("class") or "")
+        check(opened, "the group is already open, so both entries are in sight")
+        if not opened:
             group.locator(".nav-group-label").first.click()
-            page.wait_for_timeout(600)
-        check(on_screen(child), "expanding it reveals Public website")
+            page.wait_for_timeout(700)
+            check(
+                "open" in (group.get_attribute("class") or ""),
+                "clicking it opens the group",
+            )
+
+        child = page.locator('.nav-group a[href$="/content/public"]').first
+        check(on_screen(child), "Public website is listed under it")
         check(
             on_screen(page.locator('.nav-group a[href$="/content/partner"]').first),
             "and Partner console",

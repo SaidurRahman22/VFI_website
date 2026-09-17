@@ -47,6 +47,15 @@ const sections = [
         title: 'Website content',
         icon: 'ri-pages-line',
         ability: 'content.manage',
+
+        /*
+          Open on arrival. A collapsed group is two rows nobody can see, and a
+          collapsed child still occupies layout space while being clipped - so
+          it looks present, reports itself visible, and a click on it lands on
+          the group label instead. With two children there is nothing to gain by
+          folding them away.
+        */
+        open: true,
         children: [
           { title: 'Public website', icon: 'ri-global-line', to: '/content/public' },
           { title: 'Partner console', icon: 'ri-briefcase-line', to: '/content/partner' },
@@ -89,9 +98,9 @@ function usable(list) {
 const visible = computed(() => usable(sections))
 const legacy = computed(() => usable(external))
 
-/* A group holding the current page opens itself - see VerticalNavGroup. */
-function holdsCurrentPage(item) {
-  return (item.children || []).some(c => route.path.startsWith(c.to))
+/* Open if it says so, or if it holds the page you are on. */
+function groupOpen(item) {
+  return Boolean(item.open) || (item.children || []).some(c => route.path.startsWith(c.to))
 }
 </script>
 
@@ -108,7 +117,7 @@ function holdsCurrentPage(item) {
     >
       <VerticalNavGroup
         v-if="item.children"
-        :item="{ ...item, open: holdsCurrentPage(item) }"
+        :item="{ ...item, open: groupOpen(item) }"
       >
         <VerticalNavLink
           v-for="child in item.children"
