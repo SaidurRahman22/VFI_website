@@ -114,6 +114,15 @@
           .then(function (r) {
             if (r.step === "totp") { show("stepTotp"); $("#alCode").focus(); }
             else if (r.step === "enroll") { startEnroll(); }
+            /* step === "done" — the password alone completed the sign-in, which
+               happens whenever ADMIN_REQUIRE_TOTP is off. This branch did not
+               exist: the server answered 200 {"step":"done"}, nothing handled
+               it, and the page just sat there. A successful login that appears
+               to do nothing is indistinguishable from a broken one. */
+            else if (r.step === "done") { window.location.href = "/admin-panel/"; }
+            /* Any other step is a server/client mismatch. Say so rather than
+               leaving the button spinning on a silent success. */
+            else { say("Signed in, but this page did not understand the response. Open /admin-panel/ directly.", "err"); }
           })
           .catch(function (err) { say(err.status === 423 ? "Account temporarily locked. Try again later." : "Invalid credentials."); })
           .finally(function () { busy($("#stepPassword"), false); });
