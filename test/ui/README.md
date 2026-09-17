@@ -157,3 +157,29 @@ One trap worth knowing if you extend this: `.fi-modal` is always in the DOM and
 permanently hidden — it wraps the visible `.fi-modal-window`. Waiting on a comma
 selector with `state="visible"` resolves to the hidden wrapper and never
 settles, which once made all four working actions look broken.
+
+## smoke_admin_login.py — the journey, not the API
+
+```bash
+export VFI_ADMIN_EMAIL=superadmin@vfi-fc.com
+export VFI_ADMIN_PASSWORD=...
+python test/ui/smoke_admin_login.py
+```
+
+Opens the login page, **types** the credentials, presses the button, and asserts
+where the browser ends up.
+
+It exists because of two faults that shipped together and hid each other:
+
+1. `admin-login.html` had no branch for `step === "done"` — the response the
+   server returns when the password alone completes the sign-in, which is every
+   login while `ADMIN_REQUIRE_TOTP` is off. The server answered
+   `200 {"step":"done"}`, nothing handled it, and the page just sat there. A
+   successful login that appears to do nothing looks exactly like a broken one.
+2. Every redirect still pointed at `admin.html`, the legacy panel, so the only
+   people who got anywhere were those with an already-established session — and
+   they landed on the old console.
+
+The other suites sign in **over the API** and then navigate directly, which is
+precisely why none of them could see either fault. If a check never presses the
+button a user presses, it does not cover the thing the user does.
