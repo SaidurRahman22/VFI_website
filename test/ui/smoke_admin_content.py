@@ -78,6 +78,31 @@ def dialog_button(page, text):
     return page.locator(f'.v-dialog button:has-text("{text}")').first
 
 
+def click_when_ready(page, selector, label, timeout=30000):
+    """Click, but say WHY if the button never becomes clickable.
+
+    The add button is disabled while the list is loading, and the deploy
+    replaces admin-panel/ wholesale - so a page loaded in that window can get
+    new HTML alongside a JS chunk that is not written yet, and the button then
+    never arrives. A bare click just times out and blames the click.
+    """
+    btn = page.locator(selector).first
+    deadline = time.time() + timeout / 1000
+    while time.time() < deadline:
+        if btn.count() and btn.is_visible() and btn.is_enabled():
+            btn.click()
+
+            return
+        page.wait_for_timeout(300)
+
+    check(
+        False,
+        f"{label} never became clickable",
+        f"present={btn.count()} — the screen may have loaded mid-deploy",
+    )
+    raise SystemExit(1)
+
+
 def row_titles(page):
     items = page.locator(".v-card .v-list .v-list-item-title")
     return [items.nth(i).inner_text().strip() for i in range(items.count())]
@@ -96,9 +121,6 @@ def wait_rows(page, predicate, timeout=15000):
             return True
         page.wait_for_timeout(300)
     return False
-
-
-created_ids = []
 
 
 with sync_playwright() as p:
@@ -155,11 +177,20 @@ with sync_playwright() as p:
         check(tabs.count() == 10, "ten tabs, not ten sidebar entries", str(tabs.count()))
         for expected in ["Events", "Blog posts", "Photo gallery", "Quick links"]:
             check(any(expected in n for n in names), f'tab "{expected}" is present')
+
+        # Grouped into two strips so all ten fit. Ten in one strip pushed four
+        # of them off the end, reachable only by finding the scroll arrow.
+        card = page.inner_text(".v-card")
+        check("PUBLIC WEBSITE" in card.upper(), "the strips say which content is public")
+        check("PARTNER CONSOLE" in card.upper(), "and which fills the partner console")
+        for t in ["Quick links", "Learning documents", "Email updates", "Notifications"]:
+            tabloc = page.locator(f'.v-tab:has-text("{t}")').first
+            check(on_screen(tabloc), f'"{t}" is on screen without scrolling the strip')
         page.screenshot(path=f"{OUT}/20-content-tabs.png", full_page=True)
 
         # ------------------------------------------------------- 4. create
         print("\n=== 4. add an event ===")
-        page.locator('button:has-text("New event")').first.click()
+        click_when_ready(page, 'button:has-text("New event")', "New event")
         page.wait_for_timeout(1200)
 
         dlg = page.locator(".v-dialog .v-card")
@@ -220,7 +251,7 @@ with sync_playwright() as p:
 
         # ------------------------------------------------------- 6. reorder
         print("\n=== 6. reorder ===")
-        page.locator('button:has-text("New event")').first.click()
+        click_when_ready(page, 'button:has-text("New event")', "New event")
         page.wait_for_timeout(1000)
         title_b = f"{MARK} — second"
         field(page, "Event title *").fill(title_b)
@@ -242,11 +273,55 @@ with sync_playwright() as p:
         )
         page.screenshot(path=f"{OUT}/22-content-reordered.png", full_page=True)
 
+        # ------------------------------------------------- 6b. image upload
+        print("\n=== 6b. upload a cover image ===")
+        # An image already in the repo, deliberately: the server content-hashes
+        # what it stores, so uploading the SAME file every run produces the same
+        # managed id and the same file on disk. One run and a hundred runs leave
+        # exactly one extra object in storage/media, not one per run.
+        shot = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "img", "office-desk.jpg"
+        )
+        if not check(os.path.exists(shot), "the upload source image exists", shot):
+            raise SystemExit(1)
+        page.locator(f'.v-list-item:has-text("{title_a}")').first.locator(
+            'button:has-text("Edit")'
+        ).first.click()
+        page.wait_for_timeout(1200)
+
+        page.locator('.v-dialog input[type=file]').first.set_input_files(shot)
+        # The upload is a round trip: wait for the id to land in the box that
+        # shows it, which is the same box the person reads when a picture is
+        # wrong.
+        stored = page.locator('.v-dialog .v-input:has(label:text-is("Stored image id")) input').first
+        got = ""
+        deadline = time.time() + 30
+        while time.time() < deadline:
+            got = stored.input_value()
+            if got:
+                break
+            page.wait_for_timeout(400)
+
+        check(got.startswith("/storage/media/"), "the upload returns a managed image id", got[:48])
+        check(
+            got.endswith(".jpg"),
+            "re-encoded to jpeg by the server, not trusted as uploaded",
+            got[-8:],
+        )
+        preview = page.locator(".v-dialog .v-avatar img").first
+        check(on_screen(preview), "and the preview shows the picture in the form")
+
+        dialog_button(page, "Save changes").click()
+        page.wait_for_timeout(2500)
+        thumb = page.locator(f'.v-list-item:has-text("{title_a}") img').first
+        check(on_screen(thumb), "the thumbnail shows in the list afterwards")
+        page.screenshot(path=f"{OUT}/24-content-image.png", full_page=True)
+
         # ------------------------------------- 7. the display-date collections
         print("\n=== 7. a display date is a text box, not a picker ===")
         page.locator('.v-tab:has-text("Learning documents")').first.click()
         page.wait_for_timeout(2000)
-        page.locator('button:has-text("New document")').first.click()
+        click_when_ready(page, 'button:has-text("New document")', "New document")
         page.wait_for_timeout(1200)
         date_input = field(page, "Date")
         check(
@@ -261,7 +336,7 @@ with sync_playwright() as p:
         print("\n=== 8. a script tag in a blog body does not survive ===")
         page.locator('.v-tab:has-text("Blog posts")').first.click()
         page.wait_for_timeout(2000)
-        page.locator('button:has-text("New blog post")').first.click()
+        click_when_ready(page, 'button:has-text("New blog post")', "New blog post")
         page.wait_for_timeout(1200)
         blog_title = f"{MARK} — post"
         field(page, "Post title *").fill(blog_title)
