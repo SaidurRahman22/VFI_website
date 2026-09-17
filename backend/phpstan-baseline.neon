@@ -661,18 +661,6 @@ parameters:
 			path: app/Models/AdminInvite.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Content\\ContentItem\:\:\$legacy_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/Content/ContentItem.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Content\\ContentItem\:\:\$position\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/Content/ContentItem.php
-
-		-
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:auditEntity\(\)\.$#'
 			identifier: method.notFound
 			count: 3

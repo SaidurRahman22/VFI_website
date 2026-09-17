@@ -11,6 +11,16 @@ use Illuminate\Support\Str;
  * Base for the 10 content collections (Phase 2B). Shared: soft-delete, explicit
  * `position` ordering with "new item to front", toBundle() key-mapping, and an
  * append-only audit row on every write (Phase 3).
+ *
+ * The three properties below are not documentation-for-its-own-sake: the
+ * migration builds every one of the ten tables from a shared prelude
+ * (`id`, `legacy_id`, `position`), so a subclass without them cannot exist, and
+ * code that works across collections — the console's content API — is entitled
+ * to rely on them through this base rather than on a concrete class.
+ *
+ * @property int $id
+ * @property string $legacy_id  Immutable; for blogs, THE public article URL key.
+ * @property int $position      Ascending; lowest renders first.
  */
 abstract class ContentItem extends Model
 {

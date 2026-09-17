@@ -18,10 +18,10 @@ const { can } = useVfiUser()
 /*
   BUILT HERE, natively.
 
-  The remaining screens (Students, Partner agencies, Universities, Website
-  content, Staff & roles) join this list in the commit that adds their page AND
-  their API. A link to an empty screen is exactly the decoration the client has
-  spent days finding.
+  The remaining screens (Students, Partner agencies, Universities, Staff &
+  roles) join this list in the commit that adds their page AND their API. A link
+  to an empty screen is exactly the decoration the client has spent days
+  finding.
 */
 const sections = [
   {
@@ -31,14 +31,26 @@ const sections = [
       { title: 'Applications', icon: 'ri-file-list-3-line', to: '/applications', ability: 'applications.process' },
     ],
   },
+  {
+    heading: 'The website',
+    items: [
+      /*
+        All ten content collections behind one entry, with tabs. The panel this
+        replaces spent ten sidebar rows on them - one per Eloquent model - which
+        is a database schema on screen rather than a tool.
+      */
+      { title: 'Website content', icon: 'ri-pages-line', to: '/content', ability: 'content.manage' },
+    ],
+  },
 ]
 
 /*
   NOT YET REBUILT HERE, so these point at the screens that still own them.
 
-  Signing in now lands on this console, which means anything it cannot reach is
-  effectively gone - and the legacy panel still owns every website-content
-  editor (events, blogs, news, photos, home images, Pages On/Off, backup) while
+  Signing in lands on this console, which means anything it cannot reach is
+  effectively gone. The ten content collections are now native (above), so what
+  is left on the legacy page is the fixed page furniture - which pages are
+  switched on, the home-page images, and the backup export/import - while
   /manage still owns document review, agencies and GDPR requests.
 
   Linking out is not decoration: these go somewhere that works today. They are
@@ -49,7 +61,7 @@ const external = [
   {
     heading: 'Not yet rebuilt here',
     items: [
-      { title: 'Website content', icon: 'ri-pages-line', href: '/admin.html', ability: 'content.manage' },
+      { title: 'Pages, images, backup', icon: 'ri-layout-4-line', href: '/admin.html', ability: 'content.manage' },
       { title: 'Staff tools', icon: 'ri-tools-line', href: '/manage', ability: 'documents.review' },
     ],
   },

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminApplicationController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminBackupController;
+use App\Http\Controllers\Admin\AdminContentCollectionController;
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminPageController;
@@ -59,6 +60,21 @@ Route::prefix('api/admin')->group(function () {
         // Phase 3C — override-singleton editor (optimistic concurrency).
         Route::get('content/singleton/{key}', [AdminContentController::class, 'show']);
         Route::put('content/singleton/{key}', [AdminContentController::class, 'update']);
+
+        /*
+         * The ten website-content collections as JSON, for the new console.
+         * One controller for all ten (it serves its own field schema), so this
+         * is six routes rather than sixty. `collections` is declared BEFORE
+         * `{collection}` or the literal would be swallowed as a slug.
+         * Every handler re-checks `content.manage` itself.
+         */
+        $coll = AdminContentCollectionController::class;
+        Route::get('content/collections', [$coll, 'collections']);
+        Route::get('content/{collection}', [$coll, 'index']);
+        Route::post('content/{collection}', [$coll, 'store']);
+        Route::put('content/{collection}/{id}', [$coll, 'update'])->whereNumber('id');
+        Route::delete('content/{collection}/{id}', [$coll, 'destroy'])->whereNumber('id');
+        Route::put('content/{collection}/{id}/move', [$coll, 'move'])->whereNumber('id');
 
         // Phase 3D — page-visibility (owner-only, allow-listed, audited).
         Route::get('pages', [AdminPageController::class, 'index']);
