@@ -344,30 +344,41 @@ onMounted(async () => {
       </VCard>
     </template>
 
-    <!-- 👉 the case -->
-    <VNavigationDrawer
+    <!--
+      👉 the case
+
+      A VDialog, not a VNavigationDrawer. The drawer measured x:1500 in a
+      1500px viewport with transform translateX(560px) and never received
+      v-navigation-drawer--active: it positions itself through Vuetify's layout
+      system, and this template's shell is a custom VerticalNavLayout, so the
+      open position was never applied. The overlay dimmed the page while the
+      panel itself stayed off-screen - a click that looked like it worked and
+      showed nothing. VDialog teleports to body and does not need that
+      registration.
+    -->
+    <VDialog
       v-model="open"
-      temporary
-      location="end"
-      width="560"
+      max-width="620"
+      scrollable
     >
-      <div
-        v-if="detailLoading"
-        class="pa-6"
-      >
-        <VProgressLinear indeterminate />
-      </div>
+      <VCard>
+        <div
+          v-if="detailLoading"
+          class="pa-6"
+        >
+          <VProgressLinear indeterminate />
+        </div>
 
-      <VAlert
-        v-else-if="detailError"
-        type="error"
-        variant="tonal"
-        class="ma-4"
-      >
-        {{ detailError }}
-      </VAlert>
+        <VAlert
+          v-else-if="detailError"
+          type="error"
+          variant="tonal"
+          class="ma-4"
+        >
+          {{ detailError }}
+        </VAlert>
 
-      <template v-else-if="detail">
+        <template v-else-if="detail">
         <div class="d-flex align-center justify-space-between pa-4">
           <div>
             <div class="text-h6">
@@ -562,7 +573,8 @@ size="x-small"
             No status changes recorded yet.
           </div>
         </div>
-      </template>
-    </VNavigationDrawer>
+        </template>
+      </VCard>
+    </VDialog>
   </div>
 </template>

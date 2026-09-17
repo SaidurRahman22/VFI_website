@@ -1,0 +1,1 @@
+import{aU as e,aA as t,as as s,aV as o}from"./DVBjJu0Q.js";const r={},c={class:"layout-wrapper layout-blank","data-allow-mismatch":""};function l(a,n){return t(),s("div",c,[o(a.$slots,"default")])}const d=e(r,[["render",l]]);export{d as default};
