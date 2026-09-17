@@ -61,7 +61,8 @@ const external = [
   {
     heading: 'Not yet rebuilt here',
     items: [
-      { title: 'Pages, images, backup', icon: 'ri-layout-4-line', href: '/admin.html', ability: 'content.manage' },
+      // Short enough not to be truncated by the sidebar at its own width.
+      { title: 'Pages & backup', icon: 'ri-layout-4-line', href: '/admin.html', ability: 'content.manage' },
       { title: 'Staff tools', icon: 'ri-tools-line', href: '/manage', ability: 'documents.review' },
     ],
   },

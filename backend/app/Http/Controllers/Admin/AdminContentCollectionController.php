@@ -91,9 +91,17 @@ class AdminContentCollectionController extends Controller
      *  - photos drops the old `title` field, which had no column at all and so
      *    was discarded on every save, and offers `alt` instead, which does have
      *    one and is what a screen reader reads out in place of the photo.
+     *
+     * `group` says WHERE the collection comes out: four of these fill the public
+     * marketing site, six fill the partner console that agencies sign in to. Ten
+     * tabs in one strip overflow a 1500px screen, which put the six partner ones
+     * permanently behind a scroll arrow; grouped, each strip fits, and the
+     * heading answers the question the client asked — where does this text
+     * actually appear.
      */
     private const SCHEMA = [
         'events' => [
+            'group' => 'Public website',
             'label' => 'Events',
             'singular' => 'Event',
             'title_key' => 'title',
@@ -117,6 +125,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'blogs' => [
+            'group' => 'Public website',
             'label' => 'Blog posts',
             'singular' => 'Blog post',
             'title_key' => 'title',
@@ -143,6 +152,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'news' => [
+            'group' => 'Public website',
             'label' => 'News & updates',
             'singular' => 'News item',
             'title_key' => 'title',
@@ -156,6 +166,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'photos' => [
+            'group' => 'Public website',
             'label' => 'Photo gallery',
             'singular' => 'Photo',
             'title_key' => 'caption',
@@ -168,6 +179,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-managers' => [
+            'group' => 'Partner console',
             'label' => 'Regional managers',
             'singular' => 'Regional manager',
             'title_key' => 'name',
@@ -185,6 +197,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-updates' => [
+            'group' => 'Partner console',
             'label' => 'Important updates',
             'singular' => 'Update',
             'title_key' => 'title',
@@ -201,6 +214,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-quicklinks' => [
+            'group' => 'Partner console',
             'label' => 'Quick links',
             'singular' => 'Quick link',
             'title_key' => 'label',
@@ -214,6 +228,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-docs' => [
+            'group' => 'Partner console',
             'label' => 'Learning documents',
             'singular' => 'Document',
             'title_key' => 'title',
@@ -233,6 +248,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-emails' => [
+            'group' => 'Partner console',
             'label' => 'Email updates',
             'singular' => 'Email update',
             'title_key' => 'subject',
@@ -245,6 +261,7 @@ class AdminContentCollectionController extends Controller
             ],
         ],
         'pp-notifs' => [
+            'group' => 'Partner console',
             'label' => 'Notifications',
             'singular' => 'Notification',
             'title_key' => 'title',
@@ -292,6 +309,7 @@ class AdminContentCollectionController extends Controller
         foreach (self::COLLECTIONS as $slug => $model) {
             $out[] = [
                 'slug' => $slug,
+                'group' => self::SCHEMA[$slug]['group'],
                 'label' => self::SCHEMA[$slug]['label'],
                 'count' => $model::query()->count(),
             ];
@@ -313,6 +331,7 @@ class AdminContentCollectionController extends Controller
 
         return $this->fresh([
             'collection' => $collection,
+            'group' => $meta['group'],
             'label' => $meta['label'],
             'singular' => $meta['singular'],
             'title_key' => $meta['title_key'],

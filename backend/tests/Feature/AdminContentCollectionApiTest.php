@@ -105,6 +105,30 @@ class AdminContentCollectionApiTest extends TestCase
     }
 
     /**
+     * Ten tabs in one strip overflow a 1500px screen, which is how the six
+     * partner-console collections ended up behind a scroll arrow. The group
+     * also answers the question the client actually asked of every field —
+     * where does this text come out on the site?
+     */
+    public function test_each_collection_says_where_its_content_appears(): void
+    {
+        $this->actingAs($this->staff());
+
+        $byslug = collect($this->getJson('/api/admin/content/collections')->json('data'))->keyBy('slug');
+
+        $this->assertSame('Public website', $byslug['events']['group']);
+        $this->assertSame('Public website', $byslug['photos']['group']);
+        $this->assertSame('Partner console', $byslug['pp-managers']['group']);
+        $this->assertSame('Partner console', $byslug['pp-notifs']['group']);
+
+        // Two groups, so two strips that each fit.
+        $this->assertSame(['Public website', 'Partner console'], $byslug->pluck('group')->unique()->values()->all());
+
+        // A screen entered directly on one collection still knows its group.
+        $this->assertSame('Partner console', $this->getJson('/api/admin/content/pp-docs')->json('group'));
+    }
+
+    /**
      * The console renders its form from this schema, so the schema travelling
      * with the rows is the feature, not decoration — a missing field is an
      * uneditable column.

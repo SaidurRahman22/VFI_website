@@ -64,6 +64,36 @@ function labelOf(slug) {
   return tabs.value.find(t => t.slug === slug)?.label || 'Content'
 }
 
+/*
+  Two strips, not one of ten.
+
+  Ten tabs overflow a 1500px screen, which left the six partner-console
+  collections permanently behind a scroll arrow. Split by where the content
+  comes out - the public marketing site, or the console agencies sign in to -
+  each strip fits, and the heading tells whoever is editing where their words
+  are about to appear.
+*/
+const groups = computed(() => {
+  const order = []
+
+  for (const t of tabs.value) {
+    let g = order.find(x => x.name === t.group)
+
+    if (!g) {
+      g = { name: t.group, items: [] }
+      order.push(g)
+    }
+    g.items.push(t)
+  }
+
+  return order
+})
+
+/* Where the current collection lives, for the strip that owns it. */
+function groupOf(slug) {
+  return tabs.value.find(t => t.slug === slug)?.group || null
+}
+
 async function loadTabs() {
   const res = await api.get('/api/admin/content/collections')
 
@@ -335,24 +365,40 @@ onMounted(async () => {
       </div>
 
       <VCard>
-        <VTabs
-          v-model="tab"
-          show-arrows
+        <div
+          v-for="(g, gi) in groups"
+          :key="g.name"
+          class="px-4 pt-3"
+          :class="gi > 0 ? 'border-t' : ''"
         >
-          <VTab
-            v-for="t in tabs"
-            :key="t.slug"
-            :value="t.slug"
+          <p class="text-overline text-medium-emphasis mb-0">
+            {{ g.name }}
+          </p>
+          <!--
+            One VTabs per group, and only the strip holding the current
+            collection carries the v-model - otherwise each strip fights the
+            other to select a value it does not contain.
+          -->
+          <VTabs
+            :model-value="groupOf(tab) === g.name ? tab : null"
+            show-arrows
+            @update:model-value="v => { if (v) tab = v }"
           >
-            {{ t.label }}
-            <VChip
-              size="x-small"
-              class="ms-2"
+            <VTab
+              v-for="t in g.items"
+              :key="t.slug"
+              :value="t.slug"
             >
-              {{ t.count }}
-            </VChip>
-          </VTab>
-        </VTabs>
+              {{ t.label }}
+              <VChip
+                size="x-small"
+                class="ms-2"
+              >
+                {{ t.count }}
+              </VChip>
+            </VTab>
+          </VTabs>
+        </div>
 
         <VDivider />
 
