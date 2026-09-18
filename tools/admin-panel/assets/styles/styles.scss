@@ -1,1 +1,149 @@
-// Write your overrides
+@use "variables/vuetify" as vuetify;
+
+/*
+  What Vuetify's own variables cannot reach.
+
+  Colour, radii, shadows and the type scale are set in
+  variables/_vuetify.scss and plugins/vuetify/theme.js and belong there. What is
+  left here is the handful of things those two cannot express: a font-family
+  Vuetify never emits, per-size button radii that @core hard-codes, and the
+  sidebar, which the site paints navy and the template paints in the page
+  colour.
+*/
+
+/*
+  👉 1. The heading family, on the things that read as headings.
+
+  Vuetify's typography mixin emits size, weight, letter-spacing, line-height and
+  text-transform - never font-family. So the "button" entry in $typography
+  reaches .text-button but not .v-btn, and .v-card-title has no font-family of
+  its own at all; both would inherit DM Sans from <html>. The site sets these
+  same surfaces in Quicksand, buttons included.
+*/
+.v-btn,
+.v-card-title,
+.v-toolbar-title,
+.app-title-wrapper h1,
+.nav-item-title,
+.nav-section-title {
+  font-family: vuetify.$heading-font-family;
+}
+
+.nav-item-title {
+  // Materio's nav sits at 400, which reads as body copy once the family
+  // changes. The previous console's sidebar was Quicksand 600.
+  font-weight: 600;
+}
+
+/*
+  👉 2. Button corners, per size.
+
+  @core/scss/template/libs/vuetify/components/_button.scss hard-codes a radius
+  for every size except default - 2px at x-small rising to 10px at x-large - so
+  $button-border-radius on its own leaves a 10px default button beside a 4px
+  small one. Adding the size class to @core's own `body .v-btn--size-small`
+  selector is enough to outrank it without !important.
+*/
+body .v-btn:not(.v-btn--icon) {
+  &.v-btn--size-x-small,
+  &.v-btn--size-small {
+    border-radius: 8px;
+  }
+
+  &.v-btn--size-large,
+  &.v-btn--size-x-large {
+    border-radius: 12px;
+  }
+}
+
+/*
+  👉 3. The sidebar.
+
+  The site's dark ground is --navy #152440 and it is what the public header and
+  the previous console's sidebar are painted with; Materio instead paints the
+  nav in the page background, which leaves the console with no dark anchor at
+  all. Rather than restate every colour inside the nav, this redefines the theme
+  variables those colours are already written against - every single colour
+  declaration in @core's vertical-nav SCSS resolves through --v-theme-*,
+  --v-border-color or currentcolor, with no literals anywhere - so the whole
+  subtree flips together, including the `h1` in a scoped style block in
+  layouts/components/DefaultLayoutWithVerticalNav.vue.
+
+  Measured against #152440: nav item text (high emphasis, .9) 10.06:1, nested
+  icons and the header actions (medium, .7) 6.61:1, section titles 4.80:1 once
+  --v-disabled-opacity is lifted from .4, where they measure 3.14:1. The active
+  item's white label is 6.12:1 over the blue end of its gradient and 8.79:1 over
+  the violet end.
+
+  In the dark theme these are the values the theme already carries, so it is
+  unchanged apart from the nav sitting on the surface navy instead of the darker
+  page navy - which is the right way round for a raised sidebar.
+*/
+.layout-nav-type-vertical .layout-vertical-nav {
+  --v-theme-background: 21, 36, 64; // --navy #152440
+  --v-theme-surface: 21, 36, 64;
+  --v-theme-on-background: 221, 228, 240;
+  --v-theme-on-surface: 221, 228, 240;
+  --v-border-color: 221, 228, 240;
+  --v-theme-perfect-scrollbar-thumb: 59, 77, 109;
+
+  // Section titles are drawn at --v-disabled-opacity, which is tuned for ink on
+  // white. Lifting it puts them at the #8590a3 the site's own sidebar labels use.
+  --v-disabled-opacity: 0.56;
+
+  /*
+    Vuetify doubles its hover and selected overlays on dark surfaces through
+    this multiplier and sets it to 1 for a light theme. The nav is now a dark
+    surface inside a light theme, so it needs the dark value: at 1 the hover
+    wash on navy is not visible.
+  */
+  --v-theme-overlay-multiplier: 2;
+
+  /*
+    The emblem is a blue-to-crimson mark with no light ground of its own and it
+    disappears against navy. The site solves this the same way, with a white
+    rounded tile behind it (css/admin.css .ad__mark).
+  */
+  .app-title-wrapper img {
+    padding: 3px;
+    border-radius: 9px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(47, 98, 168, 28%);
+  }
+
+  .nav-items {
+    /*
+      Materio's nav item is a pill on its trailing edge only, which is the
+      template's signature rather than this company's; the previous console used
+      a plain 10px rounded rectangle. @core sets the four corners with
+      !important at four classes, so this carries `.nav-items` to make the
+      result independent of which global stylesheet the build emits first.
+    */
+    .nav-link > :first-child,
+    .nav-group > :first-child {
+      border-radius: 10px !important;
+    }
+
+    /*
+      The active item runs blue into violet, the sweep the previous console used
+      (--blue to --violet). `nav-active-end` is a theme colour so the dark theme
+      can lift that far end alongside primary.
+    */
+    .nav-link > a.router-link-exact-active {
+      background:
+        linear-gradient(
+          100deg,
+          rgb(var(--v-theme-primary)),
+          rgb(var(--v-theme-nav-active-end))
+        ) !important;
+    }
+  }
+}
+
+/*
+  👉 4. Selection, so dragging over text reads as brand blue rather than the
+  browser default.
+*/
+::selection {
+  background: rgba(var(--v-theme-primary), 0.18);
+}

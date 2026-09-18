@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * Phase 9A slice 3 — the roster of partner agencies, with suspend / close /
@@ -24,11 +25,13 @@ class AgencyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Partner agencies';
+
     protected static ?string $navigationLabel = 'Agencies';
 
     protected static ?string $modelLabel = 'agency';
 
-    protected static ?int $navigationSort = 12;
+    protected static ?int $navigationSort = 20;
 
     /** Role gate: see App\Support\StaffAbilities for who holds this. */
     public static function canAccess(): bool

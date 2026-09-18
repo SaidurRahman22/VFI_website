@@ -33,6 +33,25 @@
 
   4. The collection is in the URL (?tab=blogs) so a particular one is linkable
      and a refresh does not dump you back on the first tab.
+
+  5. Removing says it can be undone, so undoing it lives on this screen. The
+     confirmation has always promised the item is kept and restorable, and for a
+     while the only thing that could act on that promise was a psql prompt - the
+     panel that held the trashed filter and the restore action is gone.
+     "Recently removed" reads the collection's removed rows and puts one back.
+     Every action that changes the list is followed by a sentence saying what
+     happened, because the list shows only the result and not which of the two
+     things produced it.
+
+  6. The filter is client-side, and it changes what reordering can honestly
+     offer. index() sends the whole collection unpaginated, so the rows are
+     already here and a request per keystroke would buy nothing. One step up or
+     down is withdrawn while a filter is on: the row above the one you can see
+     is not necessarily the row it would swap with, so the click would either
+     move something out of sight or appear to do nothing at all. To-the-top and
+     to-the-bottom stay, because where they land does not depend on what is
+     filtered out - and they are why reaching the front of a thirty-item gallery
+     is no longer twenty-nine clicks and twenty-nine requests.
 */
 const props = defineProps({
   /* The API's group slug: 'public-website' or 'partner-console'. */
@@ -74,6 +93,21 @@ const uploading = ref(null) // the key of the field currently uploading
 /* ---- delete confirmation ---- */
 const confirming = ref(null)
 const deleting = ref(false)
+
+/* ---- what has been removed, and putting one back ---- */
+const trashOpen = ref(false)
+const trashLoading = ref(false)
+const trashError = ref(null)
+const trash = ref([])
+const restoring = ref(null)
+
+/* The sentence after an action. The list only shows the result, so on its own
+   it cannot distinguish "removed" from "put back" from "never saved". */
+const notice = ref(null)
+
+/* The client-side filter over the rows already in the browser. `clearable`
+   writes null into this, so nothing may assume it is a string. */
+const filter = ref('')
 
 const rowBusy = ref(null)
 
@@ -124,6 +158,14 @@ async function refreshCounts() {
 watch(tab, async slug => {
   if (!slug)
     return
+
+  /* All three belong to the collection being left, not to the one arriving: a
+     filter typed for blog titles hides most of the photos, and a sentence about
+     a restored event means nothing over a list of documents. */
+  filter.value = ''
+  notice.value = null
+  trashOpen.value = false
+
   router.replace({ query: { ...route.query, tab: slug } })
   await loadList(slug)
 })
@@ -197,6 +239,7 @@ async function save() {
 
 async function confirmDelete() {
   const row = confirming.value
+  const title = titleOf(row)
 
   deleting.value = true
   try {
@@ -204,6 +247,10 @@ async function confirmDelete() {
     confirming.value = null
     await loadList(tab.value)
     await refreshCounts()
+
+    /* Named, and pointing at the undo. The dialog said it could be put back;
+       this is where the person is told where that is. */
+    notice.value = `“${title}” is off the website. Recently removed will put it back.`
   }
   catch (e) {
     listError.value = e.message
@@ -211,6 +258,56 @@ async function confirmDelete() {
   }
   finally {
     deleting.value = false
+  }
+}
+
+/* ------------------------------------------------- removed, and put back */
+
+async function loadTrash() {
+  trashLoading.value = true
+  trashError.value = null
+  try {
+    trash.value = (await api.get(`/api/admin/content/${tab.value}/trashed`)).data
+  }
+  catch (e) {
+    trashError.value = e.message || 'Could not read what has been removed.'
+  }
+  finally {
+    trashLoading.value = false
+  }
+}
+
+async function openTrash() {
+  /* Asked for on open, not held from earlier: someone else may have removed or
+     restored something since, and a stale list here offers a button that would
+     then be refused. */
+  trash.value = []
+  trashOpen.value = true
+  await loadTrash()
+}
+
+async function restoreItem(row) {
+  restoring.value = row.id
+  trashError.value = null
+  try {
+    await api.post(`/api/admin/content/${tab.value}/${row.id}/restore`)
+
+    /* Closed, because what was recovered is in the list behind this dialog and
+       that is where it should be looked at. */
+    trashOpen.value = false
+    await loadList(tab.value)
+    await refreshCounts()
+    notice.value = `“${titleOf(row)}” is back in ${labelOf(tab.value).toLowerCase()}, in the place it held.`
+  }
+  catch (e) {
+    /* "it is still on the website" arrives as a 422 - someone else put it back
+       first. That is information, so it stays here beside the row it is about,
+       and the list is re-read so the row it refers to goes away. */
+    trashError.value = e.message
+    await loadTrash()
+  }
+  finally {
+    restoring.value = null
   }
 }
 
@@ -287,6 +384,45 @@ function metaOf(row) {
 
 const imageKey = computed(() => list.value.fields.find(f => f.type === 'image')?.key || null)
 
+/* What a removed row says under its title. The server sends ISO-8601 and the
+   browser is the only thing that knows the reader's timezone and locale, so it
+   does the formatting - and says just "Removed" rather than inventing a date if
+   there is none to print. */
+function removedLine(row) {
+  const when = row.removed_at ? new Date(row.removed_at) : null
+  const stamp = when && !Number.isNaN(when.getTime()) ? `Removed ${when.toLocaleString()}` : 'Removed'
+
+  return [stamp, metaOf(row)].filter(Boolean).join(' · ')
+}
+
+/* What was typed, which is also what gets quoted back if nothing matches -
+   echoing a lower-cased copy of someone's own words reads as a typo. */
+const filterText = computed(() => (filter.value || '').trim())
+const filtering = computed(() => filterText.value !== '')
+
+/* Matched against what the row actually shows, plus the public id: a row that
+   turned up because of text nobody can see reads as a bug in the filter. */
+const filtered = computed(() => {
+  if (!filtering.value)
+    return list.value.data
+
+  const q = filterText.value.toLowerCase()
+
+  return list.value.data.filter(row =>
+    [titleOf(row), metaOf(row), row.legacy_id].join(' ').toLowerCase().includes(q))
+})
+
+/* Against the whole collection, never the filtered view. An end derived from a
+   filtered index would grey out "to the top" on a row with twenty rows above
+   it, which is the disabled button telling a lie instead of the enabled one. */
+function isFirst(row) {
+  return list.value.data[0]?.id === row.id
+}
+
+function isLast(row) {
+  return list.value.data[list.value.data.length - 1]?.id === row.id
+}
+
 onMounted(async () => {
   /*
     AWAIT the user before deciding what to draw. Calling can() before
@@ -349,14 +485,27 @@ onMounted(async () => {
           </p>
         </div>
 
-        <VBtn
+        <div
           v-if="tab"
-          prepend-icon="ri-add-line"
-          :disabled="loading"
-          @click="startCreate"
+          class="d-flex flex-wrap align-center gap-2"
         >
-          New {{ list.singular.toLowerCase() }}
-        </VBtn>
+          <VBtn
+            variant="text"
+            prepend-icon="ri-history-line"
+            :disabled="loading"
+            @click="openTrash"
+          >
+            Recently removed
+          </VBtn>
+
+          <VBtn
+            prepend-icon="ri-add-line"
+            :disabled="loading"
+            @click="startCreate"
+          >
+            New {{ list.singular.toLowerCase() }}
+          </VBtn>
+        </div>
       </div>
 
       <VCard>
@@ -401,10 +550,60 @@ onMounted(async () => {
           {{ listError }}
         </VAlert>
 
+        <VAlert
+          v-if="notice"
+          type="success"
+          variant="tonal"
+          class="ma-4"
+          closable
+          @click:close="notice = null"
+        >
+          {{ notice }}
+        </VAlert>
+
+        <!--
+          The filter, over rows that are already here. It stands in for the
+          per-column search the generated panel had; its hint explains why two
+          of the reorder buttons leave while it is on.
+        -->
+        <div
+          v-if="!loading && list.data.length"
+          class="d-flex flex-wrap align-center justify-space-between gap-3 px-4 pt-4"
+        >
+          <VTextField
+            v-model="filter"
+            label="Filter by title, the line under it, or the public id"
+            prepend-inner-icon="ri-search-line"
+            density="compact"
+            clearable
+            persistent-hint
+            hide-details="auto"
+            style="max-inline-size: 30rem;"
+            :hint="filtering
+              ? 'While filtered, a row can go to the top or the bottom. One step up or down is hidden: it would swap this row with one you cannot see.'
+              : ''"
+          />
+
+          <p
+            v-if="filtering"
+            class="text-body-2 text-medium-emphasis mb-0"
+          >
+            Showing {{ filtered.length }} of {{ list.data.length }}.
+          </p>
+        </div>
+
         <VCardText v-if="!loading && !list.data.length">
           <p class="text-body-1 mb-0">
             There is nothing in {{ labelOf(tab).toLowerCase() }} yet. Use
             <strong>New {{ list.singular.toLowerCase() }}</strong> to add the first one.
+          </p>
+        </VCardText>
+
+        <!-- Not the empty state above: these rows exist, the filter is hiding them. -->
+        <VCardText v-else-if="!loading && !filtered.length">
+          <p class="text-body-1 mb-0">
+            Nothing in {{ labelOf(tab).toLowerCase() }} matches
+            <strong>{{ filterText }}</strong>. Clear the filter to see all {{ list.data.length }}.
           </p>
         </VCardText>
 
@@ -413,7 +612,7 @@ onMounted(async () => {
           lines="two"
         >
           <template
-            v-for="(row, i) in list.data"
+            v-for="(row, i) in filtered"
             :key="row.id"
           >
             <VListItem>
@@ -447,20 +646,38 @@ onMounted(async () => {
               <template #append>
                 <div class="d-flex align-center gap-1">
                   <VBtn
+                    icon="ri-skip-up-line"
+                    variant="text"
+                    size="small"
+                    :disabled="isFirst(row) || rowBusy === row.id"
+                    :aria-label="`Move ${titleOf(row)} to the top`"
+                    @click="move(row, 'top')"
+                  />
+                  <VBtn
+                    v-if="!filtering"
                     icon="ri-arrow-up-line"
                     variant="text"
                     size="small"
-                    :disabled="i === 0 || rowBusy === row.id"
+                    :disabled="isFirst(row) || rowBusy === row.id"
                     :aria-label="`Move ${titleOf(row)} up`"
                     @click="move(row, 'up')"
                   />
                   <VBtn
+                    v-if="!filtering"
                     icon="ri-arrow-down-line"
                     variant="text"
                     size="small"
-                    :disabled="i === list.data.length - 1 || rowBusy === row.id"
+                    :disabled="isLast(row) || rowBusy === row.id"
                     :aria-label="`Move ${titleOf(row)} down`"
                     @click="move(row, 'down')"
+                  />
+                  <VBtn
+                    icon="ri-skip-down-line"
+                    variant="text"
+                    size="small"
+                    :disabled="isLast(row) || rowBusy === row.id"
+                    :aria-label="`Move ${titleOf(row)} to the bottom`"
+                    @click="move(row, 'bottom')"
                   />
                   <VBtn
                     variant="tonal"
@@ -480,7 +697,7 @@ onMounted(async () => {
                 </div>
               </template>
             </VListItem>
-            <VDivider v-if="i < list.data.length - 1" />
+            <VDivider v-if="i < filtered.length - 1" />
           </template>
         </VList>
       </VCard>
@@ -497,7 +714,11 @@ onMounted(async () => {
           <VCardTitle>
             {{ editing ? `Edit ${list.singular.toLowerCase()}` : `New ${list.singular.toLowerCase()}` }}
           </VCardTitle>
-          <VCardSubtitle v-if="editing">
+          <!-- text-wrap, or Vuetify clips a subtitle to one ellipsised line. -->
+          <VCardSubtitle
+            v-if="editing"
+            class="text-wrap"
+          >
             Saved as <code>{{ editing.legacy_id }}</code> — the id the public site uses. It never changes.
           </VCardSubtitle>
         </VCardItem>
@@ -654,7 +875,8 @@ onMounted(async () => {
             <strong>{{ titleOf(confirming) }}</strong> will stop appearing on the public site immediately.
           </p>
           <p class="text-body-2 text-medium-emphasis mb-0">
-            It is kept in the database and can be restored, and the change is recorded in the audit log.
+            It is kept, and <strong>Recently removed</strong> at the top of this page puts it back
+            where it was. The change is recorded in the audit log.
           </p>
         </VCardText>
         <VCardActions>
@@ -672,6 +894,94 @@ onMounted(async () => {
             @click="confirmDelete"
           >
             Remove it
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- 👉 what has been removed, and putting one back -->
+    <VDialog
+      v-model="trashOpen"
+      max-width="620"
+      scrollable
+    >
+      <VCard>
+        <VCardItem>
+          <VCardTitle>Removed from {{ labelOf(tab) }}</VCardTitle>
+          <VCardSubtitle class="text-wrap">
+            Nothing here appears on the website. Putting one back returns it to the list in the
+            place it held, under the same id the public site used for it.
+          </VCardSubtitle>
+        </VCardItem>
+
+        <VDivider />
+
+        <VProgressLinear
+          v-if="trashLoading"
+          indeterminate
+        />
+
+        <VCardText>
+          <VAlert
+            v-if="trashError"
+            type="warning"
+            variant="tonal"
+            class="mb-4"
+          >
+            {{ trashError }}
+          </VAlert>
+
+          <!--
+            Only once the answer is in: an empty list and an unanswered request
+            look identical on screen, and only one of them is nothing.
+          -->
+          <p
+            v-if="!trashLoading && !trash.length"
+            class="text-body-1 mb-0"
+          >
+            Nothing has been removed from {{ labelOf(tab).toLowerCase() }}.
+          </p>
+
+          <VList
+            v-else
+            lines="two"
+          >
+            <template
+              v-for="(row, i) in trash"
+              :key="row.id"
+            >
+              <VListItem>
+                <VListItemTitle>{{ titleOf(row) }}</VListItemTitle>
+                <VListItemSubtitle>{{ removedLine(row) }}</VListItemSubtitle>
+
+                <template #append>
+                  <VBtn
+                    variant="tonal"
+                    size="small"
+                    prepend-icon="ri-arrow-go-back-line"
+                    :loading="restoring === row.id"
+                    :disabled="!!restoring"
+                    @click="restoreItem(row)"
+                  >
+                    Put it back
+                  </VBtn>
+                </template>
+              </VListItem>
+              <VDivider v-if="i < trash.length - 1" />
+            </template>
+          </VList>
+        </VCardText>
+
+        <VDivider />
+
+        <VCardActions>
+          <VSpacer />
+          <VBtn
+            variant="text"
+            :disabled="!!restoring"
+            @click="trashOpen = false"
+          >
+            Close
           </VBtn>
         </VCardActions>
       </VCard>

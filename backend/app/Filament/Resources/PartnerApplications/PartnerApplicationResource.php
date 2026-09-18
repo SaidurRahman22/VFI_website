@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use UnitEnum;
 
 /**
  * Phase 6F — staff review of partner applications. Approve mints the tenant
@@ -26,6 +27,10 @@ class PartnerApplicationResource extends Resource
     protected static ?string $model = PartnerApplication::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Partner agencies';
+
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationLabel = 'Partner applications';
 

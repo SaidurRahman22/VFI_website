@@ -37,11 +37,14 @@ PAGES = [
     "manage/contact-enquiries", "manage/data-subject-requests", "manage/disclosures",
     "manage/student-lookup/student-lookups", "manage/universities",
     "manage/university-defaults",
-    "manage/content/blogs", "manage/content/events", "manage/content/news-items",
-    "manage/content/photos", "manage/content/pp-docs", "manage/content/pp-emails",
-    "manage/content/pp-managers", "manage/content/pp-notifs",
-    "manage/content/pp-quicklinks", "manage/content/pp-updates",
 ]
+
+# The ten manage/content/* pages are gone on purpose: the console edits those
+# collections natively now, so their Filament resources were deleted. Leaving
+# them here would report ten failures on every run for a deliberate removal,
+# and a gate that always shows red is a gate nobody reads - which is exactly
+# how a real 500 in this panel would go unnoticed.
+# They are covered instead by test/ui/smoke_admin_content.py.
 
 # Row actions on the staff queue, with a word that must appear in the dialog.
 # A modal that opens empty is not a working button.

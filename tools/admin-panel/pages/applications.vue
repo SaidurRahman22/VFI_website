@@ -60,8 +60,17 @@ const STATUS_COLOR = {
   non_enrolment: 'error',
 }
 
+/*
+  An unmapped status takes no colour at all rather than `secondary`. That slot
+  carries the logo crimson in this theme, so a status the map has not caught up
+  with - the normal consequence of the server's transition map gaining a state -
+  rendered as an alarming red chip for something nobody has said is wrong. With
+  no colour a tonal chip inherits the card's ink and tints itself with it, which
+  is the panel's neutral, and a timeline dot falls back to its own CSS default
+  rather than disappearing.
+*/
 function colorFor(status) {
-  return STATUS_COLOR[status] || 'secondary'
+  return STATUS_COLOR[status] || null
 }
 
 async function loadList() {
@@ -304,12 +313,20 @@ onMounted(async () => {
               </td>
               <td>{{ row.agency_name }}</td>
               <td>
+                <!--
+                  The label is in ink and the status colour is only the tint. A
+                  tonal chip otherwise writes its own colour as the text over a
+                  16% tint of itself, and four of the ten statuses map to the
+                  gold - conditional, pending_from_partner, payment, deferral -
+                  which measures 1.81:1, so the most-read column on this screen
+                  was illegible for the cases most likely to be in it.
+                -->
                 <VChip
                   :color="colorFor(row.status)"
                   size="small"
                   variant="tonal"
                 >
-                  {{ row.status_label }}
+                  <span class="text-high-emphasis">{{ row.status_label }}</span>
                 </VChip>
               </td>
               <td class="text-no-wrap">
@@ -400,7 +417,7 @@ onMounted(async () => {
             variant="tonal"
             class="mb-4"
           >
-            {{ detail.application.status_label }}
+            <span class="text-high-emphasis">{{ detail.application.status_label }}</span>
           </VChip>
 
           <!-- programme -->
@@ -419,7 +436,16 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- readiness: the reason a case can or cannot be processed -->
+          <!--
+            readiness: the reason a case can or cannot be processed.
+
+            The sentence is wrapped and given the theme's ink because a tonal
+            alert paints its own colour as the text over a 16% tint of itself,
+            and the warning gold lands at 1.81:1 that way - the not-ready branch,
+            the one naming the documents that are holding the case up, was the
+            least readable line in the drawer. The class goes on the wrapper, not
+            the alert: on the alert it would take the icon and the tint with it.
+          -->
           <VAlert
             v-if="detail.readiness"
             :type="detail.readiness.ready ? 'success' : 'warning'"
@@ -427,16 +453,18 @@ onMounted(async () => {
             density="compact"
             class="mb-4"
           >
-            <template v-if="detail.readiness.ready">
-              All {{ detail.readiness.required.length }} required documents are in.
-            </template>
-            <template v-else>
-              Waiting on {{ detail.readiness.missing.length }} document(s):
-              {{ detail.readiness.missing.join(', ') || '—' }}
-              <template v-if="detail.readiness.rejected.length">
-                <br>Rejected: {{ detail.readiness.rejected.join(', ') }}
+            <div class="text-high-emphasis">
+              <template v-if="detail.readiness.ready">
+                All {{ detail.readiness.required.length }} required documents are in.
               </template>
-            </template>
+              <template v-else>
+                Waiting on {{ detail.readiness.missing.length }} document(s):
+                {{ detail.readiness.missing.join(', ') || '—' }}
+                <template v-if="detail.readiness.rejected.length">
+                  <br>Rejected: {{ detail.readiness.rejected.join(', ') }}
+                </template>
+              </template>
+            </div>
           </VAlert>
 
           <VAlert

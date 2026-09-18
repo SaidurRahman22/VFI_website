@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 /**
  * Phase 8+ — staff CRUD for universities (catalogue institutions + their
@@ -27,11 +28,13 @@ class UniversityResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
 
+    protected static string|UnitEnum|null $navigationGroup = 'University catalogue';
+
     protected static ?string $modelLabel = 'University';
 
     protected static ?string $pluralModelLabel = 'Universities';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 10;
 
     public static function form(Schema $schema): Schema
     {

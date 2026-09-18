@@ -18,6 +18,16 @@
         </include>
     </source>
     <php>
+        <!--
+            PHP's default 128M is not enough for the image tests: decoding a
+            4000px source into a GD truecolor bitmap is ~64MB on its own, and
+            ImageOptimiserTest's oversize case pushed the process over. It did
+            not fail an assertion - the process DIED, mid-suite, which reads as
+            a red suite with no failing test and makes the whole gate
+            unusable. Every stage that ran `php artisan test` on this tree got
+            that, so nobody could prove their work safe.
+        -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

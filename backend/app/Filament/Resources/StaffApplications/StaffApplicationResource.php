@@ -15,6 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
+use UnitEnum;
 
 /**
  * Phase 9A slice 2 — the staff view of every agency's applications.
@@ -38,11 +39,13 @@ class StaffApplicationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Casework';
+
     protected static ?string $navigationLabel = 'Applications';
 
     protected static ?string $modelLabel = 'application';
 
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 10;
 
     /** Role gate: see App\Support\StaffAbilities for who holds this. */
     public static function canAccess(): bool

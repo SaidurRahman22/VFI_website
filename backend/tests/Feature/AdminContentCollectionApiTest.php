@@ -34,7 +34,15 @@ use Tests\TestCase;
  *   rewrite the public website.
  *
  *   THE SLUG IS REQUEST INPUT. An unknown collection must be a flat 404, not a
- *   class-resolution error.
+ *   class-resolution error. That goes for the undo routes too, which take an id
+ *   as well and so are the newest place a slug could have become a class name.
+ *
+ *   A PROMISE THE SCREEN MAKES. The delete confirmation tells the person the
+ *   item can be restored. Nothing in the API could do that until trashed() and
+ *   restore() existed, so the sentence was true of the database and false of
+ *   everyone reading it. Those two handlers are therefore load-bearing, not
+ *   convenient, and the awkward cases carry the weight: a restore with nothing
+ *   to restore has to refuse rather than answer 200 over no work at all.
  *
  *   pp_* DATES ARE DISPLAY STRINGS. Their columns are varchar and hold values
  *   like "12 Aug 2026". The page this replaces offered them as date pickers,
@@ -62,6 +70,8 @@ class AdminContentCollectionApiTest extends TestCase
     {
         $this->getJson('/api/admin/content/events')->assertStatus(401);
         $this->postJson('/api/admin/content/events', ['title' => 'x'])->assertStatus(401);
+        $this->getJson('/api/admin/content/events/trashed')->assertStatus(401);
+        $this->postJson('/api/admin/content/events/1/restore')->assertStatus(401);
     }
 
     /**
@@ -284,6 +294,118 @@ class AdminContentCollectionApiTest extends TestCase
         $this->deleteJson("/api/admin/content/events/{$e->id}")->assertStatus(404);
     }
 
+    // -------------------------------------------------- removing, and undoing
+
+    /**
+     * The confirmation dialog promises a removal can be undone, so the removed
+     * rows have to be reachable, and reachable with enough on them to recognise
+     * which one you want: the same title and the same subtitle the live list
+     * shows, because the screen draws both from one schema.
+     */
+    public function test_a_removed_item_leaves_the_list_and_turns_up_in_the_removed_one(): void
+    {
+        Event::create(['title' => 'Dhaka fair']);
+        $gone = Event::create(['title' => 'Cancelled fair', 'city' => 'Sylhet']);
+        $this->actingAs($this->staff());
+
+        $this->assertSame([], $this->getJson('/api/admin/content/events/trashed')->assertOk()->json('data'));
+
+        $this->deleteJson("/api/admin/content/events/{$gone->id}")->assertOk();
+
+        $live = array_column($this->getJson('/api/admin/content/events')->json('data'), 'title');
+        $this->assertSame(['Dhaka fair'], $live, 'a removed item must be off the list it was on');
+
+        $removed = $this->getJson('/api/admin/content/events/trashed')->assertOk();
+        $this->assertSame(['Cancelled fair'], array_column($removed->json('data'), 'title'));
+        $this->assertSame('Sylhet', $removed->json('data.0.city'));
+        // The dialog says when it went, so the row has to carry when.
+        $this->assertNotNull($removed->json('data.0.removed_at'));
+        $this->assertStringContainsString('no-store', (string) $removed->headers->get('Cache-Control'));
+    }
+
+    /**
+     * Back where it was, not at the front. `position` survives the round trip
+     * untouched, so an editor who removes the wrong row and puts it back has
+     * not also silently reordered the page it appears on.
+     */
+    public function test_putting_one_back_returns_it_to_the_list_where_it_was(): void
+    {
+        Event::create(['title' => 'Last']);
+        $middle = Event::create(['title' => 'Middle']);
+        Event::create(['title' => 'First']);
+        $this->actingAs($this->staff());
+
+        $this->deleteJson("/api/admin/content/events/{$middle->id}")->assertOk();
+        $this->assertSame(
+            ['First', 'Last'],
+            array_column($this->getJson('/api/admin/content/events')->json('data'), 'title')
+        );
+
+        $res = $this->postJson("/api/admin/content/events/{$middle->id}/restore")->assertOk();
+        $this->assertSame('Middle', $res->json('item.title'));
+
+        $this->assertSame(
+            ['First', 'Middle', 'Last'],
+            array_column($this->getJson('/api/admin/content/events')->json('data'), 'title')
+        );
+        $this->assertSame([], $this->getJson('/api/admin/content/events/trashed')->json('data'));
+    }
+
+    /**
+     * Undoing a removal writes to the public website, so it is gated exactly as
+     * the removal was. Partner-ops staff hold an admin session and the route
+     * group admits them; the handler is what must refuse.
+     */
+    public function test_only_content_staff_can_see_or_undo_a_removal(): void
+    {
+        $e = Event::create(['title' => 'Dhaka fair']);
+        $e->delete();
+
+        $this->actingAs($this->staff(Role::StaffPartnerOps));
+
+        $this->getJson('/api/admin/content/events/trashed')->assertStatus(403);
+        $this->postJson("/api/admin/content/events/{$e->id}/restore")->assertStatus(403);
+        $this->assertNotNull(
+            Event::withTrashed()->find($e->id)?->deleted_at,
+            'a refused restore must not have restored it anyway'
+        );
+    }
+
+    /** The undo routes resolve their slug through the same allow-list. */
+    public function test_the_undo_routes_are_a_flat_404_for_an_unknown_collection(): void
+    {
+        $this->actingAs($this->staff());
+
+        $this->getJson('/api/admin/content/users/trashed')->assertStatus(404);
+        $this->postJson('/api/admin/content/users/1/restore')->assertStatus(404);
+        $this->postJson('/api/admin/content/App%5CModels%5CUser/1/restore')->assertStatus(404);
+    }
+
+    /**
+     * A restore that had nothing to restore must say so. Answering 200 would
+     * tell someone their content is back — the exact class of lie this screen
+     * keeps being rebuilt to stop telling.
+     */
+    public function test_restoring_something_that_was_never_removed_is_refused(): void
+    {
+        $e = Event::create(['title' => 'Still on the site']);
+        $this->actingAs($this->staff());
+
+        $this->postJson("/api/admin/content/events/{$e->id}/restore")
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'That one has not been removed — it is still on the website.');
+
+        // An id nobody ever created is the 404 it is on every other handler,
+        // and not the sentence above, which would be false of it.
+        $this->postJson('/api/admin/content/events/9999/restore')->assertStatus(404);
+
+        // Two people with the dialog open, both clicking: the second one is
+        // told nothing happened rather than told it worked twice.
+        $this->deleteJson("/api/admin/content/events/{$e->id}")->assertOk();
+        $this->postJson("/api/admin/content/events/{$e->id}/restore")->assertOk();
+        $this->postJson("/api/admin/content/events/{$e->id}/restore")->assertStatus(422);
+    }
+
     // --------------------------------------------------------------- reorder
 
     public function test_reordering_swaps_with_the_neighbour_and_stops_at_the_ends(): void
@@ -309,6 +431,56 @@ class AdminContentCollectionApiTest extends TestCase
 
         $this->putJson("/api/admin/content/events/{$middleId}/move", ['direction' => 'sideways'])
             ->assertStatus(422)->assertJsonValidationErrors('direction');
+    }
+
+    /**
+     * One step per request was the whole reorder vocabulary, which put the
+     * front of a thirty-item gallery twenty-nine clicks away from a photo
+     * uploaded to the end of it.
+     *
+     * The second assertion is the one that matters as much as the order:
+     * everything that did not move must still hold the position it held.
+     * Renumbering the list to make one row first is how two editors tidying
+     * different ends of a long gallery overwrite each other.
+     */
+    public function test_move_to_top_and_to_bottom_get_there_in_one_request(): void
+    {
+        // ContentItem puts each new row at the front, so this creates bottom-up.
+        foreach (['Fifth', 'Fourth', 'Third', 'Second', 'First'] as $title) {
+            Event::create(['title' => $title]);
+        }
+        $this->actingAs($this->staff());
+
+        $rows = $this->getJson('/api/admin/content/events')->json('data');
+        $this->assertSame(['First', 'Second', 'Third', 'Fourth', 'Fifth'], array_column($rows, 'title'));
+
+        $before = collect($rows)->pluck('position', 'title');
+        $lastId = end($rows)['id'];
+
+        $this->putJson("/api/admin/content/events/{$lastId}/move", ['direction' => 'top'])->assertOk();
+
+        $moved = $this->getJson('/api/admin/content/events')->json('data');
+        $this->assertSame(['Fifth', 'First', 'Second', 'Third', 'Fourth'], array_column($moved, 'title'));
+        $this->assertSame(
+            $before->except('Fifth')->all(),
+            collect($moved)->pluck('position', 'title')->except('Fifth')->all(),
+            'moving one row to the top must not have renumbered the others'
+        );
+
+        $this->putJson("/api/admin/content/events/{$lastId}/move", ['direction' => 'bottom'])->assertOk();
+        $this->assertSame(
+            ['First', 'Second', 'Third', 'Fourth', 'Fifth'],
+            array_column($this->getJson('/api/admin/content/events')->json('data'), 'title')
+        );
+
+        // Already at that end. Refused, and in the same words the one-step move
+        // uses, rather than written again — an accepted no-op would walk the
+        // position further out on every extra click.
+        $this->putJson("/api/admin/content/events/{$lastId}/move", ['direction' => 'bottom'])
+            ->assertStatus(422)->assertJsonPath('message', 'This is already last in the list.');
+
+        $this->putJson("/api/admin/content/events/{$rows[0]['id']}/move", ['direction' => 'top'])
+            ->assertStatus(422)->assertJsonPath('message', 'This is already first in the list.');
     }
 
     // ------------------------------------------------- the awkward per-table
@@ -383,6 +555,10 @@ class AdminContentCollectionApiTest extends TestCase
             $id = $this->postJson("/api/admin/content/{$slug}", $payload)->assertCreated()->json('item.id');
             $this->putJson("/api/admin/content/{$slug}/{$id}", $payload)->assertOk();
             $this->deleteJson("/api/admin/content/{$slug}/{$id}")->assertOk();
+
+            // The undo half is not events-only either.
+            $this->assertNotEmpty($this->getJson("/api/admin/content/{$slug}/trashed")->assertOk()->json('data'));
+            $this->postJson("/api/admin/content/{$slug}/{$id}/restore")->assertOk();
         }
     }
 
@@ -402,5 +578,30 @@ class AdminContentCollectionApiTest extends TestCase
         $this->assertContains('create', $actions);
         $this->assertContains('update', $actions);
         $this->assertContains('delete', $actions);
+    }
+
+    /**
+     * Putting a page back on the public site is a change to the public site,
+     * and the one write the model's audit trait cannot see: it hooks
+     * created/updated/deleted, and SoftDeletes fires `restored`. The controller
+     * writes this row itself, under the entity and id the trait uses, so a
+     * removal and its undo are two rows of one story rather than two queries.
+     */
+    public function test_putting_one_back_is_recorded_in_the_audit_log_too(): void
+    {
+        $this->actingAs($this->staff());
+
+        $id = $this->postJson('/api/admin/content/events', ['title' => 'Audited fair'])
+            ->assertCreated()->json('item.id');
+        $this->deleteJson("/api/admin/content/events/{$id}")->assertOk();
+        $this->postJson("/api/admin/content/events/{$id}/restore")->assertOk();
+
+        $actions = ContentAuditLog::query()
+            ->where('entity', 'events')
+            ->where('entity_id', Event::query()->find($id)?->legacy_id)
+            ->pluck('action')->all();
+
+        $this->assertContains('delete', $actions);
+        $this->assertContains('restore', $actions);
     }
 }

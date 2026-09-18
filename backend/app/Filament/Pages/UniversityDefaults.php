@@ -15,6 +15,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use UnitEnum;
 
 /**
  * Phase 8+ — the copy the university detail template falls back to when a
@@ -27,11 +28,13 @@ class UniversityDefaults extends Page
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
+    protected static string|UnitEnum|null $navigationGroup = 'University catalogue';
+
     protected static ?string $navigationLabel = 'University page defaults';
 
     protected static ?string $title = 'University page defaults';
 
-    protected static ?int $navigationSort = 21;
+    protected static ?int $navigationSort = 20;
 
     protected string $view = 'filament.pages.university-defaults';
 

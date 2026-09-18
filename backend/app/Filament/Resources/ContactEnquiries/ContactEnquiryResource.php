@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 /**
  * Read-only staff inbox for public contact-form leads (Phase 2 §7.3).
@@ -23,6 +24,10 @@ class ContactEnquiryResource extends Resource
     protected static ?string $model = ContactEnquiry::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Enquiries';
+
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationLabel = 'Contact Enquiries';
 

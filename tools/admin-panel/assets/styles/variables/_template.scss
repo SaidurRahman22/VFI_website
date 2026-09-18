@@ -1,3 +1,16 @@
+/*
+  This file is the `@configured-variables` alias in nuxt.config.ts. It feeds the
+  Materio template's OWN SCSS - nav widths, nav spacing, the layout z-indexes,
+  $theme-colors-name - and nothing else.
+
+  Vuetify's variables are NOT configurable from here. They belong in
+  ./_vuetify.scss, which is what nuxt.config hands vite-plugin-vuetify as its
+  styles.configFile; a Vuetify variable set in this file is read after Vuetify
+  has already emitted its CSS and is ignored without any error.
+
+  Nothing in the VFI restyle needed a template variable, so the forward below is
+  the template's, unchanged.
+*/
 @forward "@core/scss/template/variables";
 
 // ℹ️ Remove above import and uncomment below to override core variables.

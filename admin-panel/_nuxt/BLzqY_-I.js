@@ -1,0 +1,1 @@
+import{b0 as e,R as t,G as o,b1 as s}from"./0-oOBynK.js";const r={},c={class:"layout-wrapper layout-blank","data-allow-mismatch":""};function l(a,n){return t(),o("div",c,[s(a.$slots,"default")])}const d=e(r,[["render",l]]);export{d as default};

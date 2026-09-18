@@ -13,10 +13,26 @@ export default defineNuxtConfig({
       titleTemplate: '%s - VFI Admin',
       title: 'VFI Admin',
 
+      /*
+        DM Sans and Quicksand, requested exactly as index.html requests them -
+        same two families, same 400;500;600;700, same display=swap, same two
+        preconnect hints - so a visitor arriving from the public site already
+        has both in cache and the console does not re-fetch them.
+      */
       link: [{
         rel: 'icon',
         type: 'image/png',
         href: '/assets/img/vfi-emblem.png',
+      }, {
+        rel: 'preconnect',
+        href: 'https://fonts.googleapis.com',
+      }, {
+        rel: 'preconnect',
+        href: 'https://fonts.gstatic.com',
+        crossorigin: '',
+      }, {
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap',
       }],
     },
   },
@@ -74,6 +90,8 @@ export default defineNuxtConfig({
         '/content/partner',
         '/settings',
         '/pages',
+        '/images',
+        '/backup',
       ],
     },
   },

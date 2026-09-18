@@ -141,7 +141,10 @@ class AppServiceProvider extends ServiceProvider
             (int) config('catalogue.search_rate_per_minute', 40)
         )->by($request->user()?->getAuthIdentifier() ? 'u:'.$request->user()->getAuthIdentifier() : 'ip:'.$request->ip()));
 
-        // Phase 3E — content policy on all 10 collection models (Filament enforces it).
+        // Phase 3E — content policy on all 10 collection models. Registered, but
+        // no request path asks the Gate any more: the Filament resources that did
+        // are gone and the console's content API checks StaffAbilities in every
+        // handler. ContentPolicy's docblock says why it is kept anyway.
         foreach ([
             Event::class, Blog::class,
             NewsItem::class, Photo::class,

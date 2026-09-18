@@ -1,0 +1,929 @@
+<!DOCTYPE html><html  data-capo=""><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VFI Admin - VFI Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap">
+<style id="vuetify-theme-stylesheet">:root {
+      --v-theme-background: 246,247,251;
+      --v-theme-background-overlay-multiplier: 1;
+      --v-theme-surface: 255,255,255;
+      --v-theme-surface-overlay-multiplier: 1;
+      --v-theme-surface-bright: 255,255,255;
+      --v-theme-surface-bright-overlay-multiplier: 1;
+      --v-theme-surface-light: 238,238,238;
+      --v-theme-surface-light-overlay-multiplier: 1;
+      --v-theme-surface-variant: 66,66,66;
+      --v-theme-surface-variant-overlay-multiplier: 2;
+      --v-theme-on-surface-variant: 238,238,238;
+      --v-theme-primary: 47,98,168;
+      --v-theme-primary-overlay-multiplier: 2;
+      --v-theme-primary-darken-1: 35,79,136;
+      --v-theme-primary-darken-1-overlay-multiplier: 2;
+      --v-theme-secondary: 184,30,78;
+      --v-theme-secondary-overlay-multiplier: 2;
+      --v-theme-secondary-darken-1: 149,18,69;
+      --v-theme-secondary-darken-1-overlay-multiplier: 2;
+      --v-theme-error: 179,60,48;
+      --v-theme-error-overlay-multiplier: 2;
+      --v-theme-info: 91,74,158;
+      --v-theme-info-overlay-multiplier: 2;
+      --v-theme-success: 14,120,80;
+      --v-theme-success-overlay-multiplier: 2;
+      --v-theme-warning: 245,166,35;
+      --v-theme-warning-overlay-multiplier: 1;
+      --v-theme-on-primary: 255,255,255;
+      --v-theme-on-secondary: 255,255,255;
+      --v-theme-success-darken-1: 12,106,70;
+      --v-theme-success-darken-1-overlay-multiplier: 2;
+      --v-theme-on-success: 255,255,255;
+      --v-theme-info-darken-1: 80,65,139;
+      --v-theme-info-darken-1-overlay-multiplier: 2;
+      --v-theme-on-info: 255,255,255;
+      --v-theme-warning-darken-1: 216,146,31;
+      --v-theme-warning-darken-1-overlay-multiplier: 1;
+      --v-theme-on-warning: 20,28,38;
+      --v-theme-error-darken-1: 168,56,45;
+      --v-theme-error-darken-1-overlay-multiplier: 2;
+      --v-theme-on-error: 255,255,255;
+      --v-theme-on-background: 20,28,38;
+      --v-theme-on-surface: 20,28,38;
+      --v-theme-grey-50: 246,247,251;
+      --v-theme-grey-50-overlay-multiplier: 1;
+      --v-theme-grey-100: 238,240,246;
+      --v-theme-grey-100-overlay-multiplier: 1;
+      --v-theme-grey-200: 231,233,240;
+      --v-theme-grey-200-overlay-multiplier: 1;
+      --v-theme-grey-300: 215,218,228;
+      --v-theme-grey-300-overlay-multiplier: 1;
+      --v-theme-grey-400: 182,187,201;
+      --v-theme-grey-400-overlay-multiplier: 1;
+      --v-theme-grey-500: 154,159,176;
+      --v-theme-grey-500-overlay-multiplier: 1;
+      --v-theme-grey-600: 118,124,143;
+      --v-theme-grey-600-overlay-multiplier: 1;
+      --v-theme-grey-700: 91,97,114;
+      --v-theme-grey-700-overlay-multiplier: 2;
+      --v-theme-grey-800: 58,67,86;
+      --v-theme-grey-800-overlay-multiplier: 2;
+      --v-theme-grey-900: 20,28,38;
+      --v-theme-grey-900-overlay-multiplier: 2;
+      --v-theme-perfect-scrollbar-thumb: 199,204,217;
+      --v-theme-perfect-scrollbar-thumb-overlay-multiplier: 1;
+      --v-theme-skin-bordered-background: 255,255,255;
+      --v-theme-skin-bordered-background-overlay-multiplier: 1;
+      --v-theme-skin-bordered-surface: 255,255,255;
+      --v-theme-skin-bordered-surface-overlay-multiplier: 1;
+      --v-theme-expansion-panel-text-custom-bg: 246,247,251;
+      --v-theme-expansion-panel-text-custom-bg-overlay-multiplier: 1;
+      --v-theme-track-bg: 238,240,246;
+      --v-theme-track-bg-overlay-multiplier: 1;
+      --v-theme-chat-bg: 246,247,251;
+      --v-theme-chat-bg-overlay-multiplier: 1;
+      --v-theme-nav-active-end: 100,57,118;
+      --v-theme-nav-active-end-overlay-multiplier: 2;
+      --v-theme-on-surface-bright: 0,0,0;
+      --v-theme-on-surface-light: 0,0,0;
+      --v-theme-on-primary-darken-1: 255,255,255;
+      --v-theme-on-secondary-darken-1: 255,255,255;
+      --v-theme-on-success-darken-1: 255,255,255;
+      --v-theme-on-info-darken-1: 255,255,255;
+      --v-theme-on-warning-darken-1: 255,255,255;
+      --v-theme-on-error-darken-1: 255,255,255;
+      --v-theme-on-grey-50: 0,0,0;
+      --v-theme-on-grey-100: 0,0,0;
+      --v-theme-on-grey-200: 0,0,0;
+      --v-theme-on-grey-300: 0,0,0;
+      --v-theme-on-grey-400: 0,0,0;
+      --v-theme-on-grey-500: 255,255,255;
+      --v-theme-on-grey-600: 255,255,255;
+      --v-theme-on-grey-700: 255,255,255;
+      --v-theme-on-grey-800: 255,255,255;
+      --v-theme-on-grey-900: 255,255,255;
+      --v-theme-on-perfect-scrollbar-thumb: 0,0,0;
+      --v-theme-on-skin-bordered-background: 0,0,0;
+      --v-theme-on-skin-bordered-surface: 0,0,0;
+      --v-theme-on-expansion-panel-text-custom-bg: 0,0,0;
+      --v-theme-on-track-bg: 0,0,0;
+      --v-theme-on-chat-bg: 0,0,0;
+      --v-theme-on-nav-active-end: 255,255,255;
+      --v-border-color: 21, 36, 64;
+      --v-border-opacity: 0.12;
+      --v-high-emphasis-opacity: 0.9;
+      --v-medium-emphasis-opacity: 0.7;
+      --v-disabled-opacity: 0.4;
+      --v-idle-opacity: 0.04;
+      --v-hover-opacity: 0.04;
+      --v-focus-opacity: 0.1;
+      --v-selected-opacity: 0.08;
+      --v-activated-opacity: 0.16;
+      --v-pressed-opacity: 0.14;
+      --v-dragged-opacity: 0.1;
+      --v-theme-kbd: 33, 37, 41;
+      --v-theme-on-kbd: 255, 255, 255;
+      --v-theme-code: 245, 245, 245;
+      --v-theme-on-code: 0, 0, 0;
+      --v-code-color: 184, 30, 78;
+      --v-overlay-scrim-background: 21, 36, 64;
+      --v-tooltip-background: 21, 36, 64;
+      --v-overlay-scrim-opacity: 0.5;
+      --v-table-header-color: 246, 247, 251;
+      --v-shadow-key-umbra-color: 14, 27, 44;
+      --v-shadow-xs-opacity: 0.05;
+      --v-shadow-sm-opacity: 0.06;
+      --v-shadow-md-opacity: 0.08;
+      --v-shadow-lg-opacity: 0.10;
+      --v-shadow-xl-opacity: 0.14;
+    }
+    .v-theme--light {
+      color-scheme: normal;
+      --v-theme-background: 246,247,251;
+      --v-theme-background-overlay-multiplier: 1;
+      --v-theme-surface: 255,255,255;
+      --v-theme-surface-overlay-multiplier: 1;
+      --v-theme-surface-bright: 255,255,255;
+      --v-theme-surface-bright-overlay-multiplier: 1;
+      --v-theme-surface-light: 238,238,238;
+      --v-theme-surface-light-overlay-multiplier: 1;
+      --v-theme-surface-variant: 66,66,66;
+      --v-theme-surface-variant-overlay-multiplier: 2;
+      --v-theme-on-surface-variant: 238,238,238;
+      --v-theme-primary: 47,98,168;
+      --v-theme-primary-overlay-multiplier: 2;
+      --v-theme-primary-darken-1: 35,79,136;
+      --v-theme-primary-darken-1-overlay-multiplier: 2;
+      --v-theme-secondary: 184,30,78;
+      --v-theme-secondary-overlay-multiplier: 2;
+      --v-theme-secondary-darken-1: 149,18,69;
+      --v-theme-secondary-darken-1-overlay-multiplier: 2;
+      --v-theme-error: 179,60,48;
+      --v-theme-error-overlay-multiplier: 2;
+      --v-theme-info: 91,74,158;
+      --v-theme-info-overlay-multiplier: 2;
+      --v-theme-success: 14,120,80;
+      --v-theme-success-overlay-multiplier: 2;
+      --v-theme-warning: 245,166,35;
+      --v-theme-warning-overlay-multiplier: 1;
+      --v-theme-on-primary: 255,255,255;
+      --v-theme-on-secondary: 255,255,255;
+      --v-theme-success-darken-1: 12,106,70;
+      --v-theme-success-darken-1-overlay-multiplier: 2;
+      --v-theme-on-success: 255,255,255;
+      --v-theme-info-darken-1: 80,65,139;
+      --v-theme-info-darken-1-overlay-multiplier: 2;
+      --v-theme-on-info: 255,255,255;
+      --v-theme-warning-darken-1: 216,146,31;
+      --v-theme-warning-darken-1-overlay-multiplier: 1;
+      --v-theme-on-warning: 20,28,38;
+      --v-theme-error-darken-1: 168,56,45;
+      --v-theme-error-darken-1-overlay-multiplier: 2;
+      --v-theme-on-error: 255,255,255;
+      --v-theme-on-background: 20,28,38;
+      --v-theme-on-surface: 20,28,38;
+      --v-theme-grey-50: 246,247,251;
+      --v-theme-grey-50-overlay-multiplier: 1;
+      --v-theme-grey-100: 238,240,246;
+      --v-theme-grey-100-overlay-multiplier: 1;
+      --v-theme-grey-200: 231,233,240;
+      --v-theme-grey-200-overlay-multiplier: 1;
+      --v-theme-grey-300: 215,218,228;
+      --v-theme-grey-300-overlay-multiplier: 1;
+      --v-theme-grey-400: 182,187,201;
+      --v-theme-grey-400-overlay-multiplier: 1;
+      --v-theme-grey-500: 154,159,176;
+      --v-theme-grey-500-overlay-multiplier: 1;
+      --v-theme-grey-600: 118,124,143;
+      --v-theme-grey-600-overlay-multiplier: 1;
+      --v-theme-grey-700: 91,97,114;
+      --v-theme-grey-700-overlay-multiplier: 2;
+      --v-theme-grey-800: 58,67,86;
+      --v-theme-grey-800-overlay-multiplier: 2;
+      --v-theme-grey-900: 20,28,38;
+      --v-theme-grey-900-overlay-multiplier: 2;
+      --v-theme-perfect-scrollbar-thumb: 199,204,217;
+      --v-theme-perfect-scrollbar-thumb-overlay-multiplier: 1;
+      --v-theme-skin-bordered-background: 255,255,255;
+      --v-theme-skin-bordered-background-overlay-multiplier: 1;
+      --v-theme-skin-bordered-surface: 255,255,255;
+      --v-theme-skin-bordered-surface-overlay-multiplier: 1;
+      --v-theme-expansion-panel-text-custom-bg: 246,247,251;
+      --v-theme-expansion-panel-text-custom-bg-overlay-multiplier: 1;
+      --v-theme-track-bg: 238,240,246;
+      --v-theme-track-bg-overlay-multiplier: 1;
+      --v-theme-chat-bg: 246,247,251;
+      --v-theme-chat-bg-overlay-multiplier: 1;
+      --v-theme-nav-active-end: 100,57,118;
+      --v-theme-nav-active-end-overlay-multiplier: 2;
+      --v-theme-on-surface-bright: 0,0,0;
+      --v-theme-on-surface-light: 0,0,0;
+      --v-theme-on-primary-darken-1: 255,255,255;
+      --v-theme-on-secondary-darken-1: 255,255,255;
+      --v-theme-on-success-darken-1: 255,255,255;
+      --v-theme-on-info-darken-1: 255,255,255;
+      --v-theme-on-warning-darken-1: 255,255,255;
+      --v-theme-on-error-darken-1: 255,255,255;
+      --v-theme-on-grey-50: 0,0,0;
+      --v-theme-on-grey-100: 0,0,0;
+      --v-theme-on-grey-200: 0,0,0;
+      --v-theme-on-grey-300: 0,0,0;
+      --v-theme-on-grey-400: 0,0,0;
+      --v-theme-on-grey-500: 255,255,255;
+      --v-theme-on-grey-600: 255,255,255;
+      --v-theme-on-grey-700: 255,255,255;
+      --v-theme-on-grey-800: 255,255,255;
+      --v-theme-on-grey-900: 255,255,255;
+      --v-theme-on-perfect-scrollbar-thumb: 0,0,0;
+      --v-theme-on-skin-bordered-background: 0,0,0;
+      --v-theme-on-skin-bordered-surface: 0,0,0;
+      --v-theme-on-expansion-panel-text-custom-bg: 0,0,0;
+      --v-theme-on-track-bg: 0,0,0;
+      --v-theme-on-chat-bg: 0,0,0;
+      --v-theme-on-nav-active-end: 255,255,255;
+      --v-border-color: 21, 36, 64;
+      --v-border-opacity: 0.12;
+      --v-high-emphasis-opacity: 0.9;
+      --v-medium-emphasis-opacity: 0.7;
+      --v-disabled-opacity: 0.4;
+      --v-idle-opacity: 0.04;
+      --v-hover-opacity: 0.04;
+      --v-focus-opacity: 0.1;
+      --v-selected-opacity: 0.08;
+      --v-activated-opacity: 0.16;
+      --v-pressed-opacity: 0.14;
+      --v-dragged-opacity: 0.1;
+      --v-theme-kbd: 33, 37, 41;
+      --v-theme-on-kbd: 255, 255, 255;
+      --v-theme-code: 245, 245, 245;
+      --v-theme-on-code: 0, 0, 0;
+      --v-code-color: 184, 30, 78;
+      --v-overlay-scrim-background: 21, 36, 64;
+      --v-tooltip-background: 21, 36, 64;
+      --v-overlay-scrim-opacity: 0.5;
+      --v-table-header-color: 246, 247, 251;
+      --v-shadow-key-umbra-color: 14, 27, 44;
+      --v-shadow-xs-opacity: 0.05;
+      --v-shadow-sm-opacity: 0.06;
+      --v-shadow-md-opacity: 0.08;
+      --v-shadow-lg-opacity: 0.10;
+      --v-shadow-xl-opacity: 0.14;
+    }
+    .v-theme--dark {
+      color-scheme: dark;
+      --v-theme-background: 14,23,42;
+      --v-theme-background-overlay-multiplier: 1;
+      --v-theme-surface: 21,36,64;
+      --v-theme-surface-overlay-multiplier: 1;
+      --v-theme-surface-bright: 204,191,214;
+      --v-theme-surface-bright-overlay-multiplier: 2;
+      --v-theme-surface-light: 66,66,66;
+      --v-theme-surface-light-overlay-multiplier: 1;
+      --v-theme-surface-variant: 163,163,163;
+      --v-theme-surface-variant-overlay-multiplier: 2;
+      --v-theme-on-surface-variant: 66,66,66;
+      --v-theme-primary: 109,145,194;
+      --v-theme-primary-overlay-multiplier: 2;
+      --v-theme-primary-darken-1: 89,129,185;
+      --v-theme-primary-darken-1-overlay-multiplier: 2;
+      --v-theme-secondary: 205,98,131;
+      --v-theme-secondary-overlay-multiplier: 2;
+      --v-theme-secondary-darken-1: 198,75,113;
+      --v-theme-secondary-darken-1-overlay-multiplier: 2;
+      --v-theme-error: 228,97,83;
+      --v-theme-error-overlay-multiplier: 2;
+      --v-theme-info: 143,132,189;
+      --v-theme-info-overlay-multiplier: 2;
+      --v-theme-success: 89,189,151;
+      --v-theme-success-overlay-multiplier: 2;
+      --v-theme-warning: 245,166,35;
+      --v-theme-warning-overlay-multiplier: 2;
+      --v-theme-on-primary: 10,2,23;
+      --v-theme-on-secondary: 10,2,23;
+      --v-theme-success-darken-1: 65,179,136;
+      --v-theme-success-darken-1-overlay-multiplier: 2;
+      --v-theme-on-success: 10,2,23;
+      --v-theme-info-darken-1: 127,117,168;
+      --v-theme-info-darken-1-overlay-multiplier: 2;
+      --v-theme-on-info: 10,2,23;
+      --v-theme-warning-darken-1: 225,153,32;
+      --v-theme-warning-darken-1-overlay-multiplier: 2;
+      --v-theme-on-warning: 10,2,23;
+      --v-theme-error-darken-1: 203,86,74;
+      --v-theme-error-darken-1-overlay-multiplier: 2;
+      --v-theme-on-error: 10,2,23;
+      --v-theme-on-background: 221,228,240;
+      --v-theme-on-surface: 221,228,240;
+      --v-theme-grey-50: 20,31,54;
+      --v-theme-grey-50-overlay-multiplier: 1;
+      --v-theme-grey-100: 27,40,66;
+      --v-theme-grey-100-overlay-multiplier: 1;
+      --v-theme-grey-200: 42,58,88;
+      --v-theme-grey-200-overlay-multiplier: 1;
+      --v-theme-grey-300: 59,77,109;
+      --v-theme-grey-300-overlay-multiplier: 1;
+      --v-theme-grey-400: 86,107,140;
+      --v-theme-grey-400-overlay-multiplier: 1;
+      --v-theme-grey-500: 114,134,165;
+      --v-theme-grey-500-overlay-multiplier: 2;
+      --v-theme-grey-600: 152,169,194;
+      --v-theme-grey-600-overlay-multiplier: 2;
+      --v-theme-grey-700: 183,196,216;
+      --v-theme-grey-700-overlay-multiplier: 2;
+      --v-theme-grey-800: 211,220,236;
+      --v-theme-grey-800-overlay-multiplier: 2;
+      --v-theme-grey-900: 232,237,246;
+      --v-theme-grey-900-overlay-multiplier: 2;
+      --v-theme-perfect-scrollbar-thumb: 59,77,109;
+      --v-theme-perfect-scrollbar-thumb-overlay-multiplier: 1;
+      --v-theme-skin-bordered-background: 21,36,64;
+      --v-theme-skin-bordered-background-overlay-multiplier: 1;
+      --v-theme-skin-bordered-surface: 21,36,64;
+      --v-theme-skin-bordered-surface-overlay-multiplier: 1;
+      --v-theme-expansion-panel-text-custom-bg: 27,40,66;
+      --v-theme-expansion-panel-text-custom-bg-overlay-multiplier: 1;
+      --v-theme-track-bg: 42,58,88;
+      --v-theme-track-bg-overlay-multiplier: 1;
+      --v-theme-chat-bg: 17,28,51;
+      --v-theme-chat-bg-overlay-multiplier: 1;
+      --v-theme-nav-active-end: 154,126,166;
+      --v-theme-nav-active-end-overlay-multiplier: 2;
+      --v-theme-on-surface-bright: 0,0,0;
+      --v-theme-on-surface-light: 255,255,255;
+      --v-theme-on-primary-darken-1: 255,255,255;
+      --v-theme-on-secondary-darken-1: 255,255,255;
+      --v-theme-on-success-darken-1: 255,255,255;
+      --v-theme-on-info-darken-1: 255,255,255;
+      --v-theme-on-warning-darken-1: 255,255,255;
+      --v-theme-on-error-darken-1: 255,255,255;
+      --v-theme-on-grey-50: 255,255,255;
+      --v-theme-on-grey-100: 255,255,255;
+      --v-theme-on-grey-200: 255,255,255;
+      --v-theme-on-grey-300: 255,255,255;
+      --v-theme-on-grey-400: 255,255,255;
+      --v-theme-on-grey-500: 255,255,255;
+      --v-theme-on-grey-600: 255,255,255;
+      --v-theme-on-grey-700: 0,0,0;
+      --v-theme-on-grey-800: 0,0,0;
+      --v-theme-on-grey-900: 0,0,0;
+      --v-theme-on-perfect-scrollbar-thumb: 255,255,255;
+      --v-theme-on-skin-bordered-background: 255,255,255;
+      --v-theme-on-skin-bordered-surface: 255,255,255;
+      --v-theme-on-expansion-panel-text-custom-bg: 255,255,255;
+      --v-theme-on-track-bg: 255,255,255;
+      --v-theme-on-chat-bg: 255,255,255;
+      --v-theme-on-nav-active-end: 255,255,255;
+      --v-border-color: 221, 228, 240;
+      --v-border-opacity: 0.12;
+      --v-high-emphasis-opacity: 0.9;
+      --v-medium-emphasis-opacity: 0.7;
+      --v-disabled-opacity: 0.4;
+      --v-idle-opacity: 0.1;
+      --v-hover-opacity: 0.04;
+      --v-focus-opacity: 0.1;
+      --v-selected-opacity: 0.08;
+      --v-activated-opacity: 0.16;
+      --v-pressed-opacity: 0.14;
+      --v-dragged-opacity: 0.1;
+      --v-theme-kbd: 33, 37, 41;
+      --v-theme-on-kbd: 255, 255, 255;
+      --v-theme-code: 52, 52, 52;
+      --v-theme-on-code: 204, 204, 204;
+      --v-code-color: 220, 143, 167;
+      --v-overlay-scrim-background: 10, 2, 23;
+      --v-tooltip-background: 238, 240, 246;
+      --v-overlay-scrim-opacity: 0.5;
+      --v-table-header-color: 27, 40, 66;
+      --v-shadow-key-umbra-color: 5, 8, 15;
+      --v-shadow-xs-opacity: 0.24;
+      --v-shadow-sm-opacity: 0.28;
+      --v-shadow-md-opacity: 0.34;
+      --v-shadow-lg-opacity: 0.40;
+      --v-shadow-xl-opacity: 0.48;
+    }
+    .bg-background {
+      --v-theme-overlay-multiplier: var(--v-theme-background-overlay-multiplier);
+      background-color: rgb(var(--v-theme-background)) !important;
+      color: rgb(var(--v-theme-on-background)) !important;
+    }
+    .bg-surface {
+      --v-theme-overlay-multiplier: var(--v-theme-surface-overlay-multiplier);
+      background-color: rgb(var(--v-theme-surface)) !important;
+      color: rgb(var(--v-theme-on-surface)) !important;
+    }
+    .bg-surface-bright {
+      --v-theme-overlay-multiplier: var(--v-theme-surface-bright-overlay-multiplier);
+      background-color: rgb(var(--v-theme-surface-bright)) !important;
+      color: rgb(var(--v-theme-on-surface-bright)) !important;
+    }
+    .bg-surface-light {
+      --v-theme-overlay-multiplier: var(--v-theme-surface-light-overlay-multiplier);
+      background-color: rgb(var(--v-theme-surface-light)) !important;
+      color: rgb(var(--v-theme-on-surface-light)) !important;
+    }
+    .bg-surface-variant {
+      --v-theme-overlay-multiplier: var(--v-theme-surface-variant-overlay-multiplier);
+      background-color: rgb(var(--v-theme-surface-variant)) !important;
+      color: rgb(var(--v-theme-on-surface-variant)) !important;
+    }
+    .bg-primary {
+      --v-theme-overlay-multiplier: var(--v-theme-primary-overlay-multiplier);
+      background-color: rgb(var(--v-theme-primary)) !important;
+      color: rgb(var(--v-theme-on-primary)) !important;
+    }
+    .bg-primary-darken-1 {
+      --v-theme-overlay-multiplier: var(--v-theme-primary-darken-1-overlay-multiplier);
+      background-color: rgb(var(--v-theme-primary-darken-1)) !important;
+      color: rgb(var(--v-theme-on-primary-darken-1)) !important;
+    }
+    .bg-secondary {
+      --v-theme-overlay-multiplier: var(--v-theme-secondary-overlay-multiplier);
+      background-color: rgb(var(--v-theme-secondary)) !important;
+      color: rgb(var(--v-theme-on-secondary)) !important;
+    }
+    .bg-secondary-darken-1 {
+      --v-theme-overlay-multiplier: var(--v-theme-secondary-darken-1-overlay-multiplier);
+      background-color: rgb(var(--v-theme-secondary-darken-1)) !important;
+      color: rgb(var(--v-theme-on-secondary-darken-1)) !important;
+    }
+    .bg-error {
+      --v-theme-overlay-multiplier: var(--v-theme-error-overlay-multiplier);
+      background-color: rgb(var(--v-theme-error)) !important;
+      color: rgb(var(--v-theme-on-error)) !important;
+    }
+    .bg-info {
+      --v-theme-overlay-multiplier: var(--v-theme-info-overlay-multiplier);
+      background-color: rgb(var(--v-theme-info)) !important;
+      color: rgb(var(--v-theme-on-info)) !important;
+    }
+    .bg-success {
+      --v-theme-overlay-multiplier: var(--v-theme-success-overlay-multiplier);
+      background-color: rgb(var(--v-theme-success)) !important;
+      color: rgb(var(--v-theme-on-success)) !important;
+    }
+    .bg-warning {
+      --v-theme-overlay-multiplier: var(--v-theme-warning-overlay-multiplier);
+      background-color: rgb(var(--v-theme-warning)) !important;
+      color: rgb(var(--v-theme-on-warning)) !important;
+    }
+    .bg-success-darken-1 {
+      --v-theme-overlay-multiplier: var(--v-theme-success-darken-1-overlay-multiplier);
+      background-color: rgb(var(--v-theme-success-darken-1)) !important;
+      color: rgb(var(--v-theme-on-success-darken-1)) !important;
+    }
+    .bg-info-darken-1 {
+      --v-theme-overlay-multiplier: var(--v-theme-info-darken-1-overlay-multiplier);
+      background-color: rgb(var(--v-theme-info-darken-1)) !important;
+      color: rgb(var(--v-theme-on-info-darken-1)) !important;
+    }
+    .bg-warning-darken-1 {
+      --v-theme-overlay-multiplier: var(--v-theme-warning-darken-1-overlay-multiplier);
+      background-color: rgb(var(--v-theme-warning-darken-1)) !important;
+      color: rgb(var(--v-theme-on-warning-darken-1)) !important;
+    }
+    .bg-error-darken-1 {
+      --v-theme-overlay-multiplier: var(--v-theme-error-darken-1-overlay-multiplier);
+      background-color: rgb(var(--v-theme-error-darken-1)) !important;
+      color: rgb(var(--v-theme-on-error-darken-1)) !important;
+    }
+    .bg-grey-50 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-50-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-50)) !important;
+      color: rgb(var(--v-theme-on-grey-50)) !important;
+    }
+    .bg-grey-100 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-100-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-100)) !important;
+      color: rgb(var(--v-theme-on-grey-100)) !important;
+    }
+    .bg-grey-200 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-200-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-200)) !important;
+      color: rgb(var(--v-theme-on-grey-200)) !important;
+    }
+    .bg-grey-300 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-300-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-300)) !important;
+      color: rgb(var(--v-theme-on-grey-300)) !important;
+    }
+    .bg-grey-400 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-400-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-400)) !important;
+      color: rgb(var(--v-theme-on-grey-400)) !important;
+    }
+    .bg-grey-500 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-500-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-500)) !important;
+      color: rgb(var(--v-theme-on-grey-500)) !important;
+    }
+    .bg-grey-600 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-600-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-600)) !important;
+      color: rgb(var(--v-theme-on-grey-600)) !important;
+    }
+    .bg-grey-700 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-700-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-700)) !important;
+      color: rgb(var(--v-theme-on-grey-700)) !important;
+    }
+    .bg-grey-800 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-800-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-800)) !important;
+      color: rgb(var(--v-theme-on-grey-800)) !important;
+    }
+    .bg-grey-900 {
+      --v-theme-overlay-multiplier: var(--v-theme-grey-900-overlay-multiplier);
+      background-color: rgb(var(--v-theme-grey-900)) !important;
+      color: rgb(var(--v-theme-on-grey-900)) !important;
+    }
+    .bg-perfect-scrollbar-thumb {
+      --v-theme-overlay-multiplier: var(--v-theme-perfect-scrollbar-thumb-overlay-multiplier);
+      background-color: rgb(var(--v-theme-perfect-scrollbar-thumb)) !important;
+      color: rgb(var(--v-theme-on-perfect-scrollbar-thumb)) !important;
+    }
+    .bg-skin-bordered-background {
+      --v-theme-overlay-multiplier: var(--v-theme-skin-bordered-background-overlay-multiplier);
+      background-color: rgb(var(--v-theme-skin-bordered-background)) !important;
+      color: rgb(var(--v-theme-on-skin-bordered-background)) !important;
+    }
+    .bg-skin-bordered-surface {
+      --v-theme-overlay-multiplier: var(--v-theme-skin-bordered-surface-overlay-multiplier);
+      background-color: rgb(var(--v-theme-skin-bordered-surface)) !important;
+      color: rgb(var(--v-theme-on-skin-bordered-surface)) !important;
+    }
+    .bg-expansion-panel-text-custom-bg {
+      --v-theme-overlay-multiplier: var(--v-theme-expansion-panel-text-custom-bg-overlay-multiplier);
+      background-color: rgb(var(--v-theme-expansion-panel-text-custom-bg)) !important;
+      color: rgb(var(--v-theme-on-expansion-panel-text-custom-bg)) !important;
+    }
+    .bg-track-bg {
+      --v-theme-overlay-multiplier: var(--v-theme-track-bg-overlay-multiplier);
+      background-color: rgb(var(--v-theme-track-bg)) !important;
+      color: rgb(var(--v-theme-on-track-bg)) !important;
+    }
+    .bg-chat-bg {
+      --v-theme-overlay-multiplier: var(--v-theme-chat-bg-overlay-multiplier);
+      background-color: rgb(var(--v-theme-chat-bg)) !important;
+      color: rgb(var(--v-theme-on-chat-bg)) !important;
+    }
+    .bg-nav-active-end {
+      --v-theme-overlay-multiplier: var(--v-theme-nav-active-end-overlay-multiplier);
+      background-color: rgb(var(--v-theme-nav-active-end)) !important;
+      color: rgb(var(--v-theme-on-nav-active-end)) !important;
+    }
+    .text-background {
+      color: rgb(var(--v-theme-background)) !important;
+    }
+    .border-background {
+      --v-border-color: var(--v-theme-background);
+    }
+    .text-surface {
+      color: rgb(var(--v-theme-surface)) !important;
+    }
+    .border-surface {
+      --v-border-color: var(--v-theme-surface);
+    }
+    .text-surface-bright {
+      color: rgb(var(--v-theme-surface-bright)) !important;
+    }
+    .border-surface-bright {
+      --v-border-color: var(--v-theme-surface-bright);
+    }
+    .text-surface-light {
+      color: rgb(var(--v-theme-surface-light)) !important;
+    }
+    .border-surface-light {
+      --v-border-color: var(--v-theme-surface-light);
+    }
+    .text-surface-variant {
+      color: rgb(var(--v-theme-surface-variant)) !important;
+    }
+    .border-surface-variant {
+      --v-border-color: var(--v-theme-surface-variant);
+    }
+    .on-surface-variant {
+      color: rgb(var(--v-theme-on-surface-variant)) !important;
+    }
+    .text-primary {
+      color: rgb(var(--v-theme-primary)) !important;
+    }
+    .border-primary {
+      --v-border-color: var(--v-theme-primary);
+    }
+    .text-primary-darken-1 {
+      color: rgb(var(--v-theme-primary-darken-1)) !important;
+    }
+    .border-primary-darken-1 {
+      --v-border-color: var(--v-theme-primary-darken-1);
+    }
+    .text-secondary {
+      color: rgb(var(--v-theme-secondary)) !important;
+    }
+    .border-secondary {
+      --v-border-color: var(--v-theme-secondary);
+    }
+    .text-secondary-darken-1 {
+      color: rgb(var(--v-theme-secondary-darken-1)) !important;
+    }
+    .border-secondary-darken-1 {
+      --v-border-color: var(--v-theme-secondary-darken-1);
+    }
+    .text-error {
+      color: rgb(var(--v-theme-error)) !important;
+    }
+    .border-error {
+      --v-border-color: var(--v-theme-error);
+    }
+    .text-info {
+      color: rgb(var(--v-theme-info)) !important;
+    }
+    .border-info {
+      --v-border-color: var(--v-theme-info);
+    }
+    .text-success {
+      color: rgb(var(--v-theme-success)) !important;
+    }
+    .border-success {
+      --v-border-color: var(--v-theme-success);
+    }
+    .text-warning {
+      color: rgb(var(--v-theme-warning)) !important;
+    }
+    .border-warning {
+      --v-border-color: var(--v-theme-warning);
+    }
+    .on-primary {
+      color: rgb(var(--v-theme-on-primary)) !important;
+    }
+    .on-secondary {
+      color: rgb(var(--v-theme-on-secondary)) !important;
+    }
+    .text-success-darken-1 {
+      color: rgb(var(--v-theme-success-darken-1)) !important;
+    }
+    .border-success-darken-1 {
+      --v-border-color: var(--v-theme-success-darken-1);
+    }
+    .on-success {
+      color: rgb(var(--v-theme-on-success)) !important;
+    }
+    .text-info-darken-1 {
+      color: rgb(var(--v-theme-info-darken-1)) !important;
+    }
+    .border-info-darken-1 {
+      --v-border-color: var(--v-theme-info-darken-1);
+    }
+    .on-info {
+      color: rgb(var(--v-theme-on-info)) !important;
+    }
+    .text-warning-darken-1 {
+      color: rgb(var(--v-theme-warning-darken-1)) !important;
+    }
+    .border-warning-darken-1 {
+      --v-border-color: var(--v-theme-warning-darken-1);
+    }
+    .on-warning {
+      color: rgb(var(--v-theme-on-warning)) !important;
+    }
+    .text-error-darken-1 {
+      color: rgb(var(--v-theme-error-darken-1)) !important;
+    }
+    .border-error-darken-1 {
+      --v-border-color: var(--v-theme-error-darken-1);
+    }
+    .on-error {
+      color: rgb(var(--v-theme-on-error)) !important;
+    }
+    .on-background {
+      color: rgb(var(--v-theme-on-background)) !important;
+    }
+    .on-surface {
+      color: rgb(var(--v-theme-on-surface)) !important;
+    }
+    .text-grey-50 {
+      color: rgb(var(--v-theme-grey-50)) !important;
+    }
+    .border-grey-50 {
+      --v-border-color: var(--v-theme-grey-50);
+    }
+    .text-grey-100 {
+      color: rgb(var(--v-theme-grey-100)) !important;
+    }
+    .border-grey-100 {
+      --v-border-color: var(--v-theme-grey-100);
+    }
+    .text-grey-200 {
+      color: rgb(var(--v-theme-grey-200)) !important;
+    }
+    .border-grey-200 {
+      --v-border-color: var(--v-theme-grey-200);
+    }
+    .text-grey-300 {
+      color: rgb(var(--v-theme-grey-300)) !important;
+    }
+    .border-grey-300 {
+      --v-border-color: var(--v-theme-grey-300);
+    }
+    .text-grey-400 {
+      color: rgb(var(--v-theme-grey-400)) !important;
+    }
+    .border-grey-400 {
+      --v-border-color: var(--v-theme-grey-400);
+    }
+    .text-grey-500 {
+      color: rgb(var(--v-theme-grey-500)) !important;
+    }
+    .border-grey-500 {
+      --v-border-color: var(--v-theme-grey-500);
+    }
+    .text-grey-600 {
+      color: rgb(var(--v-theme-grey-600)) !important;
+    }
+    .border-grey-600 {
+      --v-border-color: var(--v-theme-grey-600);
+    }
+    .text-grey-700 {
+      color: rgb(var(--v-theme-grey-700)) !important;
+    }
+    .border-grey-700 {
+      --v-border-color: var(--v-theme-grey-700);
+    }
+    .text-grey-800 {
+      color: rgb(var(--v-theme-grey-800)) !important;
+    }
+    .border-grey-800 {
+      --v-border-color: var(--v-theme-grey-800);
+    }
+    .text-grey-900 {
+      color: rgb(var(--v-theme-grey-900)) !important;
+    }
+    .border-grey-900 {
+      --v-border-color: var(--v-theme-grey-900);
+    }
+    .text-perfect-scrollbar-thumb {
+      color: rgb(var(--v-theme-perfect-scrollbar-thumb)) !important;
+    }
+    .border-perfect-scrollbar-thumb {
+      --v-border-color: var(--v-theme-perfect-scrollbar-thumb);
+    }
+    .text-skin-bordered-background {
+      color: rgb(var(--v-theme-skin-bordered-background)) !important;
+    }
+    .border-skin-bordered-background {
+      --v-border-color: var(--v-theme-skin-bordered-background);
+    }
+    .text-skin-bordered-surface {
+      color: rgb(var(--v-theme-skin-bordered-surface)) !important;
+    }
+    .border-skin-bordered-surface {
+      --v-border-color: var(--v-theme-skin-bordered-surface);
+    }
+    .text-expansion-panel-text-custom-bg {
+      color: rgb(var(--v-theme-expansion-panel-text-custom-bg)) !important;
+    }
+    .border-expansion-panel-text-custom-bg {
+      --v-border-color: var(--v-theme-expansion-panel-text-custom-bg);
+    }
+    .text-track-bg {
+      color: rgb(var(--v-theme-track-bg)) !important;
+    }
+    .border-track-bg {
+      --v-border-color: var(--v-theme-track-bg);
+    }
+    .text-chat-bg {
+      color: rgb(var(--v-theme-chat-bg)) !important;
+    }
+    .border-chat-bg {
+      --v-border-color: var(--v-theme-chat-bg);
+    }
+    .text-nav-active-end {
+      color: rgb(var(--v-theme-nav-active-end)) !important;
+    }
+    .border-nav-active-end {
+      --v-border-color: var(--v-theme-nav-active-end);
+    }
+    .on-surface-bright {
+      color: rgb(var(--v-theme-on-surface-bright)) !important;
+    }
+    .on-surface-light {
+      color: rgb(var(--v-theme-on-surface-light)) !important;
+    }
+    .on-primary-darken-1 {
+      color: rgb(var(--v-theme-on-primary-darken-1)) !important;
+    }
+    .on-secondary-darken-1 {
+      color: rgb(var(--v-theme-on-secondary-darken-1)) !important;
+    }
+    .on-success-darken-1 {
+      color: rgb(var(--v-theme-on-success-darken-1)) !important;
+    }
+    .on-info-darken-1 {
+      color: rgb(var(--v-theme-on-info-darken-1)) !important;
+    }
+    .on-warning-darken-1 {
+      color: rgb(var(--v-theme-on-warning-darken-1)) !important;
+    }
+    .on-error-darken-1 {
+      color: rgb(var(--v-theme-on-error-darken-1)) !important;
+    }
+    .on-grey-50 {
+      color: rgb(var(--v-theme-on-grey-50)) !important;
+    }
+    .on-grey-100 {
+      color: rgb(var(--v-theme-on-grey-100)) !important;
+    }
+    .on-grey-200 {
+      color: rgb(var(--v-theme-on-grey-200)) !important;
+    }
+    .on-grey-300 {
+      color: rgb(var(--v-theme-on-grey-300)) !important;
+    }
+    .on-grey-400 {
+      color: rgb(var(--v-theme-on-grey-400)) !important;
+    }
+    .on-grey-500 {
+      color: rgb(var(--v-theme-on-grey-500)) !important;
+    }
+    .on-grey-600 {
+      color: rgb(var(--v-theme-on-grey-600)) !important;
+    }
+    .on-grey-700 {
+      color: rgb(var(--v-theme-on-grey-700)) !important;
+    }
+    .on-grey-800 {
+      color: rgb(var(--v-theme-on-grey-800)) !important;
+    }
+    .on-grey-900 {
+      color: rgb(var(--v-theme-on-grey-900)) !important;
+    }
+    .on-perfect-scrollbar-thumb {
+      color: rgb(var(--v-theme-on-perfect-scrollbar-thumb)) !important;
+    }
+    .on-skin-bordered-background {
+      color: rgb(var(--v-theme-on-skin-bordered-background)) !important;
+    }
+    .on-skin-bordered-surface {
+      color: rgb(var(--v-theme-on-skin-bordered-surface)) !important;
+    }
+    .on-expansion-panel-text-custom-bg {
+      color: rgb(var(--v-theme-on-expansion-panel-text-custom-bg)) !important;
+    }
+    .on-track-bg {
+      color: rgb(var(--v-theme-on-track-bg)) !important;
+    }
+    .on-chat-bg {
+      color: rgb(var(--v-theme-on-chat-bg)) !important;
+    }
+    .on-nav-active-end {
+      color: rgb(var(--v-theme-on-nav-active-end)) !important;
+    }
+</style>
+<link rel="stylesheet" href="/admin-panel/_nuxt/entry.DdhdrFs7.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/default.DF0WjBT1.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VGrid.B47qK9tN.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/DefaultLayoutWithVerticalNav.BG9IGaMi.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/NavItems.DhbwqETx.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/NavbarThemeSwitcher.CXsIzU6l.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VOverlay.QlmoXc77.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VMenu.BFak0ojt.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VList.CC74qWSm.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/index.B_DuvYpu.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VDivider.CRhg1j9w.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VSpacer.BQH96tHP.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VCard.DmBuqe92.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VDialog.Cdx5-VsF.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VFileInput.D24N9p85.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VField.BMS4fACi.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VInput.CiShyMxw.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VTable.BAcbaANm.css" crossorigin>
+<link rel="stylesheet" href="/admin-panel/_nuxt/VTextField.iugAyg5q.css" crossorigin>
+<link rel="preload" as="fetch" crossorigin="anonymous" href="/admin-panel/backup/_payload.json?ba278747-7b84-4b00-af58-92c715dfeabc">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/0-oOBynK.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/O0GtedTH.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/Dgldoy30.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/CeAzZhci.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/DlaqZLYT.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/DAUtlcMC.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/BPeoyMZL.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/DWGaNmQL.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/5zFMYw2L.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/DYp8JnVF.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/MRscorWo.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/DeaOzctY.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/BAosaJJ4.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/BeQimLMr.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/BEapoVlx.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/CRFDCSfd.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/D04sOTUg.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/6Mbw1Xt9.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/C50czDcC.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/WsFdxzky.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/Kq9GuZnX.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/C3GDOVGJ.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/BcHmW4Lj.js">
+<link rel="modulepreload" as="script" crossorigin href="/admin-panel/_nuxt/CH1fOuxJ.js">
+<link rel="prefetch" as="image" type="image/png" href="/admin-panel/_nuxt/404.KybqypYR.png">
+<link rel="prefetch" as="style" crossorigin href="/admin-panel/_nuxt/blank.CExWZhJD.css">
+<link rel="prefetch" as="script" crossorigin href="/admin-panel/_nuxt/BLzqY_-I.js">
+<link rel="icon" type="image/png" href="/assets/img/vfi-emblem.png">
+<script type="module" src="/admin-panel/_nuxt/0-oOBynK.js" crossorigin></script>
+<script id="unhead:payload" type="application/json">{"titleTemplate":"%s - VFI Admin","title":"VFI Admin"}</script></head><body><div id="__nuxt"><div class="v-application v-theme--light v-layout v-layout--full-height v-locale--is-ltr" style=""><div class="v-application__wrap"><!--[--><div class="layout-wrapper layout-nav-type-vertical layout-navbar-static layout-footer-static layout-content-width-fluid layout-overlay-nav" data-v-f3236505><aside data-allow-mismatch class="layout-vertical-nav overlay-nav" data-v-f0a13c05><div class="nav-header" data-v-f0a13c05><!--[--><a href="/admin-panel/" class="app-logo app-title-wrapper" data-v-f3236505><img src="/assets/img/vfi-emblem.png" alt="VFI" width="34" height="34" style="object-fit:contain;" data-v-f3236505><h1 class="font-weight-medium leading-normal text-xl" data-v-f3236505> VFI Admin </h1></a><button type="button" class="v-btn v-btn--icon v-theme--light text-default v-btn--density-default v-btn--size-default v-btn--variant-text d-block d-lg-none" style="" data-v-f3236505><!--[--><span class="v-btn__overlay"></span><span class="v-btn__underlay"></span><!--]--><!----><span class="v-btn__content" data-no-activator><!--[--><!--[--><i class="ri-close-line v-icon notranslate v-theme--light v-icon--size-default" style="" aria-hidden="true" data-v-f3236505></i><!--]--><!--]--></span><!----><!----></button><!--]--></div><!--[--><div class="vertical-nav-items-shadow" data-v-f0a13c05></div><!--]--><!--[--><ul class="ps nav-items" data-v-f0a13c05><!--[--><!--[--><!--[--><!--[--><!--[--><li class="nav-section-title"><div class="title-wrapper"><span class="title-text">Daily work</span></div></li><!--[--><!--[--><li class="nav-link"><a href="/admin-panel/" class=""><i class="ri-home-smile-line v-icon notranslate v-theme--light v-icon--size-default nav-item-icon" style="" aria-hidden="true"></i><span class="nav-item-title">Dashboard</span><!----></a></li><!--]--><!--]--><!--]--><!--]--><!--[--><!--]--><!--]--><!--]--><!--]--></ul><!--]--><!--[--><!--]--></aside><div class="layout-content-wrapper"><header class="layout-navbar navbar-blur"><div class="navbar-content-container"><div class="d-flex h-100 align-center" data-v-f3236505><button type="button" class="v-btn v-btn--icon v-theme--light text-default v-btn--density-default v-btn--size-default v-btn--variant-text ms-n3 d-lg-none" style="" data-v-f3236505><!--[--><span class="v-btn__overlay"></span><span class="v-btn__underlay"></span><!--]--><!----><span class="v-btn__content" data-no-activator><!--[--><!--[--><i class="ri-menu-line v-icon notranslate v-theme--light v-icon--size-default" style="" aria-hidden="true" data-v-f3236505></i><!--]--><!--]--></span><!----><!----></button><div class="v-spacer" style="" data-v-f3236505></div><!----><button type="button" class="v-btn v-btn--icon v-theme--light text-default v-btn--density-default v-btn--size-default v-btn--variant-text me-2" style="" data-v-f3236505><!--[--><span class="v-btn__overlay"></span><span class="v-btn__underlay"></span><!--]--><!----><span class="v-btn__content" data-no-activator><!--[--><!--[--><i class="ri-sun-line v-icon notranslate v-theme--light v-icon--size-default" style="" aria-hidden="true"></i><!--[--><!----><!----><!--]--><!--]--><!--]--></span><!----><!----></button><div class="v-avatar v-theme--light text-primary v-avatar--density-default v-avatar--size-default v-avatar--variant-tonal cursor-pointer" style="" data-v-f3236505><!--[--><!--[--><span class="text-sm font-weight-medium">?</span><!--[--><!----><!----><!--]--><!--]--><!--]--><!--[--><!----><span class="v-avatar__underlay"></span><!--]--></div></div></div></header><main class="layout-page-content"><div class="page-content-container"><!--[--><!--[--><div><div class="d-flex align-center gap-2 py-4"><div class="v-progress-circular v-progress-circular--indeterminate v-theme--light text-primary" style="width:20px;height:20px;" role="progressbar" aria-valuemin="0" aria-valuemax="100"><svg style="transform:rotate(calc(-90deg + 0deg));" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><circle class="v-progress-circular__underlay" style="" fill="transparent" cx="50%" cy="50%" r="20" stroke-width="10" stroke-dasharray="125.66370614359172" stroke-dashoffset="0"></circle><circle class="v-progress-circular__overlay" fill="transparent" cx="50%" cy="50%" r="20" stroke-width="10" stroke-dasharray="125.66370614359172" stroke-dashoffset="125.66370614359172px"></circle></svg><!----></div><span class="text-body-2">Checking your access…</span></div></div><!--]--><!--]--></div></main><footer class="layout-footer"><div class="footer-content-container"><div class="h-100 d-flex align-center justify-space-between" data-v-f3236505><span class="text-disabled text-sm"> © 2026 VFI Foreign Consultancy — staff console </span><span class="text-disabled text-sm d-none d-md-inline"> UI based on Materio (MIT) </span></div></div></footer></div><div class="layout-overlay"></div></div><!--]--></div></div></div><div id="teleports"></div><script type="application/json" data-nuxt-data="nuxt-app" data-ssr="true" id="__NUXT_DATA__" data-src="/admin-panel/backup/_payload.json?ba278747-7b84-4b00-af58-92c715dfeabc">[{"state":1,"once":5,"_errors":6,"serverRendered":8,"path":9,"pinia":10,"prerenderedAt":11},["Reactive",2],{"$svfi-user":3,"$svfi-user-loading":4,"$svfi-user-failed":4},null,false,["Set"],["ShallowReactive",7],{},true,"/backup",{},1789704008037]</script>
+<script>window.__NUXT__={};window.__NUXT__.config={public:{device:{defaultUserAgent:"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36",enabled:true,refreshOnResize:false}},app:{baseURL:"/admin-panel/",buildId:"ba278747-7b84-4b00-af58-92c715dfeabc",buildAssetsDir:"/_nuxt/",cdnURL:""}}</script></body></html>

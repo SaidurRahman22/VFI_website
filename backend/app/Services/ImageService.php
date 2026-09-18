@@ -101,10 +101,26 @@ class ImageService
         Storage::disk('public')->delete(self::DIR.'/'.basename($id));
     }
 
-    /** Set/clear a media slot; reference-counted delete of the previous image. */
-    public function setMedia(string $key, ?string $imgId): array
+    /**
+     * Set/clear a media slot; reference-counted delete of the previous image.
+     *
+     * Every slot lives in the one JSONB row that this rewrites whole, so a
+     * caller editing on a person's behalf passes the version it read and gets
+     * null back if the row has moved since — its save is refused rather than
+     * flattening the slot someone else just changed. The check sits here and
+     * not in the caller because the read it compares against is the same read
+     * the write is built from; there is no window in between. Passing null
+     * skips it, which is what a caller with nothing stale behind it wants.
+     */
+    public function setMedia(string $key, ?string $imgId, ?int $expectVersion = null): ?array
     {
         $row = SiteContent::query()->where('key', 'media')->first();
+        $version = (int) ($row->version ?? 0);
+
+        if ($expectVersion !== null && $expectVersion !== $version) {
+            return null;
+        }
+
         $media = (array) ($row?->value ?? []);
         $old = $media[$key] ?? null;
 
@@ -116,7 +132,7 @@ class ImageService
 
         SiteContent::query()->updateOrCreate(
             ['key' => 'media'],
-            ['value' => $media, 'version' => ($row->version ?? 0) + 1],
+            ['value' => $media, 'version' => $version + 1],
         );
 
         if ($old && $old !== $imgId) {

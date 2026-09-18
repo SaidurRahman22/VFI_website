@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * Phase 9B — the onward-disclosure register: which document left VFI, to whom,
@@ -33,11 +34,13 @@ class DisclosureResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShare;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Access & compliance';
+
     protected static ?string $navigationLabel = 'Disclosures';
 
     protected static ?string $modelLabel = 'disclosure';
 
-    protected static ?int $navigationSort = 41;
+    protected static ?int $navigationSort = 30;
 
     public static function canAccess(): bool
     {

@@ -1,7 +1,199 @@
 // ❗ Path must be relative
-@forward "../../../@core/scss/template/libs/vuetify/variables";
 
-// ℹ️ Remove above import and uncomment below to override core variables.
-// @forward "../../../@core/scss/template/libs/vuetify/variables" with (
-//   $<variable-name>: <variable-value>
-// )
+/*
+  This is the file nuxt.config.ts hands to vite-plugin-vuetify as
+  `styles.configFile`. The plugin rewrites every `vuetify/...` stylesheet import
+  into a two-line virtual module that @uses THIS file first and the Vuetify
+  stylesheet second, so whatever is configured here is the value Vuetify's own
+  SCSS compiles against. That is why the overrides live here and not in
+  _template.scss: _template.scss only feeds the Materio template's own SCSS
+  (it is the `@configured-variables` alias), and it is read long after Vuetify
+  has already emitted its CSS, so a Vuetify variable set there is ignored in
+  silence.
+
+  Everything below is a `!default` configuration. It travels down the chain
+  (this file -> @core template vars -> @core base vars -> vuetify/settings ->
+  each component's own _variables.scss), which is how a per-component variable
+  such as $card-border-radius can be set from up here at all.
+*/
+
+/*
+  The site's two families, requested from Google Fonts in nuxt.config's
+  app.head exactly as index.html requests them. Kept as variables because
+  $typography below has to name the heading family a second time for buttons -
+  the site sets its buttons in Quicksand 600 - and the two must not drift.
+*/
+$vfi-body-font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", roboto, "Helvetica Neue", arial, sans-serif,
+  "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+$vfi-heading-font-family: "Quicksand", "DM Sans", system-ui, -apple-system, "Segoe UI", roboto, "Helvetica Neue",
+  arial, sans-serif;
+
+/* stylelint-disable length-zero-no-unit */
+@forward "../../../@core/scss/template/libs/vuetify/variables" with (
+  // 👉 Typeface
+  $body-font-family: $vfi-body-font-family !default,
+  $heading-font-family: $vfi-heading-font-family !default,
+
+  /*
+    The template's own $typography map hard-codes Inter into the "button" entry,
+    so changing the two families above would have left every button label in a
+    font this panel no longer loads. This map is the template's, value for value,
+    with three deliberate edits: buttons move to the heading family at the
+    weight the site's .btn uses (600), headings take the site's heading weights
+    (700 display, 600 for the small ones - Quicksand at 500 reads thin next to
+    DM Sans), and nothing else moves. Sizes, line heights and letter spacing are
+    the template's, because the panel's vertical rhythm is built on them.
+  */
+  $typography: (
+    "h1": (
+      "size": 2.875rem,
+      "weight": 700,
+      "line-height": 4.25rem,
+      "letter-spacing": normal,
+    ),
+    "h2": (
+      "size": 2.375rem,
+      "weight": 700,
+      "line-height": 3.5rem,
+      "letter-spacing": normal,
+    ),
+    "h3": (
+      "size": 1.75rem,
+      "weight": 700,
+      "line-height": 2.625rem,
+      "letter-spacing": normal,
+    ),
+    "h4": (
+      "size": 1.5rem,
+      "weight": 700,
+      "line-height": 2.375rem,
+      "letter-spacing": normal,
+    ),
+    "h5": (
+      "size": 1.125rem,
+      "weight": 600,
+      "line-height": 1.75rem,
+      "letter-spacing": normal,
+    ),
+    "h6": (
+      "size": 0.9375rem,
+      "weight": 600,
+      "line-height": 1.375rem,
+      "letter-spacing": normal,
+    ),
+    "subtitle-1": (
+      "size": 0.9375rem,
+      "line-height": 1.375rem,
+      "letter-spacing": normal,
+    ),
+    "subtitle-2": (
+      "size": 0.8125rem,
+      "line-height": 1.25rem,
+      "letter-spacing": normal,
+    ),
+    "body-1": (
+      "size": 0.9375rem,
+      "line-height": 1.375rem,
+      "letter-spacing": normal,
+    ),
+    "body-2": (
+      "size": 0.8125rem,
+      "line-height": 1.25rem,
+      "letter-spacing": normal,
+    ),
+    "caption": (
+      "size": 0.8125rem,
+      "line-height": 1.125rem,
+      "letter-spacing": 0.025rem,
+    ),
+    "overline": (
+      "weight": 400,
+      "line-height": 0.875rem,
+      "letter-spacing": 0.05rem,
+    ),
+    "button": (
+      "size": 0.9375rem,
+      "weight": 600,
+      "letter-spacing": normal,
+      "font-family": $vfi-heading-font-family,
+      "text-transform": capitalize,
+    ),
+  ) !default,
+
+  /*
+    👉 Corner radii
+
+    The site's own tokens are --radius 16px and --radius-lg 24px, with 10-12px
+    on the smaller controls. Materio ships 6px everywhere, which is the single
+    biggest reason the panel does not look like it belongs to this site.
+
+    $border-radius-root itself cannot be set from here - the template declares it
+    without !default - so each surface is set explicitly instead. That is also
+    why $rounded lists every key: configuring it replaces the template's map
+    wholesale and any key left out would silently fall back to Vuetify's own
+    value rather than the template's.
+  */
+  $rounded: (
+    0: 0,
+    "sm": 6px,
+    null: 10px,
+    "lg": 16px,
+    "xl": 24px,
+    "pill": 9999px,
+    "circle": 50%,
+    "shaped": 25px 0,
+  ) !default,
+
+  $card-border-radius: 16px !default,
+  $dialog-border-radius: 20px !default,
+  $button-border-radius: 10px !default,
+  $field-border-radius: 10px !default,
+  $text-field-border-radius: 10px !default,
+  $alert-border-radius: 14px !default,
+  $expansion-panel-border-radius: 14px !default,
+  $menu-content-border-radius: 12px !default,
+  $select-content-border-radius: 12px !default,
+  $snackbar-border-radius: 12px !default,
+  $tooltip-border-radius: 8px !default,
+
+  /*
+    👉 Shadows
+
+    The site casts one soft, wide shadow: 0 12px 30px rgba(14,27,44,.08), with
+    0 4px 14px .06 for small things and 0 24px 60px .14 for the largest. Materio's
+    ramp is the tight Material one (elevation 6 is 0 4px 10px), which reads hard
+    next to it. The whole ramp is restated because configuring the map replaces
+    the template's; keys 2/4/6/8/10 keep drawing their alpha from the per-theme
+    --v-shadow-*-opacity variables in plugins/vuetify/theme.js, as before.
+
+    The three elevations that carry the panel land on the site's three shadows:
+    6 is a card, 8 is a menu or select overlay, 10 is a dialog.
+  */
+  $shadow-key-umbra: (
+    0: (0 0 0 0 rgba(var(--v-shadow-key-umbra-color), 1)),
+    1: (0 1px 3px rgba(var(--v-shadow-key-umbra-color), 0.05)),
+    2: (0 2px 6px 0 rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-xs-opacity))),
+    3: (0 3px 10px rgba(var(--v-shadow-key-umbra-color), 0.06)),
+    4: (0 4px 14px 0 rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-sm-opacity))),
+    5: (0 8px 22px rgba(var(--v-shadow-key-umbra-color), 0.07)),
+    6: (0 12px 30px 0 rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-md-opacity))),
+    7: (0 14px 34px rgba(var(--v-shadow-key-umbra-color), 0.09)),
+    8: (0 16px 40px 0 rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-lg-opacity))),
+    9: (0 20px 48px rgba(var(--v-shadow-key-umbra-color), 0.11)),
+    10: (0 24px 60px 0 rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-xl-opacity))),
+    11: (0 24px 58px rgba(var(--v-shadow-key-umbra-color), 0.13)),
+    12: (0 26px 62px rgba(var(--v-shadow-key-umbra-color), 0.14)),
+    13: (0 26px 64px rgba(var(--v-shadow-key-umbra-color), 0.15)),
+    14: (0 28px 66px rgba(var(--v-shadow-key-umbra-color), 0.16)),
+    15: (0 28px 68px rgba(var(--v-shadow-key-umbra-color), 0.17)),
+    16: (0 30px 70px rgba(var(--v-shadow-key-umbra-color), 0.18)),
+    17: (0 30px 72px rgba(var(--v-shadow-key-umbra-color), 0.19)),
+    18: (0 32px 74px rgba(var(--v-shadow-key-umbra-color), 0.2)),
+    19: (0 32px 76px rgba(var(--v-shadow-key-umbra-color), 0.21)),
+    20: (0 34px 78px rgba(var(--v-shadow-key-umbra-color), 0.22)),
+    21: (0 34px 80px rgba(var(--v-shadow-key-umbra-color), 0.23)),
+    22: (0 36px 82px rgba(var(--v-shadow-key-umbra-color), 0.24)),
+    23: (0 36px 84px rgba(var(--v-shadow-key-umbra-color), 0.25)),
+    24: (0 38px 86px rgba(var(--v-shadow-key-umbra-color), 0.26))
+  ) !default,
+);

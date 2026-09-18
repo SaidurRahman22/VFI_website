@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * Phase 9A slice 4 — who holds which role.
@@ -26,11 +27,13 @@ class UserRoleResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Access & compliance';
+
     protected static ?string $navigationLabel = 'Roles & access';
 
     protected static ?string $modelLabel = 'user';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 10;
 
     /** Gate the entire resource, not just the nav item. */
     public static function canAccess(): bool

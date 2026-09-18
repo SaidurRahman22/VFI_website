@@ -61,6 +61,7 @@ const sections = [
           { title: 'Partner console', icon: 'ri-briefcase-line', to: '/content/partner' },
         ],
       },
+      { title: 'Page images', icon: 'ri-image-line', to: '/images', ability: 'content.manage' },
       { title: 'Site settings', icon: 'ri-settings-3-line', to: '/settings', ability: 'content.manage' },
 
       /*
@@ -71,20 +72,33 @@ const sections = [
       { title: 'Pages', icon: 'ri-file-list-line', to: '/pages', owner: true },
     ],
   },
+  {
+    heading: 'Administration',
+    items: [
+      /*
+        Owner only for the same reason as Pages, and more so: import REPLACES all
+        site content, which makes it the most destructive action in the console.
+        AdminBackupController gates on isOwner().
+      */
+      { title: 'Backup', icon: 'ri-database-2-line', to: '/backup', owner: true },
+    ],
+  },
 ]
 
 /*
   NOT YET REBUILT HERE, so these point at the screens that still own them.
 
   Signing in lands on this console, which means anything it cannot reach is
-  effectively gone. The ten content collections are now native (above), so what
-  is left on the legacy page is the home-page images, the backup export/import
-  and the per-country / per-region page text - while /manage still owns document
-  review, agencies and GDPR requests.
+  effectively gone. Native now: the ten content collections, the site settings,
+  page visibility, the page images and the backup. What is left on the legacy
+  page is the per-country and per-region page text and the services/partner page
+  wording - while /manage still owns document review, agencies and GDPR
+  requests.
 
   Worth knowing about that page: it saves to the EDITOR'S OWN localStorage, not
-  to the server. Everything moved off it here is server-backed for the first
-  time.
+  to the server. So its remaining editors do not work either, in the sense that
+  matters - which is why this entry is named for the pages it covers rather than
+  offered as a working tool, and why it goes as soon as those are rebuilt.
 
   Linking out is not decoration: these go somewhere that works today. They are
   labelled and grouped apart so it is obvious which parts of the console are
@@ -94,7 +108,7 @@ const external = [
   {
     heading: 'Not yet rebuilt here',
     items: [
-      { title: 'Images & backup', icon: 'ri-layout-4-line', href: '/admin.html', ability: 'content.manage' },
+      { title: 'Country & region text', icon: 'ri-map-2-line', href: '/admin.html', ability: 'content.manage' },
       { title: 'Staff tools', icon: 'ri-tools-line', href: '/manage', ability: 'documents.review' },
     ],
   },

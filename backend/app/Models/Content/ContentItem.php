@@ -19,8 +19,8 @@ use Illuminate\Support\Str;
  * to rely on them through this base rather than on a concrete class.
  *
  * @property int $id
- * @property string $legacy_id  Immutable; for blogs, THE public article URL key.
- * @property int $position      Ascending; lowest renders first.
+ * @property string $legacy_id Immutable; for blogs, THE public article URL key.
+ * @property int $position Ascending; lowest renders first.
  */
 abstract class ContentItem extends Model
 {

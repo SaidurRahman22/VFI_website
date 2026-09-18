@@ -67,16 +67,25 @@ Route::prefix('api/admin')->group(function () {
         /*
          * The ten website-content collections as JSON, for the new console.
          * One controller for all ten (it serves its own field schema), so this
-         * is six routes rather than sixty. `collections` is declared BEFORE
+         * is eight routes rather than eighty. `collections` is declared BEFORE
          * `{collection}` or the literal would be swallowed as a slug.
          * Every handler re-checks `content.manage` itself.
+         *
+         * `trashed` and `restore` are the other half of what delete promises
+         * the person: the confirmation dialog says a removed item can be put
+         * back, and until these existed the only way to do it was a psql
+         * prompt. `trashed` sits in the slot `{id}` occupies and cannot be
+         * mistaken for one — every id route is numeric-constrained, and none of
+         * them is a GET.
          */
         $coll = AdminContentCollectionController::class;
         Route::get('content/collections', [$coll, 'collections']);
         Route::get('content/{collection}', [$coll, 'index']);
+        Route::get('content/{collection}/trashed', [$coll, 'trashed']);
         Route::post('content/{collection}', [$coll, 'store']);
         Route::put('content/{collection}/{id}', [$coll, 'update'])->whereNumber('id');
         Route::delete('content/{collection}/{id}', [$coll, 'destroy'])->whereNumber('id');
+        Route::post('content/{collection}/{id}/restore', [$coll, 'restore'])->whereNumber('id');
         Route::put('content/{collection}/{id}/move', [$coll, 'move'])->whereNumber('id');
 
         // Phase 3D — page-visibility (owner-only, allow-listed, audited).
@@ -84,7 +93,10 @@ Route::prefix('api/admin')->group(function () {
         Route::put('pages/{file}', [AdminPageController::class, 'toggle']);
 
         // Phase 3F — image upload + media-slot registry (content_editor/owner).
+        // `media/slots` reads the registry back with the slot list the console
+        // renders; without it the map could only ever be written blind.
         Route::post('media', [AdminMediaController::class, 'upload']);
+        Route::get('media/slots', [AdminMediaController::class, 'slots']);
         Route::put('media/slot/{key}', [AdminMediaController::class, 'setSlot']);
 
         // Phase 3G — backup export / guarded restore (owner-only, snapshotted).

@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * Phase 9A slice 5 — cross-tenant student lookup.
@@ -29,11 +30,13 @@ class StudentLookupResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMagnifyingGlass;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Casework';
+
     protected static ?string $navigationLabel = 'Student lookup';
 
     protected static ?string $modelLabel = 'student';
 
-    protected static ?int $navigationSort = 31;
+    protected static ?int $navigationSort = 30;
 
     public static function canAccess(): bool
     {

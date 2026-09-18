@@ -13,6 +13,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
+use UnitEnum;
 
 /**
  * Phase 9A — the staff queue for checking student documents.
@@ -27,11 +28,13 @@ class DocumentReviewResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCheck;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Casework';
+
     protected static ?string $navigationLabel = 'Document reviews';
 
     protected static ?string $modelLabel = 'document review';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 20;
 
     /** Role gate: see App\Support\StaffAbilities for who holds this. */
     public static function canAccess(): bool

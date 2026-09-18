@@ -136,7 +136,7 @@ export VFI_ADMIN_PASSWORD=...            # never stored here; this repo is publi
 python test/ui/smoke_admin.py
 ```
 
-Walks all 22 `/manage` pages, then proves the staff application queue is not
+Walks all 12 `/manage` pages, then proves the staff application queue is not
 empty and that each row action (**Documents / Move / Add note / Notes**) opens a
 dialog with real content in it.
 

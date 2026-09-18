@@ -223,20 +223,29 @@
 
   /* Where each collection is actually EDITED.
      This panel can only read content (it renders the public content bundle and
-     has no write endpoints at all). The staff panel has real CRUD for every one
-     of these, so rather than show Edit/Delete buttons that silently do nothing,
-     each list points at its working editor. */
+     has no write endpoints at all). The admin console has real CRUD for every
+     one of these, so rather than show Edit/Delete buttons that silently do
+     nothing, each list points at its working editor.
+
+     These used to point at /manage/content/*, which were the Filament screens.
+     Those were deleted when the console started editing these collections
+     itself, so every one of these links was a 404 until it was repointed here.
+
+     The ten collections sit on two console screens, one per group, and the
+     collection is a ?tab= query parameter there — so these land the person on
+     the right tab, not merely on the right page. The tab values are the API's
+     own slugs, which are hyphenated where the keys on this page are camelCase. */
   var EDITOR = {
-    events: "/manage/content/events",
-    blogs: "/manage/content/blogs",
-    news: "/manage/content/news-items",
-    photos: "/manage/content/photos",
-    ppManagers: "/manage/content/pp-managers",
-    ppUpdates: "/manage/content/pp-updates",
-    ppQuicklinks: "/manage/content/pp-quicklinks",
-    ppDocs: "/manage/content/pp-docs",
-    ppEmails: "/manage/content/pp-emails",
-    ppNotifs: "/manage/content/pp-notifs"
+    events: "/admin-panel/content/public?tab=events",
+    blogs: "/admin-panel/content/public?tab=blogs",
+    news: "/admin-panel/content/public?tab=news",
+    photos: "/admin-panel/content/public?tab=photos",
+    ppManagers: "/admin-panel/content/partner?tab=pp-managers",
+    ppUpdates: "/admin-panel/content/partner?tab=pp-updates",
+    ppQuicklinks: "/admin-panel/content/partner?tab=pp-quicklinks",
+    ppDocs: "/admin-panel/content/partner?tab=pp-docs",
+    ppEmails: "/admin-panel/content/partner?tab=pp-emails",
+    ppNotifs: "/admin-panel/content/partner?tab=pp-notifs"
   };
 
   function editorBanner(kind) {
@@ -245,7 +254,7 @@
     var what = (SCHEMA[kind] && SCHEMA[kind].many) ? SCHEMA[kind].many.toLowerCase() : "items";
     return '<div class="ad__notice ad__notice--editor">' +
       "<b>This list is read-only here.</b> Add, edit, reorder or delete " + esc(what) +
-      ' in the staff panel — changes appear on the website immediately. ' +
+      ' in the admin console — changes appear on the website immediately. ' +
       '<a class="ad__noticelink" href="' + url + '">Open the ' + esc(what) + ' editor &rarr;</a>' +
       "</div>";
   }
@@ -257,7 +266,7 @@
     if (!items.length) {
       host.innerHTML = editorBanner(kind) +
         '<div class="empty"><b>No ' + esc(SCHEMA[kind].many.toLowerCase()) + ' yet</b>' +
-        "Add the first one in the staff panel.</div>";
+        "Add the first one in the admin console.</div>";
       refreshCounts(); return;
     }
     var titleKey = SCHEMA[kind].titleKey || "title";
@@ -272,21 +281,17 @@
         '<div class="row__act">' +
           // a real link to the working editor, not a button wired to nothing
           (editUrl
-            ? '<a class="btn btn--sm btn--icon" href="' + editUrl + '" title="Edit in the staff panel"><svg class="ai"><use href="#a-edit"/></svg></a>'
+            ? '<a class="btn btn--sm btn--icon" href="' + editUrl + '" title="Edit in the admin console"><svg class="ai"><use href="#a-edit"/></svg></a>'
             : "") +
         "</div></article>";
     }).join("");
 
+    // No edit/delete handlers to wire: a row's only action is the link above.
+    // There were two, left over from when rows carried [data-act] buttons, and
+    // querySelector returns null for markup that is no longer emitted — so every
+    // render of these eight lists threw here, before the thumbnails loaded and
+    // before show() got as far as closing the mobile sidebar.
     $$(".row", host).forEach(function (row) {
-      var id = row.getAttribute("data-id");
-      $('[data-act="edit"]', row).addEventListener("click", function () { openForm(kind, id); });
-      $('[data-act="del"]', row).addEventListener("click", function () {
-        var it = VFI.get(kind, id);
-        if (!window.confirm('Delete "' + (it && it[titleKey] ? it[titleKey] : "this item") + '"? This cannot be undone.')) return;
-        VFI.remove(kind, id);
-        renderList(kind); refreshCounts();
-        toast("Deleted", "ok");
-      });
       hydrateThumb($(".row__thumb", row));
     });
     refreshCounts();

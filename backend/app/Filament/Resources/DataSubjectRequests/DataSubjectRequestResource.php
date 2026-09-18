@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * Phase 9B — the register of GDPR export and erasure requests.
@@ -34,13 +35,15 @@ class DataSubjectRequestResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Access & compliance';
+
     protected static ?string $navigationLabel = 'GDPR requests';
 
     protected static ?string $modelLabel = 'GDPR request';
 
     protected static ?string $pluralModelLabel = 'GDPR requests';
 
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 20;
 
     /** Gate the entire resource, not just the nav item. */
     public static function canAccess(): bool

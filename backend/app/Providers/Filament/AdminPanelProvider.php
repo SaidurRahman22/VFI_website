@@ -39,6 +39,20 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            // Group order. Resources are discovered by scanning the filesystem,
+            // so with no list here the headings fall in whatever order the
+            // directories are read in rather than an order a person chose.
+            // This one runs from the work staff do daily to the registers they
+            // open when asked. Every resource and page declares a group, so an
+            // unlabelled row above these headings means a new one forgot its
+            // $navigationGroup.
+            ->navigationGroups([
+                'Casework',
+                'Partner agencies',
+                'University catalogue',
+                'Enquiries',
+                'Access & compliance',
+            ])
             ->pages([
                 Dashboard::class,
             ])

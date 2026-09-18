@@ -37,6 +37,16 @@ php artisan migrate --force >> "$LOG" 2>&1
 # idempotent, so it is safe on every run.
 php artisan storage:link --force >> "$LOG" 2>&1
 
+# Drop every compiled cache BEFORE rebuilding it. This matters most when a
+# deploy DELETES a class: Filament caches its discovered panel components to
+# bootstrap/cache/filament/panels/admin.php, and on boot it restores the
+# component list from that file and static-calls each class. A pull that removes
+# a resource therefore takes down far more than the page it belonged to - route
+# registration itself fails, so `route:cache` below dies and php-fpm serves 500s
+# for the whole site. There is no such cache on the server today (checked), and
+# this line is here so that stays true after any `php artisan optimize`.
+php artisan optimize:clear >> "$LOG" 2>&1
+
 php artisan config:cache >> "$LOG" 2>&1
 php artisan route:cache >> "$LOG" 2>&1
 chown -R www-data:www-data "$APP"

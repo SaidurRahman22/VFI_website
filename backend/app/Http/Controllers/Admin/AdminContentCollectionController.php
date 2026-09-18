@@ -14,6 +14,7 @@ use App\Models\Content\PpManager;
 use App\Models\Content\PpNotif;
 use App\Models\Content\PpQuicklink;
 use App\Models\Content\PpUpdate;
+use App\Models\ContentAuditLog;
 use App\Support\StaffAbilities;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,17 @@ use Illuminate\Validation\Rule;
  * immutable legacy_id. Blog additionally strips HTML from its body on save — a
  * stored-XSS contract — and that survives untouched because every write goes
  * through the model, never through a raw query.
+ *
+ * REMOVING IS NOT ERASING, AND THE SCREEN NOW SAYS SO TRUTHFULLY
+ * destroy() soft-deletes, and the console's confirmation has always told the
+ * person the item can be restored. Nothing could act on that promise until
+ * trashed() and restore() existed: the generated panel that carried the only
+ * restore UI there has ever been — a trashed filter and a restore bulk action —
+ * is gone, so the sentence was true of the database and false of anyone without
+ * a psql prompt. restore() writes its own audit row, because LogsContentAudit
+ * hooks created/updated/deleted and not SoftDeletes' `restored`; putting a page
+ * back on the public site is a write to the public site, and would otherwise be
+ * the only such write nobody could answer for afterwards.
  *
  * SAFETY OF THE DYNAMIC MODEL LOOKUP
  * The collection slug arrives in the URL, so it is resolved through a private
@@ -354,6 +366,44 @@ class AdminContentCollectionController extends Controller
         ]);
     }
 
+    /**
+     * GET /api/admin/content/{collection}/trashed — what has been taken off.
+     *
+     * A route of its own rather than a `?trashed=1` on index(), for three
+     * reasons. index() answers "what is on the site" and carries the field
+     * schema and the group labels the whole screen is drawn from, none of which
+     * this needs — the console asks for this only when someone opens the
+     * dialog, and by then it holds the schema already. The two also disagree
+     * about order: a removed row's `position` describes a list it is not in, so
+     * these come back most-recently-removed first. And a handler that cannot be
+     * switched into another mode by request input cannot be switched into the
+     * wrong one.
+     *
+     * Unpaginated, like index(): a collection accumulates far more live rows
+     * than removed ones, and a capped list would have to either drop an older
+     * deletion silently or admit on screen that it cannot reach it.
+     */
+    public function trashed(string $collection): JsonResponse
+    {
+        $this->authorise();
+        $model = $this->modelFor($collection);
+        $meta = self::SCHEMA[$collection];
+
+        $rows = $model::query()->onlyTrashed()
+            ->orderByDesc('deleted_at')->orderByDesc('id')->get()
+            ->map(fn (ContentItem $m) => $this->row($collection, $m) + ['removed_at' => $this->removedAt($m)])
+            ->values();
+
+        return $this->fresh([
+            'collection' => $collection,
+            'label' => $meta['label'],
+            'singular' => $meta['singular'],
+            'title_key' => $meta['title_key'],
+            'meta_keys' => $meta['meta_keys'],
+            'data' => $rows,
+        ]);
+    }
+
     /** POST /api/admin/content/{collection} */
     public function store(Request $request, string $collection): JsonResponse
     {
@@ -384,7 +434,8 @@ class AdminContentCollectionController extends Controller
         $this->authorise();
 
         // Soft: ContentItem uses SoftDeletes, so a mistaken delete is
-        // recoverable from the database and the audit row stands either way.
+        // recoverable through restore() below and the audit row stands either
+        // way.
         // The image is left in place deliberately — ids are content-hashed and
         // therefore shared, so deleting the file would blank the picture on
         // every other row using it.
@@ -394,22 +445,75 @@ class AdminContentCollectionController extends Controller
     }
 
     /**
-     * PUT /api/admin/content/{collection}/{id}/move — one step up or down.
+     * POST /api/admin/content/{collection}/{id}/restore — one item back.
+     *
+     * This is the other half of the confirmation dialog's promise, so it has to
+     * refuse rather than report success it did not achieve. An id nobody ever
+     * created is the same 404 it is on every other handler; an id that is
+     * simply still on the site is a different fact and gets its own sentence,
+     * because answering "restored" there would tell someone their content had
+     * been brought back when nothing happened at all.
+     *
+     * The slug still goes through modelFor(): a restore route must not become
+     * the one place a caller can name a class.
+     */
+    public function restore(string $collection, int $id): JsonResponse
+    {
+        $this->authorise();
+
+        $item = $this->modelFor($collection)::query()->withTrashed()->find($id);
+        abort_if($item === null, 404, 'That item no longer exists.');
+
+        if (! $item->trashed()) {
+            return response()->json(
+                ['message' => 'That one has not been removed — it is still on the website.'], 422
+            );
+        }
+
+        $item->restore();
+
+        // Written here rather than by the model's audit trait, which hooks
+        // created/updated/deleted and not `restored`. Same entity and id shape
+        // the trait uses, so a delete and its undo read as two rows of one
+        // story instead of taking two different queries to find.
+        ContentAuditLog::record(
+            'restore', $item->getTable(), $item->legacy_id, null, $item->getAttributes()
+        );
+
+        return $this->fresh(['item' => $this->row($collection, $item)]);
+    }
+
+    /**
+     * PUT /api/admin/content/{collection}/{id}/move — up, down, top or bottom.
      *
      * Order is what the public site renders, so it has to be editable. Swapping
      * positions with the immediate neighbour leaves every other row untouched,
      * so two editors reordering different parts of a long list do not overwrite
      * each other the way a renumber-the-whole-list save would.
+     *
+     * `top` and `bottom` are here because one step per request was the only
+     * move the screen could make: a photo uploaded to the end of a thirty-item
+     * gallery took twenty-nine clicks and twenty-nine round trips to reach the
+     * front of it. Drag-to-reorder, which the generated panel did have, is not
+     * replaced by this.
      */
     public function move(Request $request, string $collection, int $id): JsonResponse
     {
         $this->authorise();
         $model = $this->modelFor($collection);
 
-        $up = $request->validate(['direction' => ['required', Rule::in(['up', 'down'])]])['direction'] === 'up';
+        $direction = $request->validate([
+            'direction' => ['required', Rule::in(['up', 'down', 'top', 'bottom'])],
+        ])['direction'];
+
+        // `ordered()` is position ASC, so "up" and "top" both mean lower.
+        $up = $direction === 'up' || $direction === 'top';
         $item = $this->find($collection, $id);
 
-        // `ordered()` is position ASC, so "up" means the next-lower position.
+        if ($direction === 'top' || $direction === 'bottom') {
+            return $this->moveToEnd($model, $item, $up);
+        }
+
         $neighbour = $model::query()
             ->when($up,
                 fn ($q) => $q->where('position', '<', $item->position)->orderByDesc('position'),
@@ -417,9 +521,7 @@ class AdminContentCollectionController extends Controller
             ->first();
 
         if ($neighbour === null) {
-            return response()->json(
-                ['message' => 'This is already '.($up ? 'first' : 'last').' in the list.'], 422
-            );
+            return $this->alreadyAtTheEnd($up);
         }
 
         [$a, $b] = [$item->position, $neighbour->position];
@@ -430,6 +532,53 @@ class AdminContentCollectionController extends Controller
         $neighbour->forceFill(['position' => $a])->save();
 
         return $this->fresh(['moved' => $id, 'position' => $b]);
+    }
+
+    /**
+     * The far end of the list in one request.
+     *
+     * Past the current extreme rather than renumbering everything in between,
+     * so this writes exactly one row — the same property that makes the
+     * neighbour swap safe while someone else is reordering another part of the
+     * list. `min - 1` is also precisely where ContentItem puts a brand-new row,
+     * so "move to top" lands a row where a fresh one would have landed. Two
+     * people sending different rows to the same end can land on the same
+     * number, and are then separated by id: an ambiguity between those two
+     * rows, where renumbering would have rewritten the whole list under
+     * whichever of them saved second.
+     *
+     * @param  class-string<ContentItem>  $model
+     */
+    private function moveToEnd(string $model, ContentItem $item, bool $up): JsonResponse
+    {
+        // Which row is at the end is settled by identity, not by position:
+        // `ordered()` breaks a tie on position with id, and ties do happen,
+        // since every new row takes min - 1 off the same list.
+        $edge = $up
+            ? $model::query()->ordered()->first()
+            : $model::query()->orderByDesc('position')->orderByDesc('id')->first();
+
+        if ($edge?->getKey() === $item->getKey()) {
+            return $this->alreadyAtTheEnd($up);
+        }
+
+        $position = $up
+            ? (int) $model::query()->min('position') - 1
+            : (int) $model::query()->max('position') + 1;
+
+        // forceFill, for the reason move() gives: `position` is deliberately
+        // kept off the request-facing path, and this is the reorder itself.
+        $item->forceFill(['position' => $position])->save();
+
+        return $this->fresh(['moved' => $item->id, 'position' => $position]);
+    }
+
+    /** Said by both reorder paths. It is information, not a failure. */
+    private function alreadyAtTheEnd(bool $up): JsonResponse
+    {
+        return response()->json(
+            ['message' => 'This is already '.($up ? 'first' : 'last').' in the list.'], 422
+        );
     }
 
     private function find(string $collection, int $id): ContentItem
@@ -500,6 +649,21 @@ class AdminContentCollectionController extends Controller
         }
 
         return $out;
+    }
+
+    /**
+     * When an item was taken off the site, as ISO-8601.
+     *
+     * A timestamp only reads honestly in the reader's own timezone, and that is
+     * the browser's job rather than this one's. SoftDeletes casts the column,
+     * so this is a Carbon; anything else and the screen says "Removed" with no
+     * date instead of printing a guess.
+     */
+    private function removedAt(ContentItem $m): ?string
+    {
+        $v = $m->getAttribute('deleted_at');
+
+        return $v instanceof \DateTimeInterface ? $v->format(\DateTimeInterface::ATOM) : null;
     }
 
     /** @param  array<string, mixed>  $body */
