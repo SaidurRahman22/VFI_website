@@ -160,13 +160,14 @@ class StaffApplicationActionsTest extends TestCase
         $this->actingAs($this->staff());
         $app = $this->application();
 
-        // NOTE this test is currently vacuous and passes on Postgres only by
-        // accident: mountAction swallows ActionNotResolvableException and
-        // unmounts, and assertOk() is satisfied either way. Wrapped so it runs
-        // like production; it still needs a real assertion on the modal content
-        // to be worth anything.
+        // The modal content is asserted, not just the status. mountAction
+        // swallows ActionNotResolvableException and unmounts silently, so
+        // assertOk() alone was satisfied whether the action mounted or not -
+        // which is exactly how an empty staff queue stayed invisible here while
+        // the same breakage failed loudly in the tests either side of this one.
         $this->asPanelRequest(fn () => Livewire::test(ListStaffApplications::class)
             ->mountTableAction('viewNotes', $app)
-            ->assertOk());
+            ->assertOk()
+            ->assertMountedActionModalSee('No internal notes yet.'));
     }
 }
