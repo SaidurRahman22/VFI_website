@@ -27,8 +27,20 @@
   function val(sel) { var el = $(sel); return el ? String(el.value || "").trim() : ""; }
   function show(sel, on) { var el = $(sel); if (el) el.hidden = !on; }
   function cap(s) { s = String(s || ""); return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
+  // A zero is a fact, not a gap: DaadSource::tuitionMinor() returns 0 only when
+  // the feed says "none"/"no tuition"/"free", and null when it has no figure —
+  // and null already renders as an em dash here, so the two stay distinguishable.
+  // "EUR 0" was true and read like a broken number.
+  //
+  // One word, not the university page's "No tuition fee", because every call
+  // site here already supplies a label: tuitionLabel() precedes it on the card
+  // and in the detail row, and the compare grid has a "Tuition" row header. So
+  // "Tuition — No tuition fee" would stutter, while "Tuition — Free" reads.
+  // It is also four characters against "EUR 0"'s five, so no column can get
+  // wider than it already was.
   function money(t) {
     if (!t || t.minor == null) return "—";
+    if (+t.minor === 0) return "Free";
     var n = Math.round(t.minor / 100);
     return (t.currency ? t.currency + " " : "") + n.toLocaleString();
   }
