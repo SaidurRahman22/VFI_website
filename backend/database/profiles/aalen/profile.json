@@ -120,50 +120,50 @@
     {
       "name": "Deutschlandstipendium",
       "level": "UG / PG",
-      "amount": "EUR 300 per month, normally for two semesters",
-      "note": "Open to students of any nationality who are enrolled at, or are starting at, Aalen University. Selection is on academic performance and personal commitment; your financial situation is not considered. You apply online at the university once a year before the winter semester (the 2026 round ran 27 July to 9 August 2026). Contact: deutschlandstipendium@hs-aalen.de"
+      "amount": "EUR 300 / month",
+      "note": "Open to students of any nationality who are enrolled at, or are starting at, Aalen University. Selection is on academic performance and personal commitment; your financial situation is not considered. You apply online at the university once a year before the winter semester (the 2026 round ran 27 July to 9 August 2026). Contact: deutschlandstipendium@hs-aalen.de. Normally paid for two semesters."
     },
     {
       "name": "DAAD Study Scholarships - Master Studies for All Academic Disciplines",
       "level": "PG (Master's)",
-      "amount": "EUR 992 per month for 10 to 24 months, plus health, accident and liability insurance, a study allowance of EUR 460 a year and a travel allowance on request",
-      "note": "For graduates applying from abroad to start a Master's degree in Germany. Your first degree should be no more than six years old, and you cannot apply if you have already lived in Germany for more than 15 months at the deadline. You apply to the DAAD through its own portal, not to Aalen University; the window opens on 1 June each year and funding starts in the winter semester. The DAAD does not pay tuition fees, but Aalen University can exempt DAAD scholarship holders from its EUR 1,500 per semester international fee."
+      "amount": "EUR 992 / month",
+      "note": "For graduates applying from abroad to start a Master's degree in Germany. Your first degree should be no more than six years old, and you cannot apply if you have already lived in Germany for more than 15 months at the deadline. You apply to the DAAD through its own portal, not to Aalen University; the window opens on 1 June each year and funding starts in the winter semester. The DAAD does not pay tuition fees, but Aalen University can exempt DAAD scholarship holders from its EUR 1,500 per semester international fee. Paid for 10 to 24 months, with health, accident and liability insurance, a study allowance of EUR 460 a year and a travel allowance on request."
     },
     {
       "name": "Tuition fee exemption (not a scholarship)",
       "level": "UG / PG",
-      "amount": "Removes the EUR 1,500 per semester tuition fee for international students",
+      "amount": "Waives EUR 1,500 / semester",
       "note": "Not a scholarship but the main fee relief available. Aalen University can waive the fee if you hold a DAAD scholarship, if you are a national of a state in the ACP partnership agreement (Africa, Caribbean and Pacific), if you are a national of a country the United Nations lists as a Least Developed Country, if you have a disability that substantially impedes study, or during a leave semester. Holders of a Baden-Wuerttemberg Stiftung scholarship and exchange students on a reciprocal partnership agreement are not charged the fee at all. Email your reason and evidence to gebuehren@hs-aalen.de before lectures begin. The student services and administration fees still apply."
     },
     {
       "name": "Baden-Wuerttemberg-STIPENDIUM (BWS) for university students",
       "level": "UG / PG (exchange semesters, not a full degree)",
-      "amount": "EUR 800 to EUR 1,400 per month, for 3 to 11 months",
-      "note": "For one or two exchange semesters at Aalen, not for a full degree. It is awarded only through an existing partnership between Aalen University and your own university, so you apply through your home university's international office, which nominates you. Aalen's call for 2026/2027 closed on 31 March 2026 and is reissued each spring. Holders are also exempt from Aalen's EUR 1,500 per semester international fee."
+      "amount": "EUR 800 - 1,400 / month",
+      "note": "For one or two exchange semesters at Aalen, not for a full degree. It is awarded only through an existing partnership between Aalen University and your own university, so you apply through your home university's international office, which nominates you. Aalen's call for 2026/2027 closed on 31 March 2026 and is reissued each spring. Holders are also exempt from Aalen's EUR 1,500 per semester international fee. Paid for 3 to 11 months."
     },
     {
       "name": "Friedrich-Ebert-Stiftung, Grundfoerderung fuer Auslaender:innen",
       "level": "UG / PG",
-      "amount": "EUR 992 per month, plus contributions to health insurance; EUR 255 per month extra for a child. It does not have to be repaid.",
-      "note": "For international students who are already enrolled at a German state or state-recognised institution, which includes a university of applied sciences such as Aalen, so it is applied for after you arrive rather than before. German at B2 level is required even if your course is taught in English. Master's students apply before or at the start of their first semester: by 30 November for the winter semester, by 31 May for the summer semester. You apply to the foundation, not to the university."
+      "amount": "EUR 992 / month",
+      "note": "For international students who are already enrolled at a German state or state-recognised institution, which includes a university of applied sciences such as Aalen, so it is applied for after you arrive rather than before. German at B2 level is required even if your course is taught in English. Master's students apply before or at the start of their first semester: by 30 November for the winter semester, by 31 May for the summer semester. You apply to the foundation, not to the university. Plus contributions to health insurance and EUR 255 a month extra for a child. It does not have to be repaid."
     },
     {
       "name": "Studierendenwerk Ulm hardship loan (interest-free)",
       "level": "UG / PG",
-      "amount": "Interest-free loan for a maximum of 12 months; the amount is decided case by case and is not published",
-      "note": "Emergency help, not a scholarship: it must be repaid. It is for students who fall into financial difficulty through no fault of their own and who do not receive BAfoeG. Studierendenwerk Ulm runs student finance for Aalen University; ask its office in Ulm for the application and, if you are an international student, ask first whether your residence status qualifies."
+      "amount": "Set case by case",
+      "note": "Emergency help, not a scholarship: it must be repaid. It is for students who fall into financial difficulty through no fault of their own and who do not receive BAfoeG. Studierendenwerk Ulm runs student finance for Aalen University; ask its office in Ulm for the application and, if you are an international student, ask first whether your residence status qualifies. An interest-free loan for a maximum of 12 months; the amount is not published."
     },
     {
       "name": "MTS Manfred und Theodora Schurr Stiftung",
       "level": "UG / PG",
-      "amount": "EUR 200 per month, for no longer than the standard period of study",
-      "note": "Administered through Aalen University, but restricted to \"ausschliesslich Studierende aus dem Ostalbkreis\" - students from the Ostalb district - in fine and performing arts, music, literature or science, and it is means-tested against a BAfoeG assessment notice. A student arriving from abroad will not normally qualify. Application is on paper, by post, using the university's form."
+      "amount": "EUR 200 / month",
+      "note": "Administered through Aalen University, but restricted to \"ausschliesslich Studierende aus dem Ostalbkreis\" - students from the Ostalb district - in fine and performing arts, music, literature or science, and it is means-tested against a BAfoeG assessment notice. A student arriving from abroad will not normally qualify. Application is on paper, by post, using the university's form. Paid for no longer than the standard period of study."
     },
     {
       "name": "DAAD Prize for international students at Aalen University",
       "level": "UG / PG",
-      "amount": "One award a year; the amount is not published",
-      "note": "An award, not funding you can plan on: the university's International Center chooses one international student each year for academic achievement together with social or intercultural commitment, and there is no application."
+      "amount": "One award a year",
+      "note": "An award, not funding you can plan on: the university's International Center chooses one international student each year for academic achievement together with social or intercultural commitment, and there is no application. The amount is not published."
     }
   ],
   "admissions_json": [

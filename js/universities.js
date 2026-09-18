@@ -460,7 +460,7 @@
         var meta = [x.level, x.note].filter(Boolean).join(" · ");
         return '<div class="uschol__card"><div><div class="uschol__name">' + esc(x.name || "Scholarship") + '</div>'
           + (meta ? '<div class="uschol__meta">' + esc(meta) + '</div>' : '') + '</div>'
-          + '<div style="display:flex;align-items:center;gap:14px">'
+          + '<div class="uschol__act">'
           + (x.amount ? '<span class="uschol__amt">' + esc(x.amount) + '</span>' : '')
           + '<button type="button" class="btn btn--outline btn--sm" data-apply>View &amp; Apply</button></div></div>';
       }).join("") + '</div>';

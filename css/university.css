@@ -205,14 +205,28 @@
 .urank__k { font-size: .78rem; color: var(--muted); font-weight: 600; margin-top: 4px; }
 
 /* scholarships */
-.uschol { display: grid; gap: 12px; }
+/*
+  One column, stated explicitly. style.css also styles .uschol, with
+  `repeat(auto-fit, minmax(240px, 1fr))`, and this file loads second but never
+  declared grid-template-columns - so that three-across rule survived and
+  squeezed each of these full-width rows into 248px, collapsing the amount to
+  about 60px and wrapping it one word per line. The card below is a horizontal
+  row by design; it needs the width.
+*/
+.uschol { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .uschol__card {
   display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
   background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; box-shadow: var(--shadow-sm);
 }
 .uschol__name { font-weight: 700; color: var(--text); }
 .uschol__meta { font-size: .82rem; color: var(--muted); margin-top: 3px; }
-.uschol__amt { color: var(--coral-dark); font-weight: 800; font-size: 1.05rem; }
+/*
+  Never squeezed to a sliver. A long amount should push the button onto the next
+  line rather than wrap itself to one word per line, so the action group wraps
+  and the amount keeps a sensible floor.
+*/
+.uschol__amt { color: var(--coral-dark); font-weight: 800; font-size: 1.05rem; min-width: 9ch; }
+.uschol__act { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
 /* recruiters */
 .urec { display: flex; flex-wrap: wrap; gap: 8px; }
