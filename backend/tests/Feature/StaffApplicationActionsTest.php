@@ -77,7 +77,6 @@ class StaffApplicationActionsTest extends TestCase
         return RlsBypass::run(fn () => $app->withoutGlobalScope(BelongsToAgencyScope::class)->find($app->id));
     }
 
-
     /**
      * Stand up what the HTTP stack gives every real panel request.
      *

@@ -69,24 +69,34 @@ jobs:
         run: php artisan test
 
   # --- BLOCK: the same suite against the database production actually runs ----
-  # SQLite ignores varchar length and has no row-level security, so the job
-  # above cannot see the two classes of bug that have reached production here.
-  # This one can.
-  # WARN, not BLOCK, and only until the count reaches zero. Introducing this
-  # gate took the suite from 122 Postgres failures to 24; the remainder are
-  # individual assertions that assume SQLite behaviour, not defects in the app.
-  # A permanently red BLOCK job teaches people to ignore CI, so this runs
-  # advisory while that 24 is driven down.
+  # SQLite ignores varchar length and has no row-level security, so the job above
+  # cannot see the two classes of bug that have reached production here. This one
+  # can, and it is now BLOCKING: 122 failures -> 24 -> 0.
   #
-  # PROMOTE TO BLOCK (delete continue-on-error) THE DAY IT REACHES ZERO.
-  # It has already earned it: on its first run it found two live production
-  # bugs - content_audit_log.entity_id overflowing on every media upload, and
-  # the last-superadmin guard throwing instead of protecting - both invisible to
-  # 460 passing SQLite tests.
+  # It ran advisory while that count came down, on the reasoning that a
+  # permanently red BLOCK job teaches people to ignore CI. That was right, and it
+  # had a cost worth recording. The comment that used to sit here said the
+  # remaining 24 were "individual assertions that assume SQLite behaviour, not
+  # defects in the app". That was true of 23 of them and FALSE of the
+  # twenty-fourth, which was a live production bug: every partner
+  # enquiry-document download returned 404 on Postgres, because the public token
+  # route resolved the document with withoutGlobalScopes() while
+  # program_request_documents carries RLS FORCE and a policy deliberately left
+  # without an app.rls_bypass branch. It sat in this job's output for weeks,
+  # dismissed in advance by a comment.
+  #
+  # So: four production bugs found by this job in total. The overflowing
+  # content_audit_log.entity_id on every media upload and the last-superadmin
+  # guard throwing instead of protecting, both on its first run; the 404 above;
+  # and RlsBypass::run() blanking a flag it did not own, which switched the staff
+  # read bypass off for the remainder of any request that used it. All four were
+  # invisible to a green SQLite suite.
+  #
+  # Keep it green. If a failure here looks like a test being fussy about SQLite,
+  # that is exactly what the last one looked like.
   tests-postgres:
-    name: tests on postgres 16 (WARN until zero)
+    name: tests on postgres 16 (BLOCK)
     runs-on: ubuntu-latest
-    continue-on-error: true
     services:
       postgres:
         image: postgres:16

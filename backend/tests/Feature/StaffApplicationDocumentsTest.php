@@ -113,7 +113,6 @@ class StaffApplicationDocumentsTest extends TestCase
         ]);
     }
 
-
     /**
      * Stand up what the HTTP stack gives every real panel request.
      *
