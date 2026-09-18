@@ -1,0 +1,36 @@
+# =============================================================================
+# VFI cron — the LIVE copy is /etc/cron.d/vfi. This file is the record of it.
+#
+#     sudo cp /var/www/vfi/deploy/cron/vfi /etc/cron.d/vfi
+#     sudo chmod 644 /etc/cron.d/vfi        # cron IGNORES a group/world-writable file
+#     sudo systemctl restart cron
+#
+# WHY THIS FILE EXISTS
+# The server was running `schedule:run` TWICE a minute: once from /etc/cron.d/vfi
+# with its output discarded, and once from www-data's personal crontab appending
+# to /var/log/vfi-schedule.log. Every scheduled task uses withoutOverlapping(),
+# so the damage was limited — but that only blocks a tick while the previous one
+# is STILL RUNNING. A task that finishes inside the minute would simply run
+# again, which for the two that matter means `programs:ingest` twice an hour and
+# `documents:purge-expired` destroying 1,000 files a night where the schedule
+# says 500.
+#
+# So the scheduler is declared here, once, and the personal crontab is removed:
+#
+#     sudo crontab -u www-data -r
+#
+# Two entries, one per line, and a trailing newline is required or cron silently
+# skips the last line.
+# =============================================================================
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+SHELL=/bin/sh
+
+# Deploy: pull main if it moved. Exits immediately when HEAD already matches, so
+# running it every minute costs one `git fetch`.
+* * * * * root /usr/local/bin/vfi-deploy.sh
+
+# Laravel's scheduler. ONE entry — see the note above. Output is kept rather
+# than discarded: when a nightly ingest or the document purge fails, this file is
+# the only place that says so. Rotated by /etc/logrotate.d/vfi.
+* * * * * www-data cd /var/www/vfi/backend && php artisan schedule:run >> /var/log/vfi-schedule.log 2>&1
