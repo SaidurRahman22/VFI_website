@@ -141,6 +141,132 @@ class AdminContentController extends Controller
     ];
 
     /**
+     * The per-slug singletons: a set of repeating blocks, once per country or
+     * region. SCHEMA above cannot describe these - it models a flat form - so
+     * they are declared here instead and the console renders them with a
+     * different screen. Same principle either way: the fields are written down
+     * once, on the server.
+     *
+     * Every field below is read off what js/render.js actually consumes. Where
+     * the renderer splits a value on newlines (region `facts`, services
+     * `offers`) the type is `lines`, and the screen says so.
+     *
+     * NOT INCLUDED, on purpose: the country pages carry eighteen
+     * `data-crender` attributes and render.js reads only four. admits,
+     * costLiving, costStudy, coursesBachelors, coursesMasters, eligBachelors,
+     * eligMasters, exams, intakes, overview, recruiters, requirements,
+     * visaCosts and visaDocs are hooks nothing listens to - those sections show
+     * their static HTML whatever is stored. Giving them an editor would let
+     * someone type for an hour into a field no visitor can ever see, which is
+     * worse than the gap. Wire the renderer first, then add them here.
+     */
+    private const GROUPED = [
+        'countries' => [
+            'label' => 'Country pages',
+            'blurb' => 'Wording and listings on the six "Study in ..." pages.',
+            'empty_means' => 'keeps the wording already built into that page',
+            'groups' => [
+                ['slug' => 'usa', 'label' => 'USA', 'page' => 'study-in-usa.html'],
+                ['slug' => 'uk', 'label' => 'UK', 'page' => 'study-in-uk.html'],
+                ['slug' => 'canada', 'label' => 'Canada', 'page' => 'study-in-canada.html'],
+                ['slug' => 'australia', 'label' => 'Australia', 'page' => 'study-in-australia.html'],
+                ['slug' => 'ireland', 'label' => 'Ireland', 'page' => 'study-in-ireland.html'],
+                ['slug' => 'newzealand', 'label' => 'New Zealand', 'page' => 'study-in-new-zealand.html'],
+            ],
+            'fields' => [
+                ['key' => 'heroTitle', 'label' => 'Hero heading', 'type' => 'text'],
+                ['key' => 'heroSub', 'label' => 'Hero subheading', 'type' => 'textarea'],
+                ['key' => 'overviewLead', 'label' => 'Overview intro', 'type' => 'textarea'],
+            ],
+            'lists' => [
+                [
+                    'key' => 'universities', 'label' => 'Universities', 'singular' => 'university',
+                    'item' => [
+                        ['key' => 'name', 'label' => 'Name', 'type' => 'text'],
+                        ['key' => 'loc', 'label' => 'Location', 'type' => 'text', 'half' => true],
+                        ['key' => 'note1', 'label' => 'First note', 'type' => 'text', 'half' => true],
+                        ['key' => 'note2', 'label' => 'Second note', 'type' => 'text', 'half' => true],
+                    ],
+                ],
+                [
+                    'key' => 'scholarships', 'label' => 'Scholarships', 'singular' => 'scholarship',
+                    'item' => [
+                        ['key' => 'title', 'label' => 'Name', 'type' => 'text'],
+                        ['key' => 'tag', 'label' => 'Tag', 'type' => 'text', 'half' => true,
+                            'hint' => 'The small label on the card, e.g. "Merit".'],
+                        ['key' => 'amount', 'label' => 'Amount', 'type' => 'text', 'half' => true],
+                        ['key' => 'desc', 'label' => 'Description', 'type' => 'textarea'],
+                    ],
+                ],
+                [
+                    'key' => 'salaries', 'label' => 'Graduate salaries', 'singular' => 'role',
+                    'item' => [
+                        ['key' => 'role', 'label' => 'Role', 'type' => 'text', 'half' => true],
+                        ['key' => 'pay', 'label' => 'Pay', 'type' => 'text', 'half' => true],
+                    ],
+                ],
+                [
+                    'key' => 'faqs', 'label' => 'FAQs', 'singular' => 'question',
+                    'item' => [
+                        ['key' => 'q', 'label' => 'Question', 'type' => 'text'],
+                        ['key' => 'a', 'label' => 'Answer', 'type' => 'textarea'],
+                    ],
+                ],
+            ],
+        ],
+
+        'regions' => [
+            'label' => 'Region pages',
+            'blurb' => 'Wording and country bands on the Asia and Europe pages.',
+            'empty_means' => 'keeps the wording already built into that page',
+            'groups' => [
+                ['slug' => 'asia', 'label' => 'Asia', 'page' => 'asia.html'],
+                ['slug' => 'europe', 'label' => 'Europe', 'page' => 'europe.html'],
+            ],
+            'fields' => [
+                ['key' => 'heroTitle', 'label' => 'Hero heading', 'type' => 'text'],
+                ['key' => 'heroSub', 'label' => 'Hero subheading', 'type' => 'textarea'],
+            ],
+            'lists' => [
+                [
+                    'key' => 'bands', 'label' => 'Country bands', 'singular' => 'band',
+                    'item' => [
+                        ['key' => 'name', 'label' => 'Country', 'type' => 'text', 'half' => true],
+                        ['key' => 'desc', 'label' => 'Description', 'type' => 'textarea'],
+                        ['key' => 'facts', 'label' => 'Quick facts', 'type' => 'lines',
+                            'hint' => 'One fact per line. Each line becomes a ticked bullet.'],
+                        ['key' => 'img1', 'label' => 'Image 1 slot', 'type' => 'text', 'half' => true],
+                        ['key' => 'img2', 'label' => 'Image 2 slot', 'type' => 'text', 'half' => true],
+                        ['key' => 'img3', 'label' => 'Image 3 slot', 'type' => 'text', 'half' => true],
+                    ],
+                ],
+            ],
+        ],
+
+        'servicesPage' => [
+            'label' => 'Services page',
+            'blurb' => 'The service blocks on the public services page.',
+            'empty_means' => 'keeps the wording already built into the page',
+            // No slug level: this page is one of a kind.
+            'groups' => [],
+            'fields' => [],
+            'lists' => [
+                [
+                    'key' => 'blocks', 'label' => 'Service blocks', 'singular' => 'service',
+                    'item' => [
+                        ['key' => 'name', 'label' => 'Service name', 'type' => 'text'],
+                        ['key' => 'anchor', 'label' => 'Anchor', 'type' => 'text', 'half' => true,
+                            'hint' => 'Used in the #link. Left empty, it is made from the name.'],
+                        ['key' => 'img', 'label' => 'Image slot', 'type' => 'text', 'half' => true],
+                        ['key' => 'offers', 'label' => 'What is included', 'type' => 'lines',
+                            'hint' => 'One item per line. Each line becomes a starred bullet.'],
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    /**
      * GET /api/admin/content/singletons — the ones this console offers as a
      * form, so the screen does not carry its own list of them.
      */
@@ -175,10 +301,19 @@ class AdminContentController extends Controller
             // The form, for the keys that have one. Null for the repeating-block
             // singletons, which the console must not try to render as a flat
             // form - it would drop everything it could not show.
-            'label' => self::SCHEMA[$key]['label'] ?? null,
-            'blurb' => self::SCHEMA[$key]['blurb'] ?? null,
-            'empty_means' => self::SCHEMA[$key]['empty_means'] ?? null,
+            'label' => self::SCHEMA[$key]['label'] ?? self::GROUPED[$key]['label'] ?? null,
+            'blurb' => self::SCHEMA[$key]['blurb'] ?? self::GROUPED[$key]['blurb'] ?? null,
+            'empty_means' => self::SCHEMA[$key]['empty_means'] ?? self::GROUPED[$key]['empty_means'] ?? null,
             'sections' => self::SCHEMA[$key]['sections'] ?? null,
+
+            // The per-slug singletons describe themselves here instead. A key
+            // has one shape or the other, never both, so a console screen can
+            // tell which editor to use by which of these two is not null.
+            'grouped' => isset(self::GROUPED[$key]) ? [
+                'groups' => self::GROUPED[$key]['groups'],
+                'fields' => self::GROUPED[$key]['fields'],
+                'lists' => self::GROUPED[$key]['lists'],
+            ] : null,
         ])->header('Cache-Control', 'no-store');
     }
 

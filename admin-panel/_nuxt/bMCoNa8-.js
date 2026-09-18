@@ -1,0 +1,1 @@
+import{F as s,bv as t,s as e,z as n}from"./BVuEswf8.js";function i(){const o=e(!1);return s(()=>{window.requestAnimationFrame(()=>{o.value=!0})}),{ssrBootStyles:n(()=>o.value?void 0:{transition:"none !important"}),isBooted:t(o)}}export{i as u};

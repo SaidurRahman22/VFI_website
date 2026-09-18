@@ -67,6 +67,15 @@ const sections = [
           */
           { title: 'Partner page', icon: 'ri-article-line', to: '/text/partner-page' },
           { title: 'Partner console text', icon: 'ri-chat-quote-line', to: '/text/partner-portal' },
+          /*
+            The per-slug pages. These were the last content in the project with
+            no editor anywhere: the API could save them and no screen could
+            show them, because a flat form cannot express "repeating blocks,
+            once per country".
+          */
+          { title: 'Country pages', icon: 'ri-earth-line', to: '/text/countries' },
+          { title: 'Region pages', icon: 'ri-map-2-line', to: '/text/regions' },
+          { title: 'Services page', icon: 'ri-service-line', to: '/text/services' },
         ],
       },
       { title: 'Page images', icon: 'ri-image-line', to: '/images', ability: 'content.manage' },

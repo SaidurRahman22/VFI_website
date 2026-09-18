@@ -95,6 +95,9 @@ export default defineNuxtConfig({
         // build failure instead of a production surprise.
         '/text/partner-page',
         '/text/partner-portal',
+        '/text/countries',
+        '/text/regions',
+        '/text/services',
         '/pages',
         '/images',
         '/backup',
