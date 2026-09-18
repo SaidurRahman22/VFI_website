@@ -52,5 +52,13 @@ id_rsa.*
 test/ui/panel-shots/
 
 # Playwright MCP writes page snapshots/console logs here during verification.
-# The repo root is the web root, so anything committed here is served publicly.
+# The repo root is the web root, so build and test output must stay out of it.
+#
+# CORRECTION to what 26be688 said. That message claimed the three .yml files
+# committed in 41e2c36 "were served publicly for a few minutes". They were not:
+# nginx on this server refuses dot-paths outright. Measured against the live
+# vhost - /university.html is 200 while /.gitignore and /.git/config are both
+# 403, and /.git/config is the one that would have mattered. Ignoring this
+# directory is still right, because relying on that deny rule to excuse
+# committing junk into the web root is not a position worth holding.
 .playwright-mcp/
