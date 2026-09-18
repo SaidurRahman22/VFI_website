@@ -65,7 +65,16 @@
 */
 .ulayout__side { position: sticky; top: calc(var(--header-h) + 70px); }
 @media (max-width: 980px) {
-  .ulayout { grid-template-columns: 1fr; }
+  /*
+    minmax(0, 1fr) and NOT 1fr. Plain `1fr` is minmax(auto, 1fr), whose minimum
+    is min-content, so this track grew to the width of its widest unshrinkable
+    child rather than the container: at a 375px viewport .ulayout__main came out
+    367.8px against the 339px available, and the whole page scrolled sideways by
+    11px. The child is table.utable (min-content 365.8px) whose wrapper,
+    .utable-wrap, already has overflow-x: auto - so clamping the track is what
+    lets that wrapper do the scrolling it was built for.
+  */
+  .ulayout { grid-template-columns: minmax(0, 1fr); }
   .ulayout__side { position: static; }
 }
 
@@ -197,12 +206,20 @@
      calls to action.
 */
 .ucourse__fee--link { white-space: normal; font-weight: 600; font-size: .86rem; line-height: 1.35; }
+/*
+  inline-block + vertical padding takes the target from 19px to 25px high, over
+  the 24px WCAG 2.2 SC 2.5.8 minimum. The underline is text-decoration rather
+  than border-bottom because a border sits on the box: with padding it would
+  have floated 3px below the text instead of underlining it.
+*/
 .ucourse__fee--link a {
-  color: var(--muted); text-decoration: none;
-  border-bottom: 1px solid var(--line-2); transition: color .15s, border-color .15s;
+  display: inline-block; padding: 3px 0;
+  color: var(--muted); text-decoration: underline;
+  text-decoration-color: var(--line-2); text-underline-offset: 3px;
+  transition: color .15s, text-decoration-color .15s;
 }
 .ucourse__fee--link a:hover,
-.ucourse__fee--link a:focus-visible { color: var(--blue); border-bottom-color: currentColor; }
+.ucourse__fee--link a:focus-visible { color: var(--blue); text-decoration-color: currentColor; }
 @media (max-width: 560px) {
   .ucourse { grid-template-columns: 1fr; gap: 6px; }
   .ucourse__fee { text-align: left; }
