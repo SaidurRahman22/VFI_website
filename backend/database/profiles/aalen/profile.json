@@ -1,0 +1,299 @@
+{
+  "tagline": "Public university of applied sciences in Baden-Württemberg, founded in 1962. Around 60 degree programmes in five faculties; 3 bachelor's and 8 master's are taught in English.",
+  "province_state": "Baden-Württemberg",
+  "website": "https://www.hs-aalen.de",
+  "is_major_city": false,
+  "affordability_band": "low",
+  "tuition_deposit_policy": "standard",
+  "overview": "Aalen University of Applied Sciences (Hochschule Aalen) is a public university of applied sciences in Aalen, Baden-Württemberg, in southern Germany. It was founded in 1962 as a state engineering school and became a university of applied sciences in 1971. It has over 4,000 students, 146 professors and five faculties: Chemistry, Electronics and Computer Science, Mechanical Engineering and Materials Science, Optics and Mechatronics, and Business and Health. Around 60 degree programmes are offered. A German university of applied sciences teaches for practice: laboratory work, projects with companies and practical semesters are built into the programmes rather than added to them. The year has two semesters, the winter semester from September to February and the summer semester from March to August. Most bachelor's programmes are taught in German; three bachelor's and eight master's programmes are taught entirely in English.",
+  "overview_stats_json": [
+    {
+      "value": "4,163",
+      "label": "Students (winter semester 2024/25)"
+    },
+    {
+      "value": "434",
+      "label": "International students (2024/25)"
+    },
+    {
+      "value": "60",
+      "label": "Degree programmes (approx.)"
+    }
+  ],
+  "rankings_json": [
+    {
+      "rank": "Top group, all 12 indicators",
+      "by": "CHE Hochschulranking 2026/27 — Business Psychology (student survey)"
+    },
+    {
+      "rank": "Top group",
+      "by": "CHE Hochschulranking 2026/27 — Mechatronics (student survey, 2025 data)"
+    },
+    {
+      "rank": "Top group",
+      "by": "CHE Hochschulranking 2026/27 — Electrical and Information Engineering (2025 data)"
+    },
+    {
+      "rank": "Top group",
+      "by": "CHE Hochschulranking 2026/27 — Mechanical Engineering, bachelor's (2025 data)"
+    },
+    {
+      "rank": "Top group",
+      "by": "CHE Hochschulranking 2026/27 — Business Administration (student survey)"
+    },
+    {
+      "rank": "Top group",
+      "by": "CHE Hochschulranking 2026/27 — Business Informatics (student survey)"
+    },
+    {
+      "rank": "#=216",
+      "by": "QS World University Rankings: Europe 2026 — Western Europe"
+    }
+  ],
+  "ranking_note": "CHE gives no league position: it sorts each subject into a top, middle or bottom group among universities of applied sciences. Results are per subject, CHE Hochschulranking 2026/27.",
+  "cost_note": "Students who are not EU or EEA citizens pay tuition of EUR 1,500 per semester — EUR 3,000 for a full academic year. Every student also pays a semester contribution of EUR 180 per semester (winter semester 2026/27), including EU students who pay no tuition; nobody is exempt from it. Both amounts are set by Baden-Württemberg state law and can change.",
+  "living_cost_note": "About EUR 1,000 a month in Aalen: roughly EUR 360 rent, EUR 235 food, EUR 120 health insurance, EUR 90 transport, EUR 160 other.",
+  "accommodation_note": "Student halls in Aalen are run by the Jugendwerk Aalen foundation, not the Studierendenwerk: rooms and flats cost EUR 210 to EUR 535 a month including bills.",
+  "placement_rate": "88%",
+  "salary_note": "Germany-wide, engineers with under one year of experience earn a median EUR 59,250 a year gross (Stepstone 2026). A national figure, not measured at Aalen.",
+  "placement_note": "Every bachelor's degree at Aalen includes a practical semester in a company, normally in the fifth semester and at least 95 attendance days at a 40-hour week. Students find and propose their own placement, the internships office approves it and a professor supervises it. Many bachelor's and master's theses are written inside a company as well, and the in-depth-practice model lets students work in a partner company alongside their studies.\n\nThe university surveys its graduates through KOAB with ISTAT and about 70 other universities. Of the 2023 graduates who went straight into work, 88% had found a job within six months and 78% were satisfied with their professional situation; 53% work in manufacturing or industry and about a quarter in the Ostalb district, and 64% joined internationally active companies. A further 52% of bachelor's graduates went on to a master's instead of straight into work, 60% of them at Aalen. 339 of 1,374 graduates replied.",
+  "alumni_note": "Each degree programme runs its own alumni network, plus a university-wide LinkedIn group. The small-business (KMU) network is free to join and emails members jobs from partner companies.",
+  "jobs_json": [
+    {
+      "profile": "Mechanical engineer (General Mechanical Engineering B.Eng.)",
+      "salary": "EUR 6,846 / month — Germany-wide median, all experience levels"
+    },
+    {
+      "profile": "Electrical engineer (Electrical Engineering B.Eng.)",
+      "salary": "EUR 6,742 / month — Germany-wide median, all experience levels"
+    },
+    {
+      "profile": "Production engineer (Mechanical Engineering / Production Technology)",
+      "salary": "EUR 6,399 / month — Germany-wide median, all experience levels"
+    },
+    {
+      "profile": "Technical computer scientist (Computer Science B.Sc.)",
+      "salary": "EUR 6,575 / month — Germany-wide median, all experience levels"
+    },
+    {
+      "profile": "Materials engineer (Materials Science B.Eng.)",
+      "salary": "EUR 6,254 / month — Germany-wide median, all experience levels"
+    }
+  ],
+  "admission_academic": "Aalen University assesses international qualifications through uni-assist. Whatever you apply for, your first step is a preliminary review document (Vorprüfungsdokumentation, VPD) from uni-assist, issued for Aalen University; a VPD made out to another university is not accepted, and applicants from India, China and Vietnam must obtain an APS certificate before applying for the VPD. For a bachelor's degree you need a school-leaving certificate recognised in Germany as a university entrance qualification, which you can check in advance in the DAAD admission database or anabin, plus one of three aptitude tests — TestAS core test with the engineering module and at least 100 points, SAT with at least 1050, or ACT with at least 20 — a requirement the university says is suspended for the summer semester 2027 application period. For a master's degree you need a completed first university degree of three or four years, an overall education of at least 15 years, and usually a minimum grade of 2.5 on the German scale; most programmes add subject conditions, typically 210 ECTS credits in a related field, with 180 to 210 ECTS accepted in some programmes if you make up the difference during the course. Requirements are set programme by programme, so read the page for your chosen degree as well.",
+  "admission_english": "For programmes taught in English, Aalen University requires English at CEFR level B2 with a certificate no more than two years old. The accepted proofs and minimum scores are IELTS 6.0, TOEFL iBT 72, TOEFL ITP 543, TOEIC (Listening and Reading) 785, PTE Academic B2 64, Cambridge First grade B, Cambridge CAE grade C, Cambridge CPE grade C, or a UNIcert II certificate with grade 2.3. The Duolingo English Test and a medium-of-instruction letter are not on the published list. If your TOEFL test date falls in 2026 or later, check the score scale with the Admissions Office: the university's programme entries in the DAAD database give the requirement as 4.5 overall, with 4.5 in each section, for tests taken since 2026. For programmes taught in German, an English certificate is not what is needed — you must prove German language proficiency if German is not your native language.",
+  "intakes_json": [
+    {
+      "name": "Winter semester",
+      "month": "October",
+      "note": "The semester formally begins on 1 September and classes begin at the start of October. Application deadlines differ by programme, not by nationality: 15 July for German-taught Bachelor's programmes with a restricted entry grade (NC), 15 June for Master's programmes, and the first Friday after the first day of classes for German-taught Bachelor's and Master's programmes with no NC. The English-taught Bachelor's programmes have no winter intake. English-taught Master's programmes set their own winter deadlines, so check the programme page. International applicants need to start much earlier than the deadline: you must first obtain a Vorpruefungsdokumentation (VPD) from uni-assist issued for Aalen University, and applicants from India, China and Vietnam must obtain an APS certificate before the VPD."
+    },
+    {
+      "name": "Summer semester",
+      "month": "March",
+      "note": "The semester formally begins on 1 March and classes begin in mid-March. This is the only intake for the English-taught Bachelor's programmes, and their deadline is 30 November. English-taught Master's programmes that take summer entrants apply a 15 December deadline. For German-taught programmes the summer deadlines are 15 January for Bachelor's programmes with a restricted entry grade (NC), 15 December for Master's programmes, and the first Friday after the first day of classes for programmes with no NC. The same deadlines apply to international and German applicants, but international applicants must allow extra months for the uni-assist VPD and, for India, China and Vietnam, the APS certificate that comes before it."
+    }
+  ],
+  "cost_rows_json": [
+    {
+      "label": "Tuition for non-EU/EEA students",
+      "value": "EUR 1,500 per semester. Two semesters make one academic year, so a full year of tuition is EUR 3,000."
+    },
+    {
+      "label": "Tuition for EU/EEA students",
+      "value": "No tuition fee. EU and EEA citizens pay only the semester contribution. The same applies to doctoral students, and to international students who hold a German school-leaving qualification."
+    },
+    {
+      "label": "Semester contribution (paid by every student)",
+      "value": "EUR 180 per semester (winter semester 2026/27). Not tuition, and nobody is exempt from it — including EU students, who pay no tuition."
+    },
+    {
+      "label": "Semester ticket for public transport",
+      "value": "Not included. Aalen's semester ticket arrangement has ended, so travel is not covered by the semester contribution. Students buy their own ticket: the D-Ticket JugendBW costs EUR 45 per month for students up to and including age 26, and the standard Deutschlandticket costs EUR 63 per month in 2026. Both are valid on local and regional transport across Germany."
+    },
+    {
+      "label": "Second-degree fee (Zweitstudiengebuehr)",
+      "value": "EUR 650 per semester, and it is charged instead of the EUR 1,500 fee, not on top of it. It applies to someone who has already completed both a Bachelor's and a Master's degree (or a state examination or diploma) in Germany and is starting a further degree. Degrees completed outside Germany do not count."
+    }
+  ],
+  "scholarships_json": [
+    {
+      "name": "Deutschlandstipendium",
+      "level": "UG / PG",
+      "amount": "EUR 300 per month, normally for two semesters",
+      "note": "Open to students of any nationality who are enrolled at, or are starting at, Aalen University. Selection is on academic performance and personal commitment; your financial situation is not considered. You apply online at the university once a year before the winter semester (the 2026 round ran 27 July to 9 August 2026). Contact: deutschlandstipendium@hs-aalen.de"
+    },
+    {
+      "name": "DAAD Study Scholarships - Master Studies for All Academic Disciplines",
+      "level": "PG (Master's)",
+      "amount": "EUR 992 per month for 10 to 24 months, plus health, accident and liability insurance, a study allowance of EUR 460 a year and a travel allowance on request",
+      "note": "For graduates applying from abroad to start a Master's degree in Germany. Your first degree should be no more than six years old, and you cannot apply if you have already lived in Germany for more than 15 months at the deadline. You apply to the DAAD through its own portal, not to Aalen University; the window opens on 1 June each year and funding starts in the winter semester. The DAAD does not pay tuition fees, but Aalen University can exempt DAAD scholarship holders from its EUR 1,500 per semester international fee."
+    },
+    {
+      "name": "Tuition fee exemption (not a scholarship)",
+      "level": "UG / PG",
+      "amount": "Removes the EUR 1,500 per semester tuition fee for international students",
+      "note": "Not a scholarship but the main fee relief available. Aalen University can waive the fee if you hold a DAAD scholarship, if you are a national of a state in the ACP partnership agreement (Africa, Caribbean and Pacific), if you are a national of a country the United Nations lists as a Least Developed Country, if you have a disability that substantially impedes study, or during a leave semester. Holders of a Baden-Wuerttemberg Stiftung scholarship and exchange students on a reciprocal partnership agreement are not charged the fee at all. Email your reason and evidence to gebuehren@hs-aalen.de before lectures begin. The student services and administration fees still apply."
+    },
+    {
+      "name": "Baden-Wuerttemberg-STIPENDIUM (BWS) for university students",
+      "level": "UG / PG (exchange semesters, not a full degree)",
+      "amount": "EUR 800 to EUR 1,400 per month, for 3 to 11 months",
+      "note": "For one or two exchange semesters at Aalen, not for a full degree. It is awarded only through an existing partnership between Aalen University and your own university, so you apply through your home university's international office, which nominates you. Aalen's call for 2026/2027 closed on 31 March 2026 and is reissued each spring. Holders are also exempt from Aalen's EUR 1,500 per semester international fee."
+    },
+    {
+      "name": "Friedrich-Ebert-Stiftung, Grundfoerderung fuer Auslaender:innen",
+      "level": "UG / PG",
+      "amount": "EUR 992 per month, plus contributions to health insurance; EUR 255 per month extra for a child. It does not have to be repaid.",
+      "note": "For international students who are already enrolled at a German state or state-recognised institution, which includes a university of applied sciences such as Aalen, so it is applied for after you arrive rather than before. German at B2 level is required even if your course is taught in English. Master's students apply before or at the start of their first semester: by 30 November for the winter semester, by 31 May for the summer semester. You apply to the foundation, not to the university."
+    },
+    {
+      "name": "Studierendenwerk Ulm hardship loan (interest-free)",
+      "level": "UG / PG",
+      "amount": "Interest-free loan for a maximum of 12 months; the amount is decided case by case and is not published",
+      "note": "Emergency help, not a scholarship: it must be repaid. It is for students who fall into financial difficulty through no fault of their own and who do not receive BAfoeG. Studierendenwerk Ulm runs student finance for Aalen University; ask its office in Ulm for the application and, if you are an international student, ask first whether your residence status qualifies."
+    },
+    {
+      "name": "MTS Manfred und Theodora Schurr Stiftung",
+      "level": "UG / PG",
+      "amount": "EUR 200 per month, for no longer than the standard period of study",
+      "note": "Administered through Aalen University, but restricted to \"ausschliesslich Studierende aus dem Ostalbkreis\" - students from the Ostalb district - in fine and performing arts, music, literature or science, and it is means-tested against a BAfoeG assessment notice. A student arriving from abroad will not normally qualify. Application is on paper, by post, using the university's form."
+    },
+    {
+      "name": "DAAD Prize for international students at Aalen University",
+      "level": "UG / PG",
+      "amount": "One award a year; the amount is not published",
+      "note": "An award, not funding you can plan on: the university's International Center chooses one international student each year for academic achievement together with social or intercultural commitment, and there is no application."
+    }
+  ],
+  "admissions_json": [
+    {
+      "level": "Bachelors",
+      "academic": "You need a school-leaving certificate that Germany recognises as a university entrance qualification (Hochschulzugangsberechtigung). Aalen University does not assess this itself: you must apply to uni-assist for a preliminary review document (Vorprüfungsdokumentation, VPD) that confirms your certificate, and the VPD must be issued for Aalen University — one issued for a different university is not accepted. You can check your own country's case in advance in the DAAD admission database or in anabin. On top of the certificate, Aalen requires proof of eligibility to study in Germany in the form of one of three tests: the TestAS (paper-based or digital) core test plus the subject-specific engineering module with a score of at least 100, the SAT with at least 1050 points, or the ACT with a score of at least 20. The university states that this aptitude test requirement is suspended for the summer semester 2027 application period. If a school-leaving certificate is not recognised as equivalent, the standard route into a German bachelor's degree is a year at a Studienkolleg followed by the assessment examination (Feststellungsprüfung); Aalen's own pages do not describe this route, so ask the Admissions Office if your VPD shows you are not directly eligible.",
+      "english": "English-taught programmes require English at CEFR level B2, and the certificate must not be older than two years. Aalen publishes this list of accepted proofs and minimum scores: IELTS 6.0; TOEFL iBT 72; TOEFL ITP 543; TOEIC (Listening and Reading) 785; PTE Academic B2 64; Cambridge First grade B; Cambridge CAE grade C; Cambridge CPE grade C; UNIcert II certificate with grade 2.3. The Duolingo English Test is not on that list, and neither is a medium-of-instruction letter from a previous university. One point to check before you book a test: the university's own entry for the B.Eng. Mechanical Engineering programme in the DAAD International Programmes database gives the TOEFL iBT requirement as 72 overall for tests taken before 2026 (Reading 18, Listening 20, Speaking 17, Writing 17) and as 4.5 overall with 4.5 in each section for tests taken since 2026, under the new TOEFL score scale. The table on Aalen's own application page still shows only the figure 72, so confirm which scale applies to your test date with the Admissions Office. No German certificate is needed for admission to the English-taught bachelor's programmes, but international students who are not native German speakers take compulsory German language modules in the first two semesters.",
+      "tests": "The bachelor-level test requirement is the aptitude test described under academic requirements: TestAS core test plus engineering module with at least 100 points, SAT with at least 1050, or ACT with at least 20 — currently suspended for the summer semester 2027 application period. The separate Baden-Württemberg \"study orientation test\", which applicants holding a German school certificate must take, is expressly not required for Aalen's English-taught programmes. Applicants from India, China and Vietnam must obtain an APS certificate from the Academic Evaluation Centre and submit it to uni-assist together with their educational documents; the order is APS certificate first, then the uni-assist VPD, then the application. Every applicant with an international certificate needs the uni-assist VPD, which costs EUR 75 for the first programme and EUR 30 for each further programme in the same semester. The application itself is not filed through uni-assist: you submit it directly in Aalen University's own online application portal, upload the VPD and your other documents there, and post officially certified copies of your school-leaving certificate to the address shown in the portal. GRE and GMAT are not mentioned anywhere in Aalen's published bachelor requirements."
+    },
+    {
+      "level": "Masters",
+      "academic": "You need a completed first university degree that qualifies you for a profession, of three or four years' duration depending on your country, and your entire education — school plus university — must cover at least 15 years. Aalen states that most of its master's programmes also require a minimum grade, usually 2.5 on the German scale, and many set subject conditions expressed in ECTS credits or specific modules; missing content can in some cases be made up during the programme. Two published examples show how much this varies: the M.Sc. Machine Learning and Data Analytics requires a degree in computer science, business informatics, computer engineering, electrical engineering, electronics or a related field with at least 210 ECTS credits, and applicants holding 180 to 210 ECTS are admitted only if they earn the difference during the master's, which extends the programme by one semester. The M.A. Marketing and Artificial Intelligence requires a degree in a related field such as marketing, business informatics or economics, an above-average grade of at least 2.5, and either 210 ECTS or 180 ECTS with 30 earned during the master's, with at least half of those credits in management, economics or business subjects. Some programmes also ask for a letter of motivation and a CV in tabular form, and programmes aimed at working professionals require relevant work experience. You may apply before your bachelor's degree is fully completed if only a few examination components are outstanding and you submit a current transcript of records. Read the page and admission statute of your chosen programme, because these conditions are set programme by programme.",
+      "english": "For the English-taught master's programmes the requirement is the same as for the bachelor's: English at CEFR level B2, proved by a certificate no more than two years old, from Aalen's published list — IELTS 6.0, TOEFL iBT 72, TOEFL ITP 543, TOEIC (Listening and Reading) 785, PTE Academic B2 64, Cambridge First grade B, Cambridge CAE or CPE grade C, or a UNIcert II certificate with grade 2.3. Individual programme pages repeat this: M.A. Marketing and Artificial Intelligence asks for \"very good English language skills, English proficiency: Level B2 according to CEFR\" with a certificate such as TOEFL, TOEIC or IELTS. The Duolingo English Test and a medium-of-instruction letter do not appear on the accepted list. For the master's programmes taught in German, English is not the issue: Aalen requires proof of German language proficiency from any applicant whose native language is not German, and the university does not publish the accepted German certificates or the required level on its English-language master's application page — ask the Admissions Office (zulassungsamt@hs-aalen.de) which certificate and level your programme needs before you book a test.",
+      "tests": "Aalen publishes no GRE or GMAT requirement for any master's programme. What international master's applicants do need is the paperwork route: applicants from India, China and Vietnam must first obtain an APS certificate from the Academic Evaluation Centre and submit it to uni-assist with their educational documents, then obtain the uni-assist preliminary review document (VPD) — issued for Aalen University specifically — and only then apply. uni-assist charges EUR 75 for the first programme and EUR 30 for each further programme in the same semester. The application itself goes directly into Aalen University's own online portal, with the VPD uploaded there; uni-assist only evaluates your documents. Aalen also notes that \"in some master's programmes, aptitude tests are also carried out\", so check the admission statute of your chosen programme. You may apply for up to three master's programmes per semester but can accept only one offer."
+    }
+  ],
+  "recruiters_json": [
+    {
+      "name": "ZEISS (Carl Zeiss, Oberkochen)"
+    },
+    {
+      "name": "Airbus"
+    },
+    {
+      "name": "HENSOLDT"
+    },
+    {
+      "name": "Siteco"
+    },
+    {
+      "name": "RIDI (RIDI Leuchten, Jungingen)"
+    },
+    {
+      "name": "EnBW ODR AG (Ellwangen)"
+    },
+    {
+      "name": "Netze ODR GmbH"
+    },
+    {
+      "name": "IT Group Holding GmbH"
+    },
+    {
+      "name": "Hinterkopf GmbH (Eislingen)"
+    },
+    {
+      "name": "Robert Bosch Automotive Steering GmbH"
+    },
+    {
+      "name": "INNEO Solutions GmbH"
+    },
+    {
+      "name": "Carl Zeiss Meditec AG (Oberkochen)"
+    },
+    {
+      "name": "Magna Powertrain"
+    },
+    {
+      "name": "Voith"
+    },
+    {
+      "name": "Apex Tool Group GmbH"
+    }
+  ],
+  "services_json": [
+    {
+      "title": "Accommodation in Aalen",
+      "body": "Halls of residence in Aalen are run by the non-profit Jugendwerk Aalen foundation, not by the university, and you apply to it online — seven halls across the town, including apartments five minutes' walk from the Waldcampus. Rooms and flats cost EUR 210 to EUR 535 a month including bills. There is no application deadline, but apply as early as you can: rooms are usually still free shortly before the summer semester and much tighter before the winter one. Studierendenwerk Ulm also keeps a register of rooms from private landlords near the campus."
+    },
+    {
+      "title": "International Center, buddy programme and orientation",
+      "body": "The International Center brings five units together: the International Relations Office, the Language Center, the Welcome Center Ostwuerttemberg for students entering the regional job market, the International Society Aalen e.V., which runs the university's buddy programme, and the EMBRACE service centre for researchers. New students are met by a fixed sequence of events rather than left to find their way: for the winter semester 2026/2027 the central preliminary course runs 22 September to 1 October 2026, Welcome Day and first-semester orientation is on 6 October 2026, and a preparatory workshop for international degree-seeking students follows on 12 October 2026. Before arrival, the university publishes a Pre-Arrival Guide covering the visa, insurance, accommodation and how to get to Aalen, and its support for international students includes a welcome event, the buddy programme and help with German registration procedures."
+    },
+    {
+      "title": "German language courses",
+      "body": "You do not need German to be admitted to an English-taught programme, but you will study it. In the English-taught Bachelor's programmes, international students take German language modules in the first two semesters as part of the curriculum, while native German speakers take technical English instead. The Language Center, one of the five units of the International Center, provides practical language training and courses alongside your studies and can be reached at sprachenzentrum@hs-aalen.de. This matters in practice: the compulsory fifth-semester industrial internship, part-time work and daily life in Aalen are mostly conducted in German."
+    },
+    {
+      "title": "Sports, clubs and the student body",
+      "body": "The sports programme is organised with the constituted student body and covers badminton, basketball, football, padel tennis, squash, table tennis, tennis, volleyball, dodgeball, calisthenics, a running group, cycle tours, swimming at three levels, acrobatics, kickboxing, taekwondo, darts, bowling, chess, spikeball, dance courses and yoga. Because the university has no sports halls of its own, several courses run in co-operation with clubs in and around Aalen, including a climbing and bouldering centre with 600 square metres of climbing wall, an 80-route selection up to grade 10, equipment rental and student prices, and the Unterkochen chess club. The student body's AStA also organises campus events and student projects, and the sports office can be reached at sport@vs.hs-aalen.de."
+    },
+    {
+      "title": "Library, labs and campus catering",
+      "body": "The library at Anton-Huber-Strasse 17 is open Monday to Friday from 9:30 to 20:00 and Saturday from 10:00 to 17:00 during the lecture period, and closes on Sundays and public holidays; hours are much shorter in the summer break. Study desks are reserved through an online occupancy portal, there are individual workstations with power sockets and lamps, and the library runs tours, workshops and training in the Citavi and Zotero reference managers. Teaching is spread over three sites, Campus Beethovenstrasse, the Waldcampus and Campus Burren, and the canteen serves lunch from 11:30 to 13:45 Monday to Thursday and 11:30 to 13:30 on Friday, with cafeterias at Beethovenstrasse and Burren opening from 07:00."
+    },
+    {
+      "title": "Working while studying and the regional job market",
+      "body": "A German study residence permit allows an account of 140 working days a year; a day of four hours or less counts as half a day, and student assistant jobs at the university are not counted against the account. As an alternative count, each calendar week in which you work up to 20 hours during the lecture period counts as two and a half working days, and the rule more favourable to you is applied week by week. The Welcome Center Ostwuerttemberg, part of the International Center, is the contact point for international students entering the regional job market, the Career Service runs application training and an annual Career Day, and the International Office offers workshops in English for students looking for internships."
+    }
+  ],
+  "faqs_json": [
+    {
+      "q": "Do I have to pay tuition fees at Aalen University?",
+      "a": "Yes. Baden-Württemberg charges students who are not citizens of an EU or EEA country EUR 1,500 per semester for a Bachelor's or Master's degree, and Aalen University applies this. A degree you already hold from outside Germany does not reduce it: the lower second-degree fee of EUR 650 per semester applies only if you have already completed both a Bachelor's and a Master's degree in Germany. Every student also pays the semester contribution of EUR 180, which nobody is exempt from."
+    },
+    {
+      "q": "Do I need to speak German?",
+      "a": "Not to be admitted to an English-taught programme. Aalen's English-taught Bachelor's and Master's programmes require English at level B2 with an official certificate and set no minimum German level for admission. German is still part of the course: in the English-taught Bachelor's programmes, international students take German language modules in the first two semesters. You will need it in practice, because the compulsory fifth-semester internship in a company, part-time work and daily life in Aalen are mostly in German. Programmes taught in German require proof of German instead."
+    },
+    {
+      "q": "What is APS and do I need it?",
+      "a": "APS is the Academic Evaluation Centre, part of the Science Section of the German Embassy in New Delhi, which verifies your academic documents before you apply, and its certificate is generally required for the German student visa. Aalen University tells applicants from India, China and Vietnam to obtain the APS certificate first, then the uni-assist VPD, and only then apply to the degree programme, so build several months into your plan. From the Summer Semester 2027 Master's intake, Master's applicants whose previous degree is in Engineering, in Commerce, Accounting, Finance or Economics, or in Business or Management must also submit a dMAT certificate, and APS India will only issue the APS certificate once that has been submitted and checked."
+    },
+    {
+      "q": "What is a blocked account and how much money must be in it?",
+      "a": "A blocked account (Sperrkonto) is a German bank account that proves you can support yourself: the money is paid in before you apply for the visa, and a blocking notice limits you to withdrawing one month's amount at a time. For a student visa the Federal Foreign Office requires living costs to be secured one year in advance at the current BAfoeG rate of EUR 992 per month, which is EUR 11,904 for twelve months. Open the account well before your visa appointment, and make sure the bank's official confirmation states both the total amount paid in and the monthly amount available, because a confirmation without those figures is not accepted. A formal declaration of sponsorship or a recognised scholarship can be used instead of a blocked account."
+    },
+    {
+      "q": "Can I work while I study?",
+      "a": "Yes. Section 16b of the German Residence Act gives holders of a study residence permit an account of 140 working days a year, and any day on which you work four hours or less counts as only half a working day, so up to 280 short days are possible. As an alternative count, each calendar week in which you work up to 20 hours during the lecture period counts as two and a half working days, and the calculation more favourable to you is applied week by week. Student assistant jobs at the university are not counted against the account at all."
+    },
+    {
+      "q": "Can I stay in Germany to look for work after I graduate?",
+      "a": "Yes. The Federal Office for Migration and Refugees states that once you have successfully completed your studies you have up to 18 months to look for qualified employment in Germany, and you may take up any form of work during that period. If you then work for two years in a job matching your degree from a German institution, you can be granted an open-ended residence title."
+    },
+    {
+      "q": "Will the university find me a room?",
+      "a": "The university does not allocate rooms itself, but it names the two places that do. Halls of residence in Aalen are run by the Jugendwerk Aalen foundation, which takes online applications with no deadline, and Studierendenwerk Ulm keeps a register of rooms offered by private landlords near the campus. Apply as early as you can: rooms are usually still free shortly before the summer semester, but before the winter semester they can all be taken, which can mean waiting several months."
+    },
+    {
+      "q": "Do I need health insurance, and what does it cost?",
+      "a": "Yes, and you cannot be enrolled without it. Aalen University enrols you once the semester fees have been paid and proof of health insurance has been provided, so arrange German health insurance before you register at the university. Aalen University's own cost estimate, published by the DAAD, budgets about EUR 120 a month for health insurance and medicines, plus EUR 35 a month for personal liability insurance, within total living costs of about EUR 1,000 a month in Aalen."
+    }
+  ],
+  "images": {
+    "logo_key": "aalen-logo.jpg",
+    "hero_image_key": "aalen-hero.jpg",
+    "gallery_json": [
+      "aalen-campus-1.jpg",
+      "aalen-campus-2.jpg",
+      "aalen-campus-3.jpg"
+    ]
+  }
+}
