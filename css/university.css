@@ -184,6 +184,25 @@
 .ucourse__m { font-size: .84rem; color: var(--muted); margin-top: 3px; }
 .ucourse__fee { font-weight: 700; color: var(--blue); text-align: right; white-space: nowrap; padding-top: 1px; }
 .ucourse__na { color: var(--muted); font-weight: 600; font-size: .86rem; }
+/*
+  The "see the fee elsewhere" cell. Two reasons it needs its own rule:
+
+  1. the fee track is a FIXED 132px and .ucourse__fee sets white-space: nowrap
+     (in this file and again in style.css:2726), so a label of more than about
+     twelve characters would spill out of the column. This variant is allowed to
+     wrap inside the track instead.
+  2. every course on a university whose fees are stated per institution gets
+     one, so eight of them stack up. Muted by default and coloured only on
+     hover/focus, so a column of them reads as a footnote and not as eight
+     calls to action.
+*/
+.ucourse__fee--link { white-space: normal; font-weight: 600; font-size: .86rem; line-height: 1.35; }
+.ucourse__fee--link a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--line-2); transition: color .15s, border-color .15s;
+}
+.ucourse__fee--link a:hover,
+.ucourse__fee--link a:focus-visible { color: var(--blue); border-bottom-color: currentColor; }
 @media (max-width: 560px) {
   .ucourse { grid-template-columns: 1fr; gap: 6px; }
   .ucourse__fee { text-align: left; }

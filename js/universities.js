@@ -308,7 +308,10 @@
   function accItem(title, body) {
     return '<details class="uacc"><summary>' + esc(title) + '</summary><div class="uacc__b">' + esc(body || "") + '</div></details>';
   }
-  function courseRow(c) {
+  // feeHref: where to send someone whose course carries no tuition of its own.
+  // Empty when this university has no cost figures either, in which case "On
+  // request" is the honest answer rather than a link to an empty section.
+  function courseRow(c, feeHref) {
     var meta = [levelLabel(c.level)];
     if (c.duration_band) meta.push(String(c.duration_band).replace(/_/g, " "));
     if (c.study_area) meta.push(cap(String(c.study_area).replace(/_/g, " ")));
@@ -320,7 +323,11 @@
     return '<div class="ucourse"><div class="ucourse__info"><div class="ucourse__t">' + esc(title) + '</div>'
       + '<div class="ucourse__m">' + esc(meta.join(" · ")) + '</div>'
       + (chips ? '<div class="uchips" style="margin-top:6px">' + chips + '</div>' : '') + '</div>'
-      + '<div class="ucourse__fee">' + (c.tuition ? money(c.tuition) : '<span class="ucourse__na">On request</span>') + '</div>'
+      + (c.tuition
+        ? '<div class="ucourse__fee">' + money(c.tuition) + '</div>'
+        : (feeHref
+          ? '<div class="ucourse__fee ucourse__fee--link"><a href="' + feeHref + '">See Cost to Study</a></div>'
+          : '<div class="ucourse__fee"><span class="ucourse__na">On request</span></div>'))
       + '</div>';
   }
   function autoOverview(u) {
@@ -397,6 +404,21 @@
     }
     push("intakes", "Intakes", intakeInner);
 
+    // Cost rows are built HERE, before the courses, because the course rows
+    // need to know whether there is a cost figure to link to and this is the
+    // computation that decides it. One value, read in two places.
+    var costCur = s.tuition_currency || "";
+    var costRows = (p.cost_rows || []).map(function (r) { return [r.label, r.value]; });
+    if (!costRows.length) {
+      if (s.tuition_min != null) costRows.push(["Annual tuition fee (from)", money({ minor: s.tuition_min, currency: costCur })]);
+      if (s.tuition_max != null && s.tuition_max !== s.tuition_min) costRows.push(["Annual tuition fee (up to)", money({ minor: s.tuition_max, currency: costCur })]);
+      if (p.cost && p.cost.living) costRows.push(["Living expenses", p.cost.living]);
+      if (p.cost && p.cost.accommodation) costRows.push(["Housing & food", p.cost.accommodation]);
+    }
+    // Only a section that will actually be rendered can be linked to: push()
+    // drops an empty one, and the anchor would then go nowhere.
+    var feeHref = costRows.length ? "#usec-cost" : "";
+
     // Courses — tabbed by level, from the real catalogue
     var courses = u.courses || [], byLevel = {}, i;
     for (i = 0; i < courses.length; i++) {
@@ -415,7 +437,7 @@
           + esc(levelLabel(lvl)) + ' (' + byLevel[lvl].length + ')</button>';
         panels += '<div class="utabpanel" data-panel="c-' + esc(lvl) + '"' + (i === 0 ? '' : ' hidden') + '>'
           + '<div class="upanel ucourses"><div class="ucourses__scroll">'
-          + byLevel[lvl].map(function (c) { return courseRow(c); }).join("") + '</div></div>'
+          + byLevel[lvl].map(function (c) { return courseRow(c, feeHref); }).join("") + '</div></div>'
           // Rendered always, shown only when the list really overflows -
           // sizeCourseLists() decides. "More than ten" was a proxy for
           // overflow, and ten short titles fit where eight long ones do not.
@@ -428,7 +450,7 @@
     }
 
     // Cost to Study — narrative, expenses table, footnote
-    var cur = s.tuition_currency || "";
+    // (costRows/costCur are built above the courses section - see the note there)
     var costIntro = (p.cost && p.cost.note) ? p.cost.note
       : fill(cmsText("cost_intro",
         "The cost of studying at {university} has two parts: tuition for your course, and living costs while you are there — "
@@ -436,15 +458,8 @@
         + "so use the figures below as a planning guide and ask a counsellor for the exact cost of the courses on your shortlist."), u.name);
     var costInner = '<p class="unote">' + esc(costIntro) + '</p>';
 
-    var rows = (p.cost_rows || []).map(function (r) { return [r.label, r.value]; });
-    if (!rows.length) {
-      if (s.tuition_min != null) rows.push(["Annual tuition fee (from)", money({ minor: s.tuition_min, currency: cur })]);
-      if (s.tuition_max != null && s.tuition_max !== s.tuition_min) rows.push(["Annual tuition fee (up to)", money({ minor: s.tuition_max, currency: cur })]);
-      if (p.cost && p.cost.living) rows.push(["Living expenses", p.cost.living]);
-      if (p.cost && p.cost.accommodation) rows.push(["Housing & food", p.cost.accommodation]);
-    }
-    if (rows.length) {
-      costInner += tableHtml("Types of expenses", "Annual expenses" + (cur ? " in " + cur : ""), rows);
+    if (costRows.length) {
+      costInner += tableHtml("Types of expenses", "Annual expenses" + (costCur ? " in " + costCur : ""), costRows);
       var cnote = cmsText("cost_footnote", "Note: these figures are approximate and change year to year. "
         + "Check the current fee schedule on the university’s official website, or ask your VFI counsellor for the latest breakdown.");
       if (cnote) costInner += '<p class="ucost__note">' + esc(cnote) + '</p>';
