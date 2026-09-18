@@ -31,6 +31,15 @@ jobs:
         env:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
 
+      # gitleaks is good at KEYED formats - AWS ids, GitHub tokens, PEM blocks -
+      # and blind to the thing that actually leaked here: a person typing a
+      # password into a Markdown file. The super-admin placeholder sat in the
+      # tracked, PUBLIC Developer_requier.md for weeks with gitleaks green over
+      # it. This catches that shape, and refuses a tracked .env or private key.
+      - name: hand-written credentials (check-secrets)
+        working-directory: .
+        run: node tools/check-secrets.mjs
+
   # --- BLOCK: static analysis, style, tests ----------------------------------
   quality:
     name: analyse + test (BLOCK)

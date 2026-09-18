@@ -34,15 +34,20 @@ and data feeds — that the code cannot create by itself. Each item says:
 A security review in **August 2026** fixed some issues on the server and flagged
 others only you can close:
 
-1. **Rotate the server SSH password now.** The server password was previously
-   written in this file — which the web server was serving **publicly** at
-   `http://103.14.23.151/Developer_requier.md` — and it also lives in the Git
-   history. The public exposure has been **closed** (see below), but because the
-   value was public and remains in history, **change it**: SSH in, run `passwd`,
-   choose a strong password, and keep it only in a password manager. Rotate it
-   anywhere it was reused.
-2. **Replace the temporary admin password.** The super-admin uses a weak
-   placeholder (`VFI@123`). Pick a strong password and set it (see Priority 5).
+1. **Rotate the server SSH password now.** This file, which the web server was
+   serving **publicly** at `http://103.14.23.151/Developer_requier.md`, used to
+   discuss that password directly. The public exposure has been **closed** (see
+   below), and a scan of the full Git history — all 170 commits, every text and
+   config blob — does **not** find the value there, so no history rewrite is
+   needed. Change it anyway: **SSH in, run `passwd`**, choose a strong password,
+   keep it only in a password manager, and rotate it anywhere it was reused. It
+   has been shared over chat and in handover notes, so more people hold it than
+   should.
+2. **Replace the temporary admin password.** The super-admin was seeded with a
+   weak placeholder. The old value is deliberately not written here — a
+   credential does not belong in a file this repository publishes. Pick a strong
+   password and set it (see Priority 5); if you are unsure whether the seeded
+   placeholder is still in use, assume it is and change it.
 3. **Enable admin 2FA on the live server.** Set `ADMIN_REQUIRE_TOTP=true` in
    `.env` (it is `false` only for local development), then run `config:clear`, so
    admin sign-in requires Google Authenticator.
