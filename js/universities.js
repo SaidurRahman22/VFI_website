@@ -39,8 +39,17 @@
   function val(sel) { var el = $(sel); return el ? String(el.value || "").trim() : ""; }
   function show(sel, on) { var el = $(sel); if (el) el.hidden = !on; }
   function cap(s) { s = String(s || ""); return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
+  // Zero is a FACT here, not a gap. DaadSource::tuitionMinor() returns 0 only
+  // when the feed says "none", "no tuition" or "free" and null when it has no
+  // figure, so a zero can be stated in words - and most German public
+  // universities in the catalogue are exactly that case. "EUR 0" was true but
+  // read like a broken number.
+  //
+  // Returns TEXT, never markup: tableHtml() escapes cell values, so a <span>
+  // here would appear literally in the Cost to Study table.
   function money(t) {
     if (!t || t.minor == null) return "";
+    if (+t.minor === 0) return "No tuition fee";
     return (t.currency ? t.currency + " " : "") + Math.round(t.minor / 100).toLocaleString();
   }
   function tatText(b) { return b === "fast" ? "Fast" : (b === "slow" ? "Standard+" : "Standard"); }
