@@ -1,26 +1,28 @@
 # =============================================================================
-# VFI log rotation — the LIVE copy is /etc/logrotate.d/vfi. This is the record.
+# VFI log rotation - the LIVE copy is /etc/logrotate.d/vfi. This is the record.
 #
 #     sudo cp /var/www/vfi/deploy/logrotate/vfi /etc/logrotate.d/vfi
-#     sudo chmod 644 /etc/logrotate.d/vfi
-#     sudo logrotate -d /etc/logrotate.d/vfi   # dry run: prints, changes nothing
+#     sudo chown root:root /etc/logrotate.d/vfi && sudo chmod 644 /etc/logrotate.d/vfi
+#     sudo logrotate -d /etc/logrotate.d/vfi     # dry run: prints, changes nothing
+#     sudo logrotate -v /etc/logrotate.d/vfi     # first real run
+#
+# The chown is not optional and is not cosmetic: logrotate REFUSES a config file
+# it does not find owned by uid 0 ("Ignoring ... because the file owner is
+# wrong"), and the deploy chowns the whole checkout to www-data - so validating
+# this straight out of the repo path silently rotates nothing.
 #
 # WHY: nothing rotated these. /etc/logrotate.d/ carried rules for nginx, both
-# PHP-FPM pools, postgres, redis and fail2ban — and none for this application.
-# A cron entry appends to vfi-schedule.log every minute of every day, so it grows
-# without limit; it was 2.6 MB and the deploy log 302 KB when this was written.
-# The disk is 25 GB with 18 GB free, so this was not yet urgent, but "not yet"
-# is the only thing wrong with it.
-#
-# copytruncate is deliberate and is the point of this file. cron re-runs the
-# command every minute and the shell opens the log with >> each time, but
-# php-fpm and the queue worker hold their handles open for much longer. Renaming
-# a file out from under an open handle leaves the writer appending to an inode
-# nothing can read any more, and the "rotated" log then grows invisibly. Copying
-# and truncating in place keeps the handle valid. The cost is a tiny window
-# where lines written mid-copy are lost, which for these logs is the right trade.
+# PHP-FPM pools, postgres, redis and fail2ban, and none for this application. A
+# cron entry appends to vfi-schedule.log every minute of every day, so it grows
+# without limit; it was 2.6 MB and the deploy log 302 KB when this was written,
+# against 18 GB free. Not urgent - but "not yet" was the only thing wrong.
 # =============================================================================
 
+# The three /var/log files. Rotated by RENAME, the logrotate default, which is
+# safe here because nothing holds these open: the deploy script and the cron
+# entry both use a shell `>>` that opens and closes on every run, once a minute.
+# Rename-and-create is preferable to copytruncate when it is available, because
+# it cannot lose the lines written between the copy and the truncate.
 /var/log/vfi-deploy.log
 /var/log/vfi-schedule.log
 /var/log/vfi-worker.log
@@ -31,20 +33,33 @@
     delaycompress
     missingok
     notifempty
-    copytruncate
-    su root root
 
-    # 0640 root:adm — readable by the adm group the way the rest of /var/log is,
-    # not world-readable. These carry artisan output, which can include a path,
-    # a query or an exception message.
+    # 0640 root:adm - readable by the adm group, the way the rest of /var/log
+    # is, rather than world-readable as these files currently are. They carry
+    # raw artisan output, which can include a path, a query or an exception.
+    # NOTE this line only takes effect because the block does NOT use
+    # copytruncate: logrotate ignores `create` when copytruncating, since there
+    # is no new file to create.
     create 0640 root adm
 }
 
-# Laravel's own log. Not in the block above because it belongs to www-data and
-# lives under the application rather than /var/log, and because the retention is
-# deliberately shorter: LOG_LEVEL=warning on this server, so anything in here is
-# something that went wrong and should be looked at within a week, not archived
-# for a fortnight.
+# Laravel's own log, which is a different problem and gets a different answer.
+#
+# copytruncate HERE, deliberately: `php artisan queue:work` is a long-lived
+# process and Monolog holds its stream open for the life of it. Renaming a file
+# out from under an open handle leaves the writer appending to an inode nothing
+# can read, and the "rotated" log then grows invisibly forever. Copying and
+# truncating in place keeps the handle valid. The cost is a narrow window where
+# lines written mid-copy are lost, which is the right trade for a log that is
+# already only warnings.
+#
+# Shorter retention than above on purpose: LOG_LEVEL=warning on this server, so
+# anything in here is something that went wrong and wants looking at this week,
+# not archiving for a fortnight.
+#
+# `su` is required because storage/logs is group-writable by www-data, and
+# logrotate refuses to rotate inside a directory writable by anyone but the user
+# it is running as.
 /var/www/vfi/backend/storage/logs/*.log
 {
     weekly
@@ -55,5 +70,4 @@
     notifempty
     copytruncate
     su www-data www-data
-    create 0640 www-data www-data
 }
