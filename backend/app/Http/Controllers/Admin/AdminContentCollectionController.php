@@ -472,10 +472,16 @@ class AdminContentCollectionController extends Controller
 
         $item->restore();
 
-        // Written here rather than by the model's audit trait, which hooks
-        // created/updated/deleted and not `restored`. Same entity and id shape
-        // the trait uses, so a delete and its undo read as two rows of one
-        // story instead of taking two different queries to find.
+        /*
+         * A restore leaves TWO audit rows, and that is deliberate. Laravel's
+         * SoftDeletes::restore() calls save(), which fires `updated`, and the
+         * audit trait hooks `updated` — so the before/after of clearing
+         * deleted_at is already recorded. This row exists so the undo is
+         * findable BY NAME: nobody searching an audit log for what happened to a
+         * page will think to look for an `update` whose only difference is a
+         * nulled timestamp. Same entity and id shape as the trait's, so a
+         * delete and its undo come back in one query.
+         */
         ContentAuditLog::record(
             'restore', $item->getTable(), $item->legacy_id, null, $item->getAttributes()
         );
@@ -514,20 +520,51 @@ class AdminContentCollectionController extends Controller
             return $this->moveToEnd($model, $item, $up);
         }
 
+        /*
+         * The neighbour has to be found by the SAME key the list is ordered by,
+         * which is (position, id) — not by position alone. Positions can tie:
+         * moveToEnd() takes min-1, so two people each sending a different row to
+         * the top inside one read window land on the same number, and
+         * ContentItem does the same thing to every new row. With a
+         * position-only lookup the row that is visibly second would find no
+         * neighbour above it and "one step up" would refuse — a button that
+         * does nothing, on a row the person can see is not first.
+         */
+        $p = $item->position;
         $neighbour = $model::query()
             ->when($up,
-                fn ($q) => $q->where('position', '<', $item->position)->orderByDesc('position'),
-                fn ($q) => $q->where('position', '>', $item->position)->orderBy('position'))
+                fn ($q) => $q
+                    ->where(fn ($w) => $w->where('position', '<', $p)
+                        ->orWhere(fn ($t) => $t->where('position', $p)->where('id', '<', $item->id)))
+                    ->orderByDesc('position')->orderByDesc('id'),
+                fn ($q) => $q
+                    ->where(fn ($w) => $w->where('position', '>', $p)
+                        ->orWhere(fn ($t) => $t->where('position', $p)->where('id', '>', $item->id)))
+                    ->orderBy('position')->orderBy('id'))
             ->first();
 
         if ($neighbour === null) {
             return $this->alreadyAtTheEnd($up);
         }
 
-        [$a, $b] = [$item->position, $neighbour->position];
-
         // forceFill: `position` is kept out of the request-facing path on
         // purpose, but this IS the reorder, so it writes it directly.
+        if ($neighbour->position === $p) {
+            /*
+             * Tied, so the two are separated only by id and swapping the numbers
+             * would change nothing. Step the moving row past the neighbour
+             * instead. One row written, and it may tie with something else at
+             * that number — which is fine, because it still sorts on the right
+             * side of the neighbour.
+             */
+            $to = $up ? $p - 1 : $p + 1;
+            $item->forceFill(['position' => $to])->save();
+
+            return $this->fresh(['moved' => $id, 'position' => $to]);
+        }
+
+        [$a, $b] = [$p, $neighbour->position];
+
         $item->forceFill(['position' => $b])->save();
         $neighbour->forceFill(['position' => $a])->save();
 

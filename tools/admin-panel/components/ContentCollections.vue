@@ -303,8 +303,12 @@ async function restoreItem(row) {
     /* "it is still on the website" arrives as a 422 - someone else put it back
        first. That is information, so it stays here beside the row it is about,
        and the list is re-read so the row it refers to goes away. */
-    trashError.value = e.message
+    const refused = e.message
+
     await loadTrash()
+    await loadList(tab.value)
+    await refreshCounts()
+    trashError.value = refused
   }
   finally {
     restoring.value = null
@@ -539,6 +543,12 @@ onMounted(async () => {
           indeterminate
         />
 
+          <!--
+            The sentence goes in text-high-emphasis, not in the alert's own
+            colour. Vuetify's tonal variant paints the type colour as TEXT over
+            a 16% tint of itself, so a warning sentence measures 1.81:1 against
+            its own background. The gold stays on the icon and the border.
+          -->
         <VAlert
           v-if="listError"
           type="warning"
@@ -547,7 +557,7 @@ onMounted(async () => {
           closable
           @click:close="listError = null"
         >
-          {{ listError }}
+          <span class="text-high-emphasis">{{ listError }}</span>
         </VAlert>
 
         <VAlert
@@ -623,7 +633,7 @@ onMounted(async () => {
                 <VAvatar
                   size="48"
                   rounded
-                  :color="row[imageKey] ? undefined : 'secondary'"
+                  :color="undefined"
                   variant="tonal"
                 >
                   <VImg
@@ -750,8 +760,7 @@ onMounted(async () => {
                     size="72"
                     rounded
                     variant="tonal"
-                    color="secondary"
-                  >
+                                      >
                     <VImg
                       v-if="form[f.key]"
                       :src="imageSrc(form[f.key])"
@@ -872,7 +881,7 @@ onMounted(async () => {
         </VCardItem>
         <VCardText>
           <p class="mb-2">
-            <strong>{{ titleOf(confirming) }}</strong> will stop appearing on the public site immediately.
+            <strong>{{ titleOf(confirming) }}</strong> stops appearing on the public site within a minute.
           </p>
           <p class="text-body-2 text-medium-emphasis mb-0">
             It is kept, and <strong>Recently removed</strong> at the top of this page puts it back
@@ -928,7 +937,7 @@ onMounted(async () => {
             variant="tonal"
             class="mb-4"
           >
-            {{ trashError }}
+            <span class="text-high-emphasis">{{ trashError }}</span>
           </VAlert>
 
           <!--
@@ -951,6 +960,34 @@ onMounted(async () => {
               :key="row.id"
             >
               <VListItem>
+                <!--
+                  The thumbnail matters most in the collection where the title
+                  is weakest: a photo's title_key is its caption, and a caption
+                  is optional, so three removed photos with none read as three
+                  identical rows of "(untitled — photo)". The endpoint already
+                  returns every schema field, so the picture is right there.
+                -->
+                <template
+                  v-if="imageKey"
+                  #prepend
+                >
+                  <VAvatar
+                    size="48"
+                    rounded
+                    variant="tonal"
+                  >
+                    <VImg
+                      v-if="row[imageKey]"
+                      :src="imageSrc(row[imageKey])"
+                      cover
+                    />
+                    <VIcon
+                      v-else
+                      icon="ri-image-line"
+                    />
+                  </VAvatar>
+                </template>
+
                 <VListItemTitle>{{ titleOf(row) }}</VListItemTitle>
                 <VListItemSubtitle>{{ removedLine(row) }}</VListItemSubtitle>
 

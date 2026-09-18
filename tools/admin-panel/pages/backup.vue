@@ -751,7 +751,7 @@ onMounted(async () => {
                     >wrong shape</span>
                     <span
                       v-else
-                      class="text-disabled"
+                      class="text-medium-emphasis"
                     >not in the file</span>
                   </td>
                   <td class="text-body-2">
@@ -802,7 +802,7 @@ onMounted(async () => {
                     >wrong shape</span>
                     <span
                       v-else
-                      class="text-disabled"
+                      class="text-medium-emphasis"
                     >not in the file</span>
                   </td>
                   <td class="text-body-2">

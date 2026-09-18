@@ -90,15 +90,17 @@ const sections = [
 
   Signing in lands on this console, which means anything it cannot reach is
   effectively gone. Native now: the ten content collections, the site settings,
-  page visibility, the page images and the backup. What is left on the legacy
-  page is the per-country and per-region page text and the services/partner page
-  wording - while /manage still owns document review, agencies and GDPR
-  requests.
+  page visibility, the page images and the backup. /manage still owns document
+  review, agencies, universities, roles and the GDPR register.
 
-  Worth knowing about that page: it saves to the EDITOR'S OWN localStorage, not
-  to the server. So its remaining editors do not work either, in the sense that
-  matters - which is why this entry is named for the pages it covers rather than
-  offered as a working tool, and why it goes as soon as those are rebuilt.
+  admin.html is NOT linked from here any more, deliberately. Every editor on
+  that page writes to the editor's own localStorage - it makes one API call in
+  its whole length, and that one is logout - so its forms say "Saved" and change
+  nothing for a visitor or for another member of staff. The only content it
+  still nominally owned was the per-country and per-region page text, which
+  therefore never worked either; those overrides are empty on the server and
+  need a native screen. Linking to a page that convincingly pretends to save is
+  worse than having no link at all.
 
   Linking out is not decoration: these go somewhere that works today. They are
   labelled and grouped apart so it is obvious which parts of the console are
@@ -108,7 +110,6 @@ const external = [
   {
     heading: 'Not yet rebuilt here',
     items: [
-      { title: 'Country & region text', icon: 'ri-map-2-line', href: '/admin.html', ability: 'content.manage' },
       { title: 'Staff tools', icon: 'ri-tools-line', href: '/manage', ability: 'documents.review' },
     ],
   },

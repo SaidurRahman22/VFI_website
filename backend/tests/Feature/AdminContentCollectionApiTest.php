@@ -483,6 +483,41 @@ class AdminContentCollectionApiTest extends TestCase
             ->assertStatus(422)->assertJsonPath('message', 'This is already first in the list.');
     }
 
+    /**
+     * Two people each send a different row to the top inside one read window,
+     * so both land on the same position — which moveToEnd's own docblock
+     * accepts, because the list then separates them by id.
+     *
+     * The bug that hides here: a neighbour lookup that compares position alone
+     * finds nothing above the row that is visibly second, so "one step up"
+     * refuses on a row the person can see is not first. A button that does
+     * nothing is the single most common complaint on this project.
+     */
+    public function test_one_step_up_still_works_when_two_rows_share_a_position(): void
+    {
+        $a = Event::create(['title' => 'Tied first']);
+        $b = Event::create(['title' => 'Tied second']);
+
+        // The state two concurrent "to the top" presses leave behind.
+        $a->forceFill(['position' => -5])->save();
+        $b->forceFill(['position' => -5])->save();
+
+        $this->actingAs($this->staff());
+
+        // ordered() is position ASC, id ASC, so the lower id renders first.
+        $titles = array_column($this->getJson('/api/admin/content/events')->json('data'), 'title');
+        $this->assertSame(['Tied first', 'Tied second'], $titles);
+
+        $this->putJson("/api/admin/content/events/{$b->id}/move", ['direction' => 'up'])
+            ->assertOk();
+
+        $this->assertSame(
+            ['Tied second', 'Tied first'],
+            array_column($this->getJson('/api/admin/content/events')->json('data'), 'title'),
+            'the row that was visibly second must actually move'
+        );
+    }
+
     // ------------------------------------------------- the awkward per-table
 
     /**

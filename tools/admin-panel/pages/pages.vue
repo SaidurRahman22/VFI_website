@@ -146,7 +146,9 @@ onMounted(async () => {
         variant="tonal"
         class="mb-4"
       >
-        {{ offCount }} {{ offCount === 1 ? 'page is' : 'pages are' }} switched off and not linked anywhere.
+        <span class="text-high-emphasis">
+          {{ offCount }} {{ offCount === 1 ? 'page is' : 'pages are' }} switched off and not linked anywhere.
+        </span>
       </VAlert>
 
       <VCard

@@ -14,6 +14,6 @@ definePageMeta({ title: 'Public website' })
   <ContentCollections
     group="public-website"
     heading="Public website"
-    blurb="Events, articles, news and photos on vfi-fc.com. Changes are live as soon as you save."
+    blurb="Events, articles, news and photos on vfi-fc.com. Saved at once; the public pages pick a change up within a minute."
   />
 </template>

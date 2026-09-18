@@ -101,7 +101,9 @@ async function save() {
     version.value = res.version
     saved.value = { ...form.value }
     meta.value = { ...meta.value, value: res.value }
-    note.value = 'Saved. The site uses these straight away.'
+    // Stored at once; the public pages hold the content bundle for 60
+    // seconds, so "straight away" was not true of what a visitor sees.
+    note.value = 'Saved. The public pages pick these up within a minute.'
   }
   catch (e) {
     if (e.status === 409) {
@@ -201,7 +203,7 @@ onMounted(async () => {
         variant="tonal"
         class="mb-4"
       >
-        <p class="mb-2">
+        <p class="mb-2 text-high-emphasis">
           {{ saveError }}
         </p>
         <p class="text-body-2 mb-3">

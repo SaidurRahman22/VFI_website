@@ -425,10 +425,13 @@ with sync_playwright() as p:
         page.wait_for_timeout(1200)
         confirm = page.locator('.v-dialog .v-card:has-text("Remove this from the website")')
         check(on_screen(confirm), "the confirmation is on screen")
-        check(
-            "can be restored" in page.inner_text(".v-dialog"),
-            "and says the removal is recoverable, because it is",
-        )
+        # It used to say "can be restored", which was true of the database and
+        # false of anyone without a psql prompt - the only restore UI lived in
+        # the Filament panel that was deleted. It now names the screen that does
+        # it, so the assertion is on that: a promise the person can act on.
+        dlg = page.inner_text(".v-dialog")
+        check("Recently removed" in dlg, "it names where the undo actually is")
+        check("audit log" in dlg, "and that the removal is recorded")
         page.locator('.v-dialog button:has-text("Remove it")').first.click()
         page.wait_for_timeout(2500)
         check(
