@@ -41,6 +41,18 @@
     # copytruncate: logrotate ignores `create` when copytruncating, since there
     # is no new file to create.
     create 0640 root adm
+
+    # Required, and NOT because of these files - because of their directory.
+    # /var/log on this server is `drwxrwxr-x root:syslog`, i.e. group-writable
+    # by a group that is not root, and logrotate refuses to rotate anything in
+    # such a directory unless the config says whose identity to use:
+    #   error: skipping "/var/log/vfi-deploy.log" because parent directory has
+    #   insecure permissions (It's world writable or writable by group which is
+    #   not "root") Set "su" directive in config file ...
+    # A dry run reported all three files skipped without this. The two other
+    # configs on this box that write to /var/log directly, postgresql-common
+    # and ubuntu-pro-client, both carry the same line.
+    su root root
 }
 
 # Laravel's own log, which is a different problem and gets a different answer.
