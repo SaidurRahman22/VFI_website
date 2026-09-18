@@ -59,20 +59,27 @@ class UniversityForm
             Section::make('Overview')->description('The "Overview" tab of the detail page: the About paragraph and the three stat tiles beside it.')->schema([
                 Textarea::make('overview')->rows(5)->columnSpanFull()
                     ->helperText('The “About” paragraph. Plain text; line breaks are kept.'),
-                Repeater::make('overview_stats_json')->label('Stat tiles')->columns(2)->grid(3)
+                // Full width with unequal fields, NOT ->grid(3)->columns(2): those
+                // compound to about a sixth of the form each, which clipped
+                // "Acceptance rate" to a few letters. The value is always short
+                // and the label is a phrase, so they get 1 and 2 of 3.
+                Repeater::make('overview_stats_json')->label('Stat tiles')->columns(3)
                     ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
                     ->schema([
-                        TextInput::make('value')->placeholder('74%')->required(),
-                        TextInput::make('label')->placeholder('Acceptance rate')->required(),
+                        TextInput::make('value')->placeholder('74%')->required()->columnSpan(1),
+                        TextInput::make('label')->placeholder('Acceptance rate')->required()->columnSpan(2),
                     ])->columnSpanFull()->helperText('Three tiles read best, e.g. acceptance rate / international students / graduate employment.'),
             ]),
 
             Section::make('Ranking')->description('The "Ranking" tab. No feed supplies rankings, so anything here is typed by staff.')->schema([
-                Repeater::make('rankings_json')->label('Ranking cards')->columns(2)->grid(3)
+                // Same fix as the stat tiles above, and for the same reason: the
+                // rank is three characters and the publisher is a name, so one
+                // full-width row split 1:2 rather than a third of a third each.
+                Repeater::make('rankings_json')->label('Ranking cards')->columns(3)
                     ->itemLabel(fn (array $state): ?string => $state['by'] ?? null)
                     ->schema([
-                        TextInput::make('rank')->placeholder('#54')->required(),
-                        TextInput::make('by')->label('Ranked by')->placeholder('QS World Rankings')->required(),
+                        TextInput::make('rank')->placeholder('#54')->required()->columnSpan(1),
+                        TextInput::make('by')->label('Ranked by')->placeholder('QS World Rankings')->required()->columnSpan(2),
                     ])->columnSpanFull(),
                 TextInput::make('ranking_note')->label('Note')->maxLength(190)->columnSpanFull()->helperText('Small print under the ranking cards, e.g. the year the ranking refers to.'),
             ]),
