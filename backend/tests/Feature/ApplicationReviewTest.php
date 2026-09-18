@@ -72,11 +72,14 @@ class ApplicationReviewTest extends TestCase
 
         app(ApplicationReviewService::class)->transition($app, ApplicationStatus::Review, $this->staff());
 
-        $this->assertSame(ApplicationStatus::Review, $app->refresh()->status);
+        // refresh() goes through newQueryWithoutScopes(), which drops net 1 but
+        // not RLS, and staff hold no tenant - so the read-back uses the same hatch
+        // the staff screens get from StaffRlsRead for a whole request.
+        $this->assertSame(ApplicationStatus::Review, RlsBypass::run(fn () => $app->refresh())->status);
         // status events are tenant-scoped and staff hold no tenant, so the
-        // assertion opts out of the scope the same way the staff screen does
-        $this->assertSame(1, ApplicationStatusEvent::withoutGlobalScope(BelongsToAgencyScope::class)
-            ->where('application_id', $app->id)->where('to_status', 'review')->count());
+        // assertion opts out of BOTH nets the same way the staff screen does
+        $this->assertSame(1, RlsBypass::run(fn () => ApplicationStatusEvent::withoutGlobalScope(BelongsToAgencyScope::class)
+            ->where('application_id', $app->id)->where('to_status', 'review')->count()));
     }
 
     public function test_an_illegal_jump_is_refused(): void
@@ -111,8 +114,18 @@ class ApplicationReviewTest extends TestCase
 
         app(ApplicationReviewService::class)->transition($app, ApplicationStatus::Review, $staff, 'Docs look complete');
 
-        $note = PartnerNotification::withoutGlobalScope(BelongsToAgencyScope::class)
-            ->where('agency_id', $app->agency_id)->where('title', 'Application updated')->first();
+        // The notification IS written - the create() runs inside a bound tenant, so
+        // WITH CHECK is satisfied. Only this read-back was unscoped.
+        //
+        // RlsBypass would NOT work here: partner_notifications is strict by
+        // design, its policy carrying no rls_bypass branch because no staff
+        // screen reads it. So assert it the way its owner reads it, with the
+        // tenant bound - which leaves both nets on and needs no scope stripping
+        // or explicit agency_id filter at all.
+        $note = TenantScope::runAs(
+            (int) $app->agency_id,
+            fn () => PartnerNotification::where('title', 'Application updated')->first()
+        );
         $this->assertNotNull($note, 'the owning agency must be told');
 
         $audit = ContentAuditLog::where('entity', 'application')->where('entity_id', (string) $app->id)->latest('id')->first();

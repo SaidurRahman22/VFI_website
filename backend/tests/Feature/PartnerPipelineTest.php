@@ -93,8 +93,15 @@ class PartnerPipelineTest extends TestCase
         $this->asPartner($user, $agency->id)->getJson('/api/partner/dashboard/kpis')
             ->assertJsonPath('counts.submitted', 1)->assertJsonPath('counts.review', 0)->assertJsonPath('total', 1);
 
+        // The request above ended with EnsurePartner::terminate(), which resets
+        // app.agency_id while leaving the TenantContext singleton bound - so net 1
+        // is on and net 2 is off. This is a WRITE to an RLS FORCE table and
+        // WITH CHECK carries no bypass by design, so the tenant has to be really
+        // bound, not bypassed. runAs is how production performs it.
         // transition → review: exactly one new event, counter moves
-        $pipeline->transition($app, ApplicationStatus::Review, ActorType::Staff, $user->id, 'Moved to review');
+        TenantScope::runAs((int) $agency->id, fn () => $pipeline->transition(
+            $app, ApplicationStatus::Review, ActorType::Staff, $user->id, 'Moved to review'
+        ));
         $this->assertSame(2, ApplicationStatusEvent::where('application_id', $app->id)->count());
 
         $this->asPartner($user, $agency->id)->getJson('/api/partner/dashboard/kpis')

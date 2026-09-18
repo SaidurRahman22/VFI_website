@@ -77,7 +77,10 @@ class PartnerShortlistTest extends TestCase
             ->assertJsonPath('shortlist.program_id', $pid)
             ->assertJsonPath('shortlist.note', 'good fit');
 
-        $row = ProgramShortlist::firstOrFail();
+        // EnsurePartner::terminate() reset app.agency_id when the request above
+        // ended, leaving net 1 bound and net 2 unbound. program_shortlists'
+        // policy has no bypass branch, so the tenant must be really bound.
+        $row = TenantScope::runAs((int) $agency->id, fn () => ProgramShortlist::firstOrFail());
         $this->assertSame($agency->id, $row->agency_id);   // from session
         $this->assertSame($user->id, $row->created_by_user_id);
 
@@ -95,7 +98,9 @@ class PartnerShortlistTest extends TestCase
         $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/shortlist", ['program_id' => $pid, 'note' => 'updated'])
             ->assertStatus(200)->assertJsonPath('shortlist.note', 'updated');
 
-        $this->assertSame(1, ProgramShortlist::count());
+        // Both POSTs passed WITH CHECK with a tenant bound, so the rows are right;
+        // it is this count that ran unbound after terminate().
+        $this->assertSame(1, TenantScope::runAs((int) $agency->id, fn () => ProgramShortlist::count()));
     }
 
     public function test_remove_from_shortlist(): void
@@ -139,8 +144,14 @@ class PartnerShortlistTest extends TestCase
         $this->asPartner($userA, $agencyA->id)->postJson("/api/partner/students/{$sA->id}/shortlist", ['program_id' => $pid])->assertStatus(201);
         $this->asPartner($userB, $agencyB->id)->postJson("/api/partner/students/{$sB->id}/shortlist", ['program_id' => $pid])->assertStatus(201);
 
-        // same program shortlisted by both agencies (different students) — no clash
-        $this->assertSame(2, ProgramShortlist::withoutGlobalScopes()->count());
+        // Same program shortlisted by both agencies (different students) — no
+        // clash. Counted one tenant at a time: program_shortlists carries RLS
+        // FORCE and its policy has NO rls_bypass branch, so a bypass would read
+        // zero here - and withoutGlobalScopes() has to go, because with RLS bound
+        // to one agency it would count 1 on Postgres and 2 on SQLite, which would
+        // re-break the default suite to fix this one.
+        $this->assertSame(1, TenantScope::runAs((int) $agencyA->id, fn () => ProgramShortlist::count()));
+        $this->assertSame(1, TenantScope::runAs((int) $agencyB->id, fn () => ProgramShortlist::count()));
 
         $this->asPartner($userA, $agencyA->id)->getJson("/api/partner/students/{$sA->id}/shortlist")
             ->assertStatus(200)->assertJsonCount(1, 'data');

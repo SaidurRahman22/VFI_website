@@ -77,14 +77,31 @@ class StaffApplicationActionsTest extends TestCase
         return RlsBypass::run(fn () => $app->withoutGlobalScope(BelongsToAgencyScope::class)->find($app->id));
     }
 
+
+    /**
+     * Stand up what the HTTP stack gives every real panel request.
+     *
+     * Production wraps both the /manage render and the /livewire/update that
+     * every button acts through in App\Http\Middleware\StaffRlsRead, which
+     * holds `app.rls_bypass = on` for the whole request. Livewire::test() runs
+     * no middleware at all, so on Postgres the RLS FORCE policy on
+     * `applications` empties the resource query and Filament resolves every
+     * record to null - the queue renders with no rows and actions report
+     * "Record [N] no longer exists". A no-op on SQLite, which has no RLS.
+     */
+    private function asPanelRequest(callable $fn): mixed
+    {
+        return RlsBypass::run($fn);
+    }
+
     public function test_the_applications_page_renders_for_staff(): void
     {
         $this->actingAs($this->staff());
         $app = $this->application();
 
-        Livewire::test(ListStaffApplications::class)
+        $this->asPanelRequest(fn () => Livewire::test(ListStaffApplications::class)
             ->assertOk()
-            ->assertCanSeeTableRecords([$app]);
+            ->assertCanSeeTableRecords([$app]));
     }
 
     public function test_the_move_action_advances_the_case(): void
@@ -92,11 +109,17 @@ class StaffApplicationActionsTest extends TestCase
         $this->actingAs($this->staff());
         $app = $this->application();
 
-        Livewire::test(ListStaffApplications::class)
-            ->callTableAction('advance', $app, ['to' => ApplicationStatus::Review->value, 'reason' => 'Docs complete'])
-            ->assertHasNoTableActionErrors();
+        $this->asPanelRequest(function () use ($app) {
+            Livewire::test(ListStaffApplications::class)
+                ->callTableAction('advance', $app, ['to' => ApplicationStatus::Review->value, 'reason' => 'Docs complete'])
+                ->assertHasNoTableActionErrors();
 
-        $this->assertSame(ApplicationStatus::Review, $app->refresh()->status);
+            // The read-back needs the bypass too: refresh() goes through
+            // newQueryWithoutScopes(), which drops net 1 but not RLS, and
+            // firstOrFail()s - so this line would throw where the action no
+            // longer does.
+            $this->assertSame(ApplicationStatus::Review, $app->refresh()->status);
+        });
     }
 
     public function test_the_move_action_refuses_an_illegal_jump(): void
@@ -106,10 +129,17 @@ class StaffApplicationActionsTest extends TestCase
 
         // submitted -> visa_received skips the whole pipeline; the guard should
         // hold and the record must not move
-        Livewire::test(ListStaffApplications::class)
-            ->callTableAction('advance', $app, ['to' => ApplicationStatus::VisaReceived->value]);
+        $this->asPanelRequest(function () use ($app) {
+            Livewire::test(ListStaffApplications::class)
+                // Asserted first because the rest of this test cannot tell "the
+                // guard held" from "the action never ran": a silently empty queue
+                // also leaves the status untouched, which is precisely how this
+                // class of breakage stayed invisible.
+                ->assertTableActionExists('advance', record: $app)
+                ->callTableAction('advance', $app, ['to' => ApplicationStatus::VisaReceived->value]);
 
-        $this->assertSame(ApplicationStatus::Submitted, $app->refresh()->status);
+            $this->assertSame(ApplicationStatus::Submitted, $app->refresh()->status);
+        });
     }
 
     public function test_the_add_note_action_stores_a_note(): void
@@ -117,9 +147,9 @@ class StaffApplicationActionsTest extends TestCase
         $this->actingAs($this->staff());
         $app = $this->application();
 
-        Livewire::test(ListStaffApplications::class)
+        $this->asPanelRequest(fn () => Livewire::test(ListStaffApplications::class)
             ->callTableAction('addNote', $app, ['body' => 'Rang the admissions desk.'])
-            ->assertHasNoTableActionErrors();
+            ->assertHasNoTableActionErrors());
 
         $this->assertSame(1, ApplicationNote::where('application_id', $app->id)->count());
         $this->assertSame('Rang the admissions desk.', ApplicationNote::first()->body);
@@ -130,8 +160,13 @@ class StaffApplicationActionsTest extends TestCase
         $this->actingAs($this->staff());
         $app = $this->application();
 
-        Livewire::test(ListStaffApplications::class)
+        // NOTE this test is currently vacuous and passes on Postgres only by
+        // accident: mountAction swallows ActionNotResolvableException and
+        // unmounts, and assertOk() is satisfied either way. Wrapped so it runs
+        // like production; it still needs a real assertion on the modal content
+        // to be worth anything.
+        $this->asPanelRequest(fn () => Livewire::test(ListStaffApplications::class)
             ->mountTableAction('viewNotes', $app)
-            ->assertOk();
+            ->assertOk());
     }
 }

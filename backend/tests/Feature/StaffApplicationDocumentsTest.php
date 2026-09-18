@@ -113,15 +113,32 @@ class StaffApplicationDocumentsTest extends TestCase
         ]);
     }
 
+
+    /**
+     * Stand up what the HTTP stack gives every real panel request.
+     *
+     * Production wraps both the /manage render and the /livewire/update that
+     * every button acts through in App\Http\Middleware\StaffRlsRead, which
+     * holds `app.rls_bypass = on` for the whole request. Livewire::test() runs
+     * no middleware at all, so on Postgres the RLS FORCE policy on
+     * `applications` empties the resource query and Filament resolves every
+     * record to null - the queue renders with no rows and actions report
+     * "Record [N] no longer exists". A no-op on SQLite, which has no RLS.
+     */
+    private function asPanelRequest(callable $fn): mixed
+    {
+        return RlsBypass::run($fn);
+    }
+
     public function test_the_queue_shows_a_documents_column(): void
     {
         $this->actingAs($this->staff());
         $app = $this->application();
 
-        Livewire::test(ListStaffApplications::class)
+        $this->asPanelRequest(fn () => Livewire::test(ListStaffApplications::class)
             ->assertOk()
             ->assertCanSeeTableRecords([$app])
-            ->assertTableColumnExists('documents_readiness');
+            ->assertTableColumnExists('documents_readiness'));
     }
 
     /** The badge reads ApplicationReadiness, so this runs against the real one. */
@@ -138,9 +155,9 @@ class StaffApplicationDocumentsTest extends TestCase
             return new ApplicationReadiness;
         });
 
-        Livewire::test(ListStaffApplications::class)
+        $this->asPanelRequest(fn () => Livewire::test(ListStaffApplications::class)
             ->assertOk()
-            ->assertTableColumnStateSet('documents_readiness', '1/6', $app);
+            ->assertTableColumnStateSet('documents_readiness', '1/6', $app));
 
         // The service memoises document_types on the instance it is asked on, so
         // the page has to share ONE: resolving it per row would turn static
@@ -154,11 +171,11 @@ class StaffApplicationDocumentsTest extends TestCase
         $app = $this->application();
 
         // The empty case is the one staff most need to see: nothing to process.
-        Livewire::test(ListStaffApplications::class)
+        $this->asPanelRequest(fn () => Livewire::test(ListStaffApplications::class)
             ->mountTableAction('documents', $app)
             ->assertOk()
             ->assertMountedActionModalSee('NOT READY')
-            ->assertMountedActionModalSee('Passport (bio page)');
+            ->assertMountedActionModalSee('Passport (bio page)'));
     }
 
     public function test_the_documents_action_opens_for_a_case_with_an_upload(): void
@@ -167,13 +184,13 @@ class StaffApplicationDocumentsTest extends TestCase
         $app = $this->application();
         $doc = $this->upload($app->student_id);
 
-        Livewire::test(ListStaffApplications::class)
+        $this->asPanelRequest(fn () => Livewire::test(ListStaffApplications::class)
             ->mountTableAction('documents', $app)
             ->assertOk()
             ->assertMountedActionModalSee('passport.pdf')
             ->assertMountedActionModalSee('Open file')
             // the existing staff route, not a second download path
-            ->assertMountedActionModalSee(route('staff.documents.download', $doc->id));
+            ->assertMountedActionModalSee(route('staff.documents.download', $doc->id)));
     }
 
     public function test_a_staff_member_without_the_ability_cannot_reach_the_queue(): void

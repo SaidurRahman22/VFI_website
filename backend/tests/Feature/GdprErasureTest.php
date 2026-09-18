@@ -25,6 +25,7 @@ use App\Models\TermsAcceptance;
 use App\Models\User;
 use App\Services\DocumentStorage;
 use App\Services\Gdpr\DataSubjectErasureService;
+use App\Support\RlsBypass;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -250,8 +251,13 @@ class GdprErasureTest extends TestCase
             $this->assertStringContainsString('retention', $e->getMessage());
         }
 
+        // The legal hold itself is fine: heldApplications() already takes its
+        // count inside TenantScope::runAs, so erasure really is blocked on
+        // Postgres. It was only this read-back that was unscoped -
+        // withoutGlobalScopes() drops net 1 and `applications` still has RLS
+        // FORCE, with no tenant bound here.
         // the application is untouched
-        $fresh = Application::withoutGlobalScopes()->find($app->id);
+        $fresh = RlsBypass::run(fn () => Application::withoutGlobalScopes()->find($app->id));
         $this->assertNotNull($fresh);
         $this->assertSame($before, $fresh->only(['agency_id', 'student_id', 'status', 'ack_no']));
 

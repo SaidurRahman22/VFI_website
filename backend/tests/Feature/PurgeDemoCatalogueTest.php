@@ -436,8 +436,11 @@ class PurgeDemoCatalogueTest extends TestCase
         $this->assertSame('scorecard', $audit->after['program_source']);
         $this->assertLessThanOrEqual(64, strlen($audit->action), 'content_audit_log.action is varchar(64)');
 
-        $event = ApplicationStatusEvent::withoutGlobalScope(BelongsToAgencyScope::class)
-            ->where('application_id', $app->id)->sole();
+        // The command wrote this correctly, inside TenantScope::runAs. It is the
+        // read-back that needs both nets stood down: withoutGlobalScope for net 1
+        // and the app's audited bypass for net 2, which this policy names.
+        $event = RlsBypass::run(fn () => ApplicationStatusEvent::withoutGlobalScope(BelongsToAgencyScope::class)
+            ->where('application_id', $app->id)->sole());
         $this->assertSame('system', $event->actor_type->value);
         $this->assertSame('submitted', $event->to_status, 'the status itself must not move');
         $this->assertStringContainsString('demo-catalogue purge', $event->note);
