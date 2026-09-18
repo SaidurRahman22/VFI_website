@@ -1,9 +1,10 @@
-// Stamps every root *.html reference to css/*.css and js/*.js with ?v=<hash of the
-// file's bytes>. nginx serves static assets with a 7-day public cache and the assets
-// have no fingerprint in their names, so without this a returning browser keeps the
-// old css/js while getting new html — the exact split that broke partner-applications.
+// Stamps every root *.html reference to css/*.css, js/*.js and assets/ images with
+// ?v=<hash of the file's bytes>. nginx serves all of them from one location block with
+// a 7-day public cache (deploy/nginx/production.conf:75) and none of them carry a
+// fingerprint in the filename, so without this a returning browser keeps the old asset
+// while getting new html — the exact split that broke partner-applications.
 //
-// Run: node tools/stamp-assets.mjs   (after ANY change under css/ or js/)
+// Run: node tools/stamp-assets.mjs   (after ANY change under css/, js/ or assets/)
 
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
@@ -12,14 +13,27 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// Only css/ and js/ are versioned; anything else (absolute, protocol-relative, or a
-// backend route like /api/content/bootstrap.js) is left exactly as the author wrote it.
-const LOCAL_ASSET = /^(?:css|js)\/[^?#]+\.(?:css|js)$/;
+// Only css/, js/ and assets/ are versioned; anything else (absolute, protocol-relative,
+// or a backend route like /api/content/bootstrap.js) is left exactly as the author wrote
+// it. The extension list for assets/ is the one nginx caches, so nothing gets stamped
+// that is not also being held for a week.
+const LOCAL_ASSET =
+  /^(?:(?:css|js)\/[^?#]+\.(?:css|js)|assets\/[^?#]+\.(?:png|jpe?g|svg|webp|gif|ico|avif))$/;
 // A reference is any quoted string whose whole value is a local asset path. Keying off
 // the value rather than href=/src= is deliberate: admin.html loads js/admin.js only by
 // handing that path as a plain string to a dynamic <script> builder, so an attribute-only
 // match would leave the admin panel's main script permanently on the 7-day cache.
-const REFERENCE = /("|')((?:css|js)\/[^"']+)\1/g;
+//
+// The cost of matching on the value: a `data-*` attribute holding a bare asset path would
+// be stamped too, and js/store.js proves such paths are used as LOOKUP KEYS (imgId,
+// resolved through VFI.getImage). No HTML attribute holds one today - checked - but if
+// one is ever added it must not be a plain quoted asset path.
+const REFERENCE = /("|')((?:css|js|assets)\/[^"']+)\1/g;
+// Inline background images: style="background-image:url('assets/img/x.jpg')". There are
+// 149 of those against 63 quoted attribute values, so the quoted form alone would have
+// left most of the site's imagery unstamped. CSS makes the quote optional, hence the
+// backreference on a group that is allowed to be empty.
+const INLINE_URL = /url\(\s*("|'|)((?:css|js|assets)\/[^"')]+)\1\s*\)/g;
 
 const hashes = new Map();
 
@@ -54,16 +68,18 @@ for (const page of pages) {
   const before = readFileSync(file, 'utf8');
   let stamped = 0;
 
-  const after = before.replace(REFERENCE, (whole, quote, value) => {
+  // One rewriting rule, reached through two syntaxes. Returns null when the value
+  // should be left exactly as the author wrote it.
+  const restamp = (value) => {
     const split = value.indexOf('?');
     const assetPath = split === -1 ? value : value.slice(0, split);
     const query = split === -1 ? '' : value.slice(split + 1);
-    if (!LOCAL_ASSET.test(assetPath)) return whole;
+    if (!LOCAL_ASSET.test(assetPath)) return null;
 
     const hash = hashOf(assetPath);
     if (hash === null) {
       missing.add(assetPath);
-      return whole;
+      return null;
     }
 
     // Drop any previous ?v= but keep other params, so re-running only moves the hash.
@@ -72,10 +88,21 @@ for (const page of pages) {
       .filter((p) => p && !p.startsWith('v='))
       .join('&');
     const next = assetPath + '?' + (kept ? kept + '&' : '') + 'v=' + hash;
-    if (next === value) return whole;
+    return next === value ? null : next;
+  };
 
+  let after = before.replace(REFERENCE, (whole, quote, value) => {
+    const next = restamp(value);
+    if (next === null) return whole;
     stamped += 1;
     return quote + next + quote;
+  });
+
+  after = after.replace(INLINE_URL, (whole, quote, value) => {
+    const next = restamp(value);
+    if (next === null) return whole;
+    stamped += 1;
+    return 'url(' + quote + next + quote + ')';
   });
 
   if (after !== before) {
@@ -97,4 +124,36 @@ console.log(
 
 if (missing.size) {
   console.log('stamp-assets: referenced but not on disk (left alone): ' + [...missing].join(', '));
+}
+
+// css/ is NOT scanned for url(...) image references, and that gap has a reason:
+// rewriting a stylesheet changes its bytes, so the ?v= every HTML page carries for THAT
+// stylesheet would have to be recomputed after the rewrite rather than in the same pass.
+// There are zero such references today, so the ordering was not built for a case that
+// does not exist - but silence would turn it into a stale-image bug that looks like
+// nothing at all, so it shouts instead.
+const IMAGE_URL_IN_CSS =
+  /url\(\s*["']?([^"')]+\.(?:png|jpe?g|svg|webp|gif|ico|avif))["']?\s*\)/gi;
+const cssImageRefs = [];
+try {
+  for (const entry of readdirSync(join(ROOT, 'css'), { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.css')) continue;
+    const text = readFileSync(join(ROOT, 'css', entry.name), 'utf8');
+    for (const match of text.matchAll(IMAGE_URL_IN_CSS)) {
+      const ref = match[1];
+      // Remote and inline images are nobody's cache problem here.
+      if (/^(?:https?:)?\/\//.test(ref) || ref.startsWith('data:')) continue;
+      cssImageRefs.push(entry.name + ' → ' + ref);
+    }
+  }
+} catch {
+  // No css/ directory: nothing to warn about.
+}
+if (cssImageRefs.length) {
+  console.log(
+    'stamp-assets: WARNING — ' + plural(cssImageRefs.length, 'image url() reference') +
+    ' inside css/ is NOT stamped, and will be served stale for up to 7 days:'
+  );
+  for (const ref of cssImageRefs) console.log('  ' + ref);
+  console.log('  Fixing that means rewriting the stylesheet, then re-hashing it for the HTML.');
 }
