@@ -1,1 +1,0 @@
-import{F as t,E as s,G as a,d as n,M as o,R as r,Y as c}from"./j7nQV3P0.js";const i={class:"d-flex align-center gap-3 pa-6"},u={__name:"index",setup(p){return t(()=>{s().replace("/content/public")}),(d,e)=>(r(),a("div",i,[n(c,{indeterminate:"",size:"20"}),e[0]||(e[0]=o("span",{class:"text-body-2"},"Opening website content…",-1))]))}};export{u as default};

@@ -89,6 +89,12 @@ export default defineNuxtConfig({
         '/content/public',
         '/content/partner',
         '/settings',
+        // The other two singletons the server declares a form for. Prerendered
+        // for the same reason as everything else here: without an entry a hard
+        // refresh on the route is a 404, and failOnError makes a wrong entry a
+        // build failure instead of a production surprise.
+        '/text/partner-page',
+        '/text/partner-portal',
         '/pages',
         '/images',
         '/backup',

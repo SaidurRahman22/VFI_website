@@ -59,6 +59,14 @@ const sections = [
         children: [
           { title: 'Public website', icon: 'ri-global-line', to: '/content/public' },
           { title: 'Partner console', icon: 'ri-briefcase-line', to: '/content/partner' },
+          /*
+            Page WORDING, as opposed to the lists above. Both had a complete
+            field schema on the server and no screen at all, so the text on the
+            public partner page and inside the partner console could not be
+            changed by anyone. Titles are the server's own labels.
+          */
+          { title: 'Partner page', icon: 'ri-article-line', to: '/text/partner-page' },
+          { title: 'Partner console text', icon: 'ri-chat-quote-line', to: '/text/partner-portal' },
         ],
       },
       { title: 'Page images', icon: 'ri-image-line', to: '/images', ability: 'content.manage' },
