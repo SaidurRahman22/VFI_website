@@ -48,6 +48,14 @@ Check the licence line before reusing any of it anywhere else.
 - **Attribution:** Clemenspool / Wikimedia Commons (CC0 1.0)
 - **Stored:** 1003 KB after optimising
 
+## Logo and hero: NOT used
+
+`aalen-logo.jpg` and `aalen-hero.jpg` are downloaded and kept here, but the
+profile does NOT write them. A logo and a hero were uploaded through the admin
+form (`01M2SNB11DFP4B6KXNNWS9C7V3.png`, `01M2SNCATMM4CBZ4VFJ6AD1Z8Z.webp`) and
+both serve correctly, so writing over them would discard real work for no gain.
+The two files stay here as a licensed fallback if either upload is ever lost.
+
 ## Not used, deliberately
 
 The university's own campus photography (e.g. `csm_09_18.06.2025_14_*.jpg` on
