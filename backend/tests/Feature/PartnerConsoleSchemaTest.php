@@ -11,6 +11,7 @@ use App\Models\Partner\ApplicationStatusEvent;
 use App\Models\Partner\PartnerAgency;
 use App\Models\Student\Student;
 use App\Models\User;
+use App\Support\RlsBypass;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -73,7 +74,12 @@ class PartnerConsoleSchemaTest extends TestCase
         $this->assertSame(1, Application::count());                                    // own tenant only
         $this->tenant()->clear();
         $this->assertSame(0, Application::count());                                    // fail-closed
-        $this->assertSame(2, Application::withoutGlobalScope(BelongsToAgencyScope::class)->count());
+        // Both cases really exist. withoutGlobalScope lifts net 1; net 2 (RLS
+        // FORCE on applications) lifts only through the app's escape hatch, whose
+        // flag that policy names (2026_08_18_000002). No-op on SQLite.
+        $this->assertSame(2, RlsBypass::run(
+            fn () => Application::withoutGlobalScope(BelongsToAgencyScope::class)->count()
+        ));
     }
 
     public function test_status_event_is_append_only_and_auto_stamps_agency(): void

@@ -11,6 +11,7 @@ use App\Models\Partner\PartnerAgency;
 use App\Models\Partner\PartnerAgencyMember;
 use App\Models\Partner\PartnerApplication;
 use App\Models\User;
+use App\Support\RlsBypass;
 use App\Support\TenantContext;
 use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -77,9 +78,14 @@ class PartnerSchemaTest extends TestCase
         $this->tenant()->clear();
         $this->assertSame(0, PartnerAgencyMember::count());
 
-        // the escape hatch shows both rows exist (app-scope removed; RLS is the
-        // Postgres-only second net, exercised in staging)
-        $this->assertSame(2, PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)->count());
+        // Both seats really exist. withoutGlobalScope lifts net 1 only; net 2 is
+        // Postgres RLS FORCE, and the members policy names app.rls_bypass
+        // (2026_08_14_000004) - so the app's own audited escape hatch is what
+        // lifts it. RlsBypass is a no-op off Postgres, so this is one assertion
+        // for both drivers rather than a claim only SQLite could satisfy.
+        $this->assertSame(2, RlsBypass::run(
+            fn () => PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)->count()
+        ));
     }
 
     public function test_seat_role_and_status_cast(): void

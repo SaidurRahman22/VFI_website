@@ -5,10 +5,10 @@ namespace Tests\Feature;
 use App\Models\Catalogue\Institution;
 use App\Models\Catalogue\ProgramSearchRow;
 use App\Models\Catalogue\ProgramShortlist;
-use App\Models\Concerns\BelongsToAgencyScope;
 use App\Models\Partner\PartnerAgency;
 use App\Models\Student\Student;
 use App\Support\TenantContext;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -74,6 +74,16 @@ class CatalogueSchemaTest extends TestCase
         $this->assertSame('A1 pick', ProgramShortlist::first()->note);
         app(TenantContext::class)->clear();
         $this->assertSame(0, ProgramShortlist::count());   // fail-closed
-        $this->assertSame(2, ProgramShortlist::withoutGlobalScope(BelongsToAgencyScope::class)->count());
+
+        // Both rows really exist - proved one tenant at a time, which is the only
+        // cross-driver way for THIS table. Unlike the members and applications
+        // policies, program_shortlists' policy carries no app.rls_bypass disjunct,
+        // deliberately: no staff screen reads shortlists across tenants, and
+        // widening a policy to suit a test would be backwards. runAs sets BOTH
+        // nets, so the numbers are identical on SQLite and Postgres - and it
+        // asserts something stronger than the old line did, namely that each row
+        // is visible to its owner and only to it.
+        $this->assertSame(1, TenantScope::runAs((int) $a1->id, fn () => ProgramShortlist::count()));
+        $this->assertSame(1, TenantScope::runAs((int) $a2->id, fn () => ProgramShortlist::count()));
     }
 }

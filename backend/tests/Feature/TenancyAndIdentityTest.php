@@ -55,18 +55,43 @@ class TenancyAndIdentityTest extends TestCase
         $this->tenant()->setAgencyId(2);
         SyntheticPartnerRow::create(['label' => 'b']);
 
-        $stripped = SyntheticPartnerRow::withoutGlobalScope(BelongsToAgencyScope::class)->count();
-
         if (DB::connection()->getDriverName() === 'pgsql') {
-            // RLS FORCE denies the read even with the app scope removed
-            DB::statement("SET LOCAL app.agency_id = '1'");
-            $this->assertSame(0, $stripped, 'RLS should deny cross-tenant read');
-        } else {
-            // No RLS on sqlite/mysql: document that stripping the scope is a
-            // deliberate, audited escape hatch — the app scope is the net here.
-            $this->assertSame(2, $stripped);
-            $this->markTestIncomplete('RLS second net is Postgres-only; verified there in staging.');
+            /*
+             * Agency 2 is still bound, and that is the assertion: stripping the
+             * app scope must NOT reveal agency 1's row, because RLS FORCE keeps
+             * the read inside whatever tenant is bound.
+             *
+             * The previous version took the count BEFORE deciding what it
+             * expected and then ran `SET LOCAL app.agency_id = '1'` four lines
+             * AFTER the query that line was meant to set up - so it measured
+             * agency 2's single row and asserted 0, and reported "RLS should deny
+             * cross-tenant read" when RLS had done exactly its job. (SET LOCAL
+             * outside a transaction is a no-op in any case.) Of the 24 Postgres
+             * failures this was the only one that looked like a real tenancy
+             * hole; it was the test.
+             */
+            $this->assertSame(
+                1,
+                SyntheticPartnerRow::withoutGlobalScope(BelongsToAgencyScope::class)->count(),
+                'RLS must keep a scope-stripped read inside the bound tenant'
+            );
+            $this->assertSame('b', SyntheticPartnerRow::withoutGlobalScope(BelongsToAgencyScope::class)->value('label'));
+
+            // Nothing bound: RLS is the only net left, and it must fail closed.
+            $this->tenant()->clear();
+            $this->assertSame(
+                0,
+                SyntheticPartnerRow::withoutGlobalScope(BelongsToAgencyScope::class)->count(),
+                'RLS must fail closed with no tenant bound'
+            );
+
+            return;
         }
+
+        // No RLS on sqlite/mysql: document that stripping the scope is a
+        // deliberate, audited escape hatch — the app scope is the net here.
+        $this->assertSame(2, SyntheticPartnerRow::withoutGlobalScope(BelongsToAgencyScope::class)->count());
+        $this->markTestIncomplete('RLS second net is Postgres-only; the Postgres CI leg exercises it.');
     }
 
     public function test_tenant_bound_role_requires_agency_id(): void
