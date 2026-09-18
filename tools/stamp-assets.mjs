@@ -157,3 +157,48 @@ if (cssImageRefs.length) {
   for (const ref of cssImageRefs) console.log('  ' + ref);
   console.log('  Fixing that means rewriting the stylesheet, then re-hashing it for the HTML.');
 }
+
+// Say what is NOT covered, every run. "212 references restamped" on its own reads as
+// "the images are fingerprinted", and the ones reached through js/ are not. Measured on
+// the live home page: the .fev__media and .news__media cards that JS builds carry 10
+// unstamped background URLs. Informational rather than a warning, because these are
+// decisions and not surprises - a warning on every run is a warning nobody reads.
+//
+// There are TWO distinct reasons, and they are not interchangeable:
+//
+//   js/store.js  - its paths are imgId LOOKUP KEYS, handed to VFI.getImage() to resolve
+//                  a managed override (admin.js:327, render.js:565). Stamping one breaks
+//                  resolution, not caching. This one cannot simply be stamped.
+//   every other  - plain URLs (universities.js SEASON[].img; the emblem in site.js and
+//                  portal.js markup). Safe to stamp in principle, but doing so rewrites
+//                  a .js file whose own ?v= every HTML page already carries, so it needs
+//                  a pre-pass over js/ BEFORE the page loop - not a rule inside it.
+const KEYED_SOURCES = new Set(['store.js']);
+const jsUrlRefs = new Set();
+const jsKeyedRefs = new Set();
+try {
+  for (const entry of readdirSync(join(ROOT, 'js'), { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.js')) continue;
+    const text = readFileSync(join(ROOT, 'js', entry.name), 'utf8');
+    if (!/assets\/[^"'`)\s]+\.(?:png|jpe?g|svg|webp|gif|ico|avif)/i.test(text)) continue;
+    (KEYED_SOURCES.has(entry.name) ? jsKeyedRefs : jsUrlRefs).add(entry.name);
+  }
+} catch {
+  // No js/ directory: nothing to report.
+}
+if (jsKeyedRefs.size || jsUrlRefs.size) {
+  console.log('stamp-assets: image paths in js/ are NOT stamped — they keep the 7-day window.');
+  if (jsKeyedRefs.size) {
+    console.log(
+      '  ' + [...jsKeyedRefs].sort().join(', ') +
+      ': imgId lookup keys. A stamp breaks resolution, not caching — cannot be stamped.'
+    );
+  }
+  if (jsUrlRefs.size) {
+    console.log(
+      '  ' + [...jsUrlRefs].sort().join(', ') +
+      ': plain URLs. Stampable, but rewriting a .js file invalidates the ?v= HTML carries'
+    );
+    console.log('    for it, so it needs a pre-pass over js/ before the page loop.');
+  }
+}
