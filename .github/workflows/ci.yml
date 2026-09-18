@@ -210,7 +210,7 @@ jobs:
 
           total = counts['failure'] + counts['error']
           if not total:
-              print('::notice::postgres suite is GREEN - promote this job to BLOCK by deleting continue-on-error')
+              print('::notice::postgres suite is GREEN - keep it that way; this job BLOCKS')
               raise SystemExit(0)
 
           header = 'postgres 16: %d failing (%d failures, %d errors)' % (
