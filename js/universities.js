@@ -416,7 +416,10 @@
         panels += '<div class="utabpanel" data-panel="c-' + esc(lvl) + '"' + (i === 0 ? '' : ' hidden') + '>'
           + '<div class="upanel ucourses"><div class="ucourses__scroll">'
           + byLevel[lvl].map(function (c) { return courseRow(c); }).join("") + '</div></div>'
-          + (byLevel[lvl].length > 10 ? '<p class="ucourses__hint">Showing all ' + byLevel[lvl].length + ' courses — scroll the list above.</p>' : '')
+          // Rendered always, shown only when the list really overflows -
+          // sizeCourseLists() decides. "More than ten" was a proxy for
+          // overflow, and ten short titles fit where eight long ones do not.
+          + '<p class="ucourses__hint" hidden>Showing all ' + byLevel[lvl].length + ' courses — scroll the list above.</p>'
           + '</div>';
       }
       push("courses", "Courses", '<div class="utabgroup"><div class="utabs">' + tabs + '</div>' + panels + '</div>');
@@ -566,23 +569,174 @@
         var group = t.parentNode.parentNode, key = t.getAttribute("data-tab");
         $$(".utab", group).forEach(function (x) { x.classList.toggle("is-on", x === t); });
         $$(".utabpanel", group).forEach(function (pn) { pn.hidden = pn.getAttribute("data-panel") !== key; });
+        // The panel that just became visible can be measured now; the one that
+        // was hidden never could be.
+        sizeCourseLists();
       }
     });
 
+    sizeCourseLists();
     spy();
   }
 
-  /* sticky-nav scrollspy */
+  /*
+    Decide, per course list, whether it needs its own scrollbar.
+
+    CSS cannot ask how tall its content is, so this measures: with the class
+    off the box is in normal flow and scrollHeight is the natural content
+    height. Taller than the cap and it becomes a scroller; otherwise it stays
+    plain page flow and the wheel passes straight through, which is the whole
+    point - a list of five has nothing to scroll and should not behave as if it
+    does.
+
+    Called after the first paint, after a level tab switch (Masters and
+    Bachelors hold different numbers), on resize (the rows reflow and get
+    taller as the column narrows) and on load (web fonts change row heights).
+  */
+  function sizeCourseLists() {
+    $$(".ucourses__scroll").forEach(function (box) {
+      // A hidden panel measures 0, so leave it for when its tab is opened.
+      if (!box.offsetParent) return;
+
+      box.classList.remove("is-scrollable");
+
+      var cap = parseInt(getComputedStyle(box).getPropertyValue("--ucourses-max"), 10);
+      if (!cap) cap = 720;
+
+      // A few pixels of slack: a list one line over the cap is worse as a
+      // scroller than as a slightly tall box.
+      var overflows = box.scrollHeight > cap + 8;
+      if (overflows) box.classList.add("is-scrollable");
+
+      var panel = closestClass(box, "utabpanel") || box.parentNode.parentNode;
+      var hint = panel ? panel.querySelector(".ucourses__hint") : null;
+      if (hint) hint.hidden = !overflows;
+    });
+  }
+
+  /* Nearest ancestor carrying a class, since this file predates .closest(). */
+  function closestClass(el, cls) {
+    for (var n = el; n && n.nodeType === 1; n = n.parentNode) {
+      if (n.classList && n.classList.contains(cls)) return n;
+    }
+    return null;
+  }
+
+  /*
+    Sticky-nav scrollspy: the tab that is highlighted follows the section you are
+    reading, and the bar keeps the highlighted tab in view.
+
+    The reading line is measured, not assumed. The site header is fixed and
+    var(--header-h) tall (74px, 64px on a phone) and this bar rests under it, so
+    "the top of what you can actually read" is wherever those two end at this
+    width. The previous +140 was close enough on a desktop and wrong on a phone.
+
+    Positions are cached because the old version called offsetTop on every
+    section on every scroll event - a forced layout per section per event, on a
+    page that is nearly 5,000px tall. They are read through
+    getBoundingClientRect rather than offsetTop as well: offsetTop is relative
+    to the offsetParent, which is <body> today and would silently stop being it
+    the moment anything above these sections gained position: relative.
+  */
   function spy() {
     var links = $$("#uniNavList a");
     if (!links.length) return;
+
+    var nav = $("#uniNav");
+    var rail = nav ? nav.querySelector(".container") : null;
     var targets = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
-    function onScroll() {
-      var y = window.pageYOffset + 140, active = 0;
-      for (var i = 0; i < targets.length; i++) { if (targets[i] && targets[i].offsetTop <= y) active = i; }
-      for (var j = 0; j < links.length; j++) links[j].classList.toggle("is-active", j === active);
+    var tops = null;
+    var queued = false;
+
+    function docTop(el) { return el.getBoundingClientRect().top + window.pageYOffset; }
+
+    function measure() {
+      tops = targets.map(function (t) { return t ? docTop(t) : Infinity; });
     }
+
+    /* Where the page stops being hidden behind the header and this bar. */
+    function readingLine() {
+      var header = document.querySelector(".header");
+      var chrome = (header ? header.getBoundingClientRect().height : 0)
+        + (nav ? nav.getBoundingClientRect().height : 0);
+      return chrome + 24;
+    }
+
+    /*
+      Keep the active tab inside the bar. At phone width six tabs do not fit and
+      the bar scrolls horizontally, so the highlight could land off-screen.
+      Only scrollLeft is touched: scrollIntoView would also move the page
+      vertically, which is the one thing a scroll handler must never do.
+    */
+    function reveal(link) {
+      if (!rail || rail.scrollWidth <= rail.clientWidth + 1) return;
+      var pad = 16;
+      var left = link.offsetLeft;
+      var right = left + link.offsetWidth;
+      if (left - pad < rail.scrollLeft) rail.scrollLeft = Math.max(0, left - pad);
+      else if (right + pad > rail.scrollLeft + rail.clientWidth) rail.scrollLeft = right + pad - rail.clientWidth;
+    }
+
+    var current = -1;
+
+    function paint() {
+      queued = false;
+      if (!tops) measure();
+
+      var line = window.pageYOffset + readingLine();
+      var active = 0;
+      for (var i = 0; i < tops.length; i++) { if (tops[i] <= line) active = i; }
+
+      // At the very bottom, the last section wins. Below the last nav section
+      // sits the "Related universities" block, so on a short final section the
+      // line can stop short of it and the highlight would never arrive.
+      if (window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 4) {
+        active = links.length - 1;
+      }
+
+      if (active === current) return;
+      current = active;
+
+      for (var j = 0; j < links.length; j++) {
+        var on = j === active;
+        links[j].classList.toggle("is-active", on);
+        // Not colour alone: a screen reader has to be able to say which one.
+        if (on) links[j].setAttribute("aria-current", "true");
+        else links[j].removeAttribute("aria-current");
+      }
+      reveal(links[active]);
+    }
+
+    function onScroll() {
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(paint);
+    }
+
+    function onResize() {
+      // Heights and offsets both change with width: --header-h drops to 64px on
+      // a phone and the sections reflow.
+      tops = null;
+      current = -1;
+      onScroll();
+    }
+
+    function onReflow() {
+      // A narrower column makes course rows taller, so a list that fitted can
+      // stop fitting. Re-measure before re-measuring the section offsets,
+      // because this one changes them.
+      sizeCourseLists();
+      onResize();
+    }
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    window.addEventListener("resize", onReflow);
+    window.addEventListener("orientationchange", onReflow);
+
+    // Images and the lead form land after this runs and move everything below
+    // them, so re-measure once the page has settled.
+    window.addEventListener("load", onReflow);
+
+    paint();
   }
 })();

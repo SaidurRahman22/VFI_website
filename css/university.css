@@ -36,7 +36,13 @@
 
 /* ---------------- sticky section nav ---------------- */
 .udetail__nav {
-  position: sticky; top: 0; z-index: 40; background: rgba(255, 255, 255, .96);
+  /*
+    Below the header, not under it. The site header is position: fixed and
+    var(--header-h) tall, so a bar stuck at top: 0 is completely hidden by it -
+    which is exactly what was happening: the active tab was changing correctly
+    the whole way down the page and nobody could see it.
+  */
+  position: sticky; top: var(--header-h); z-index: 40; background: rgba(255, 255, 255, .96);
   backdrop-filter: blur(8px); border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line); margin-bottom: 30px;
 }
@@ -69,7 +75,12 @@
 }
 
 /* ---------------- sections ---------------- */
-.usec { scroll-margin-top: 120px; margin: 0 0 34px; }
+/*
+  Clear the header AND the sticky nav, derived rather than guessed: 120px was
+  less than the 74px header plus the ~52px bar, so clicking a tab left the
+  section heading tucked under the nav.
+*/
+.usec { scroll-margin-top: calc(var(--header-h) + 72px); margin: 0 0 34px; }
 .usec__title {
   font-family: var(--display); font-size: 1.3rem; font-weight: 700; color: var(--text);
   margin: 0 0 14px; display: flex; align-items: center; gap: 10px;
@@ -133,12 +144,26 @@
 /* course list — about 10 rows visible, the rest scrolls inside the panel so a
    long catalogue never pushes the sections below it off the page */
 .ucourses { padding: 6px 22px; }
-.ucourses__scroll { max-height: 720px; overflow-y: auto; overscroll-behavior: contain; padding-right: 10px; }
-.ucourses__scroll::-webkit-scrollbar { width: 9px; }
-.ucourses__scroll::-webkit-scrollbar-track { background: var(--bg-soft); border-radius: 999px; }
-.ucourses__scroll::-webkit-scrollbar-thumb { background: #c9d3e4; border-radius: 999px; }
-.ucourses__scroll::-webkit-scrollbar-thumb:hover { background: var(--blue); }
-.ucourses__scroll { scrollbar-width: thin; scrollbar-color: #c9d3e4 var(--bg-soft); }
+/*
+  A scroller ONLY when the list does not fit. `is-scrollable` is added by
+  sizeCourseLists() after measuring the content, because CSS cannot ask how tall
+  its own content is - and applying max-height plus overflow unconditionally
+  turned a five-course list into a scroll container with nothing to scroll.
+
+  There is deliberately no `overscroll-behavior: contain` here. That is what
+  froze the page: it stops scroll chaining, so on reaching the end of the list
+  the wheel did nothing until the pointer was moved out of the box. A reader
+  scrolling PAST the courses should keep going.
+*/
+.ucourses__scroll { --ucourses-max: 720px; }
+.ucourses__scroll.is-scrollable {
+  max-height: var(--ucourses-max); overflow-y: auto; padding-right: 10px;
+  scrollbar-width: thin; scrollbar-color: #c9d3e4 var(--bg-soft);
+}
+.ucourses__scroll.is-scrollable::-webkit-scrollbar { width: 9px; }
+.ucourses__scroll.is-scrollable::-webkit-scrollbar-track { background: var(--bg-soft); border-radius: 999px; }
+.ucourses__scroll.is-scrollable::-webkit-scrollbar-thumb { background: #c9d3e4; border-radius: 999px; }
+.ucourses__scroll.is-scrollable::-webkit-scrollbar-thumb:hover { background: var(--blue); }
 .ucourses__hint { margin: 10px 2px 0; font-size: .82rem; color: var(--muted); font-weight: 600; }
 
 /* course rows — a fixed 2-column grid so every fee lines up in one column
