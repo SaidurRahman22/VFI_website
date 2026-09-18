@@ -144,7 +144,69 @@ jobs:
           # else - phpunit.xml pins DB_CONNECTION=sqlite, and a CI that silently
           # tests the wrong database is worse than no CI because it is believed.
           CI_EXPECT_DRIVER: pgsql
-        run: php artisan test
+        # --log-junit so the next step can report WHAT failed, not just that
+        # something did. The step still fails; the job is continue-on-error.
+        run: php artisan test --log-junit=storage/junit-postgres.xml
+
+      # Publish the failures where they can be read WITHOUT signing in.
+      #
+      # This job exists to be driven to zero, and until now the count was public
+      # while the reasons were not: a run log needs authentication, so "24
+      # failures" was readable by anyone and "which 24" by nobody. Check-run
+      # annotations are served unauthenticated for a public repo, so they go
+      # there.
+      #
+      # Aggregated into ONE annotation on purpose. GitHub renders at most 10
+      # annotations of a given level per step, and there are more failures than
+      # that, so one-annotation-per-test would truncate to an arbitrary subset -
+      # the same disease as an unreadable log, dressed up as progress.
+      - name: Report which assertions failed
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, re, xml.etree.ElementTree as ET
+
+          path = 'storage/junit-postgres.xml'
+          if not os.path.exists(path):
+              print('::warning::no JUnit report was written - the suite died before it could emit one')
+              raise SystemExit(0)
+
+          tree = ET.parse(path)
+          rows, counts = [], {'failure': 0, 'error': 0}
+          for case in tree.iter('testcase'):
+              for kind in ('failure', 'error'):
+                  for node in case.findall(kind):
+                      counts[kind] += 1
+                      where = case.get('class') or case.get('classname') or ''
+                      name = case.get('name') or ''
+                      text = ' '.join((node.text or node.get('message') or '').split())
+                      rows.append('%s::%s\n    %s' % (where.rsplit('\\', 1)[-1], name, text[:400]))
+
+          total = counts['failure'] + counts['error']
+          if not total:
+              print('::notice::postgres suite is GREEN - promote this job to BLOCK by deleting continue-on-error')
+              raise SystemExit(0)
+
+          header = 'postgres 16: %d failing (%d failures, %d errors)' % (
+              total, counts['failure'], counts['error'])
+          body = header + '\n\n' + '\n\n'.join(rows)
+          # Workflow commands are one line: encode the separators GitHub expects.
+          encoded = body.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          print('::error title=%s::%s' % (header, encoded))
+
+          summary = os.environ.get('GITHUB_STEP_SUMMARY')
+          if summary:
+              with open(summary, 'a', encoding='utf-8') as fh:
+                  fh.write('### ' + header + '\n\n```\n' + body + '\n```\n')
+          PY
+
+      - name: Keep the JUnit report as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-postgres
+          path: backend/storage/junit-postgres.xml
+          if-no-files-found: warn
 
   # --- BLOCK: dependency CVEs ------------------------------------------------
   deps:
