@@ -57,7 +57,13 @@
 
 /* ---------------- two-column body ---------------- */
 .ulayout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 34px; align-items: start; }
-.ulayout__side { position: sticky; top: 78px; }
+/*
+  Clear the header AND the section nav. 78px cleared the header alone, which was
+  enough while the nav was (invisibly) stuck at top: 0; now that the nav rests
+  at var(--header-h) and is ~58px tall, the form's heading was being clipped by
+  it. Same derivation as .usec above, so the three offsets move together.
+*/
+.ulayout__side { position: sticky; top: calc(var(--header-h) + 70px); }
 @media (max-width: 980px) {
   .ulayout { grid-template-columns: 1fr; }
   .ulayout__side { position: static; }
