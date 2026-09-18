@@ -90,7 +90,7 @@
         <section class="dsec" id="overview">
           <h2 class="dsec__title">Overview</h2>
           <p class="dsec__lead" data-cfield="overviewLead">Ireland pairs world-class universities with the European headquarters of the world's biggest technology and pharmaceutical companies — in an English-speaking country known for being safe, welcoming and easy to settle into.</p>
-          <div class="whygrid whygrid--3">
+          <div class="whygrid whygrid--3" data-crender="overview">
             <article class="whyc"><span class="whyc__ic whyc__ic--green"><svg class="ic"><use href="#i-globe"/></svg></span><h3>Europe's fastest-growing economy</h3><p>A thriving job market on your doorstep, with graduate roles across tech, pharma and finance.</p></article>
             <article class="whyc"><span class="whyc__ic whyc__ic--blue"><svg class="ic"><use href="#i-cap"/></svg></span><h3>All universities in the global top 5%</h3><p>Every Irish university ranks within the world's leading 5% of institutions.</p></article>
             <article class="whyc"><span class="whyc__ic whyc__ic--violet"><svg class="ic"><use href="#i-star"/></svg></span><h3>#10 for scientific research</h3><p>Ranked tenth globally for the quality of its scientific research output.</p></article>
@@ -147,7 +147,7 @@
               <button class="tabs__btn" data-tab="bs" type="button">Bachelors</button>
             </div>
             <div class="tabs__panel is-on" data-panel="ms">
-              <ul class="courselist">
+              <ul class="courselist" data-crender="coursesMasters">
                 <li>MSc Computer Science</li><li>MSc Data Science &amp; Analytics</li>
                 <li>MSc Artificial Intelligence &amp; Machine Learning</li><li>MSc Cybersecurity</li>
                 <li>MSc Business Analytics</li><li>MSc Finance &amp; FinTech</li>
@@ -157,7 +157,7 @@
               </ul>
             </div>
             <div class="tabs__panel" data-panel="bs">
-              <ul class="courselist">
+              <ul class="courselist" data-crender="coursesBachelors">
                 <li>BSc Computer Science</li><li>BSc Data Science</li>
                 <li>BBS Business Studies</li><li>BSc Pharmaceutical Science</li>
                 <li>BEng Engineering</li><li>BSc Biotechnology</li>
@@ -191,13 +191,13 @@
                 <button class="tabs__btn" data-tab="living" type="button">Cost of living</button>
               </div>
               <div class="tabs__panel is-on" data-panel="study">
-                <div class="costgrid costgrid--2">
+                <div class="costgrid costgrid--2" data-crender="costStudy">
                   <div class="costc"><b>€11,300 – €34,500</b><span>Master's degree (per year)</span></div>
                   <div class="costc"><b>€5,950 – €41,210</b><span>Bachelor's degree (per year)</span></div>
                 </div>
               </div>
               <div class="tabs__panel" data-panel="living">
-                <div class="costgrid costgrid--2">
+                <div class="costgrid costgrid--2" data-crender="costLiving">
                   <div class="costc"><b>€12,000 – €18,000</b><span>Living costs (per year)</span></div>
                   <div class="costc"><b>€1,060 – €2,045</b><span>Living costs (per month)</span></div>
                 </div>
@@ -222,7 +222,7 @@
         <!-- INTAKES -->
         <section class="dsec" id="intakes">
           <h2 class="dsec__title">Intakes in Ireland</h2>
-          <div class="intakes">
+          <div class="intakes" data-crender="intakes">
             <article class="intake"><div class="intake__top intake__top--ie-fall"><b>Autumn intake</b></div><div class="intake__body"><p class="intake__months">September · October</p><p>The primary intake — every program is open, along with most scholarships.</p><span class="intake__apply">Apply by: Jan – Jun</span></div></article>
             <article class="intake"><div class="intake__top intake__top--ie-spring"><b>Spring intake</b></div><div class="intake__body"><p class="intake__months">January · February</p><p>A secondary intake with a more limited selection of programs.</p><span class="intake__apply">Apply by: Sep – Nov</span></div></article>
             <article class="intake"><div class="intake__top intake__top--ie-summer"><b>Summer intake</b></div><div class="intake__body"><p class="intake__months">April</p><p>A minor intake, mainly for specific courses and research entry.</p><span class="intake__apply">Apply by: Dec – Feb</span></div></article>
@@ -240,7 +240,7 @@
                 <button class="tabs__btn" data-tab="mast" type="button">Masters</button>
               </div>
               <div class="tabs__panel is-on" data-panel="bach">
-                <ul class="critlist">
+                <ul class="critlist" data-crender="eligBachelors">
                   <li><svg class="ic"><use href="#i-check"/></svg>12 years of schooling completed</li>
                   <li><svg class="ic"><use href="#i-check"/></svg>60% – 80% in your final examinations</li>
                   <li><svg class="ic"><use href="#i-check"/></svg>IELTS 6.5 overall with no band below 6.0</li>
@@ -248,7 +248,7 @@
                 </ul>
               </div>
               <div class="tabs__panel" data-panel="mast">
-                <ul class="critlist">
+                <ul class="critlist" data-crender="eligMasters">
                   <li><svg class="ic"><use href="#i-check"/></svg>A bachelor's degree with 55% – 75%</li>
                   <li><svg class="ic"><use href="#i-check"/></svg>A relevant field of study is preferred</li>
                   <li><svg class="ic"><use href="#i-check"/></svg>IELTS 6.5 overall with no band below 6.0</li>
@@ -275,7 +275,7 @@
         <section class="dsec" id="exams">
           <h2 class="dsec__title">Exams to Study in Ireland</h2>
           <p class="dsec__lead">Irish universities accept all four major English tests. Our coaching covers each of them.</p>
-          <div class="examrow">
+          <div class="examrow" data-crender="exams">
             <a href="services.html" class="exam"><b>IELTS</b><span>6.5 overall</span></a>
             <a href="services.html" class="exam"><b>TOEFL</b><span>90+</span></a>
             <a href="services.html" class="exam"><b>PTE</b><span>63+</span></a>
@@ -288,7 +288,7 @@
         <!-- REQUIREMENTS -->
         <section class="dsec" id="requirements">
           <h2 class="dsec__title">Application Requirements in Ireland</h2>
-          <div class="reqgrid">
+          <div class="reqgrid" data-crender="requirements">
             <article class="reqc"><span class="reqc__ic"><svg class="ic"><use href="#i-book"/></svg></span><h3>Academic transcripts</h3><p>Official transcripts and certificates from every institution you have attended.</p></article>
             <article class="reqc"><span class="reqc__ic"><svg class="ic"><use href="#i-compass"/></svg></span><h3>Statement of purpose</h3><p>Why this course, why Ireland, and where you want it to take you.</p></article>
             <article class="reqc"><span class="reqc__ic"><svg class="ic"><use href="#i-users"/></svg></span><h3>Letters of recommendation</h3><p>At least two, from academic or professional referees.</p></article>
@@ -302,14 +302,14 @@
         <section class="dsec" id="visa">
           <h2 class="dsec__title">Student Visa in Ireland</h2>
           <p class="dsec__lead">Courses longer than 90 days need a Long-Stay "D" study visa. Apply about three months before you plan to travel — processing usually takes 4 to 8 weeks.</p>
-          <div class="visarow">
+          <div class="visarow" data-crender="visaCosts">
             <div class="visacost visacost--green"><b>€60</b><span>Single-entry visa fee</span></div>
             <div class="visacost visacost--green"><b>€100</b><span>Multi-entry visa fee</span></div>
             <div class="visacost visacost--green"><b>€10,000</b><span>Proof of funds, per year of study</span></div>
           </div>
           <div class="visadocs">
             <h3>Documents required for your visa application</h3>
-            <ul class="critlist critlist--2col">
+            <ul class="critlist critlist--2col" data-crender="visaDocs">
               <li><svg class="ic"><use href="#i-check"/></svg>Completed visa application form</li>
               <li><svg class="ic"><use href="#i-check"/></svg>Valid passport</li>
               <li><svg class="ic"><use href="#i-check"/></svg>Letter of admission from your university</li>
@@ -328,7 +328,7 @@
           <h2 class="dsec__title">Career Outcomes</h2>
           <p class="dsec__lead">Ireland hosts the European headquarters of many of the world's largest technology and pharmaceutical companies — most of them within walking distance of Dublin's campuses.</p>
           <h3 class="dsub">Top recruiters</h3>
-          <div class="recruiters">
+          <div class="recruiters" data-crender="recruiters">
             <span class="rlogo">Google</span><span class="rlogo">Meta</span><span class="rlogo">Apple</span>
             <span class="rlogo">Microsoft</span><span class="rlogo">LinkedIn</span><span class="rlogo">TikTok</span>
             <span class="rlogo">Intel</span><span class="rlogo">Accenture</span><span class="rlogo">Workday</span>
@@ -418,7 +418,7 @@
         <section class="dsec" id="admits">
           <h2 class="dsec__title">Top Admits of Ireland</h2>
           <p class="dsec__lead">A few of the students we placed at Irish universities this intake.</p>
-          <div class="admits">
+          <div class="admits" data-crender="admits">
             <article class="admit"><span class="admit__ava admit__ava--a">RK</span><b>Rafiul Karim</b><span class="admit__uni">Trinity College Dublin</span><span class="admit__prog">MSc Computer Science · Autumn 2026</span></article>
             <article class="admit"><span class="admit__ava admit__ava--b">NJ</span><b>Nusrat Jahan</b><span class="admit__uni">University College Dublin</span><span class="admit__prog">MSc Business Analytics · Autumn 2026</span></article>
             <article class="admit"><span class="admit__ava admit__ava--c">TA</span><b>Tanvir Ahmed</b><span class="admit__uni">University of Galway</span><span class="admit__prog">MSc Data Analytics · Autumn 2026</span></article>
@@ -491,6 +491,6 @@
   <script src="js/store.js?v=643c4a7a"></script>
   <script src="js/site.js?v=94122788"></script>
   <script src="js/main.js?v=426a2f7f"></script>
-  <script src="js/render.js?v=488aab37"></script>
+  <script src="js/render.js?v=33b0cfde"></script>
 </body>
 </html>

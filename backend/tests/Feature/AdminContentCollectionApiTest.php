@@ -518,6 +518,129 @@ class AdminContentCollectionApiTest extends TestCase
         );
     }
 
+    // ----------------------------------------------------------------- sort
+
+    /**
+     * Sorting a list is not reordering the site, and the two must never be
+     * confused: `position` is what the public page renders in, and a column
+     * header that quietly rewrote it would change the live site by being
+     * clicked on. So the default is still display order, a sort is a view of
+     * the same rows, and nothing is written.
+     */
+    public function test_a_list_can_be_sorted_without_touching_the_running_order(): void
+    {
+        Event::create(['title' => 'Beta']);
+        Event::create(['title' => 'Alpha']);
+        Event::create(['title' => 'Gamma']);
+        $this->actingAs($this->staff());
+
+        $before = collect($this->getJson('/api/admin/content/events')->json('data'))
+            ->pluck('position', 'title');
+        $this->assertSame(['Gamma', 'Alpha', 'Beta'], $before->keys()->all(), 'newest first, as always');
+
+        $asc = $this->getJson('/api/admin/content/events?sort=title&direction=asc')->assertOk();
+        $this->assertSame(['Alpha', 'Beta', 'Gamma'], array_column($asc->json('data'), 'title'));
+        $this->assertSame('title', $asc->json('sort'));
+        $this->assertSame('asc', $asc->json('direction'));
+
+        $desc = $this->getJson('/api/admin/content/events?sort=title&direction=desc')->assertOk();
+        $this->assertSame(['Gamma', 'Beta', 'Alpha'], array_column($desc->json('data'), 'title'));
+
+        // A direction left off is ascending, not a refusal.
+        $this->assertSame(
+            ['Alpha', 'Beta', 'Gamma'],
+            array_column($this->getJson('/api/admin/content/events?sort=title')->json('data'), 'title')
+        );
+
+        // And the site is where it was.
+        $this->assertSame(
+            $before->all(),
+            collect($this->getJson('/api/admin/content/events')->json('data'))->pluck('position', 'title')->all(),
+            'sorting a screen must never renumber the rows underneath it'
+        );
+    }
+
+    /**
+     * The column name is request input, exactly like the collection slug, and
+     * is allow-listed for the same reason. Refused rather than ignored: a list
+     * quietly coming back in display order under a highlighted column header
+     * is indistinguishable, on screen, from a sort that worked.
+     */
+    public function test_a_sort_column_that_is_not_a_column_is_refused(): void
+    {
+        Event::create(['title' => 'Dhaka fair']);
+        $this->actingAs($this->staff());
+
+        foreach (['deleted_at', 'password', 'title; DROP TABLE events', '(SELECT 1)'] as $sort) {
+            $this->getJson('/api/admin/content/events?sort='.urlencode($sort))
+                ->assertStatus(422)->assertJsonValidationErrors('sort');
+        }
+
+        $this->getJson('/api/admin/content/events?sort=title&direction=sideways')
+            ->assertStatus(422)->assertJsonValidationErrors('direction');
+
+        // A direction with nothing to sort by would come back in plain display
+        // order, which on screen looks exactly like a sort that failed.
+        $this->getJson('/api/admin/content/events?direction=desc')
+            ->assertStatus(422)->assertJsonValidationErrors('sort');
+
+        // The table is still there and still readable, which is the point of
+        // the injection cases above.
+        $this->assertSame(
+            ['Dhaka fair'],
+            array_column($this->getJson('/api/admin/content/events')->assertOk()->json('data'), 'title')
+        );
+    }
+
+    /**
+     * A column belongs to one collection only. events has `city`, blogs does
+     * not, and offering blogs a sort by it would 500 on a column that is not
+     * there.
+     */
+    public function test_a_column_from_another_collection_is_not_sortable_here(): void
+    {
+        $this->actingAs($this->staff());
+
+        $this->assertContains('city', $this->getJson('/api/admin/content/events')->json('sortable'));
+        $this->assertNotContains('city', $this->getJson('/api/admin/content/blogs')->json('sortable'));
+
+        $this->getJson('/api/admin/content/blogs?sort=city')
+            ->assertStatus(422)->assertJsonValidationErrors('sort');
+    }
+
+    /**
+     * "What did I change last" is the question an editor opens this screen
+     * with. The column existed all along; the row simply never carried it, so
+     * the console could not offer the one sort every list of edited things is
+     * expected to have.
+     */
+    public function test_every_row_says_when_it_was_last_changed(): void
+    {
+        $old = Event::create(['title' => 'Edited last year']);
+        $recent = Event::create(['title' => 'Edited this morning']);
+        Event::query()->whereKey($old->id)->update(['updated_at' => now()->subYear()]);
+        Event::query()->whereKey($recent->id)->update(['updated_at' => now()->subMinutes(5)]);
+
+        $this->actingAs($this->staff());
+
+        $res = $this->getJson('/api/admin/content/events?sort=updated_at&direction=desc')->assertOk();
+        $this->assertSame(
+            ['Edited this morning', 'Edited last year'],
+            array_column($res->json('data'), 'title')
+        );
+
+        // ISO-8601, because only the browser knows the reader's timezone.
+        $this->assertNotNull($res->json('data.0.updated_at'));
+        $this->assertSame(
+            now()->subMinutes(5)->format(\DateTimeInterface::ATOM),
+            $res->json('data.0.updated_at')
+        );
+
+        // The removed list is drawn from the same row shape.
+        $this->deleteJson("/api/admin/content/events/{$recent->id}")->assertOk();
+        $this->assertNotNull($this->getJson('/api/admin/content/events/trashed')->json('data.0.updated_at'));
+    }
+
     // ------------------------------------------------- the awkward per-table
 
     /**

@@ -1,1 +1,0 @@
-import{aS as e,R as t,G as o,bd as s}from"./BVuEswf8.js";const r={},c={class:"layout-wrapper layout-blank","data-allow-mismatch":""};function l(a,n){return t(),o("div",c,[s(a.$slots,"default")])}const _=e(r,[["render",l]]);export{_ as default};

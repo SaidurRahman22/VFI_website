@@ -76,6 +76,12 @@ const sections = [
           { title: 'Country pages', icon: 'ri-earth-line', to: '/text/countries' },
           { title: 'Region pages', icon: 'ri-map-2-line', to: '/text/regions' },
           { title: 'Services page', icon: 'ri-service-line', to: '/text/services' },
+          /*
+            The last content that only Filament could reach. Listed here the
+            day the console gained a screen for it, because a screen nothing
+            links to is a screen the client never finds.
+          */
+          { title: 'University page defaults', icon: 'ri-graduation-cap-line', to: '/text/university' },
         ],
       },
       { title: 'Page images', icon: 'ri-image-line', to: '/images', ability: 'content.manage' },

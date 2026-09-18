@@ -62,6 +62,25 @@ const current = computed(() => {
 
 const dirty = computed(() => JSON.stringify(value.value) !== saved.value)
 
+/* A `lines` list is stored as one newline-separated string, not an array, because
+   that is what js/render.js clines() reads. Bound through a getter/setter pair so
+   the textarea can write straight into the value object. */
+function linesOf(listKey) {
+  const v = current.value[listKey]
+  if (Array.isArray(v)) return v.join('\n')   // tolerate an array left by an older save
+  return typeof v === 'string' ? v : ''
+}
+
+function setLines(listKey, text) {
+  current.value[listKey] = text
+}
+
+/* True when this list's section does not exist in THIS country's markup, so
+   anything typed here would save and display nowhere. */
+function absentHere(list) {
+  return hasSlugs.value && Array.isArray(list.absent_on) && list.absent_on.includes(slug.value)
+}
+
 function rows(listKey) {
   const bucket = current.value
   if (!Array.isArray(bucket[listKey])) bucket[listKey] = []
@@ -324,6 +343,7 @@ onMounted(async () => {
         <VCardTitle class="d-flex align-center justify-space-between flex-wrap gap-2">
           <span>{{ list.label }}</span>
           <VBtn
+            v-if="!list.lines && !absentHere(list)"
             size="small"
             variant="tonal"
             prepend-icon="ri-add-line"
@@ -334,6 +354,36 @@ onMounted(async () => {
         </VCardTitle>
 
         <VCardText>
+          <!--
+            Said out loud rather than left inert. This section does not exist in
+            this country's page, so anything typed would save and show nowhere -
+            which is exactly the trap these fields were withheld to avoid.
+          -->
+          <VAlert
+            v-if="absentHere(list)"
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-0"
+          >
+            This page has no {{ list.label.toLowerCase() }} section, so there is nothing here to
+            change for {{ (meta.groups.find(g => g.slug === slug) || {}).label }}. The other
+            countries do have one.
+          </VAlert>
+
+          <!-- One line each: a textarea, not a repeater of one-field rows. -->
+          <VTextarea
+            v-else-if="list.lines"
+            :model-value="linesOf(list.key)"
+            :label="list.label"
+            hint="One per line. Blank lines are ignored, and the order here is the order on the page."
+            persistent-hint
+            rows="4"
+            auto-grow
+            @update:model-value="setLines(list.key, $event)"
+          />
+
+          <template v-else>
           <p
             v-if="!rows(list.key).length"
             class="text-body-2 text-medium-emphasis mb-0"
@@ -401,7 +451,8 @@ onMounted(async () => {
                 />
               </VCol>
             </VRow>
-          </div>
+            </div>
+          </template>
         </VCardText>
       </VCard>
 

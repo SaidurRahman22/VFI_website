@@ -20,6 +20,7 @@ class AdminContentController extends Controller
     /** Only these singleton keys may be edited here. */
     private const EDITABLE = [
         'settings', 'countries', 'regions', 'servicesPage', 'partnerPage', 'partnerPortal',
+        'universityPage',
     ];
 
     /**
@@ -31,10 +32,12 @@ class AdminContentController extends Controller
      * and that second copy is how its photos form came to offer a field with no
      * column behind it.
      *
-     * countries, regions and servicesPage are deliberately absent. They hold
-     * repeating blocks per slug ({uk: {heroTitle: …, bands: [...]}}), which a
-     * key-and-string form cannot express. They remain editable through this
-     * endpoint unchanged; they just need a screen of their own.
+     * countries, regions, servicesPage and universityPage are deliberately
+     * absent. They hold repeating blocks ({uk: {heroTitle: …, bands: [...]}}),
+     * which a key-and-string form cannot express. They are declared in GROUPED
+     * below instead, and index() offers only the keys named here — a flat form
+     * built over one of them would show the handful of strings it understood
+     * and then save that over the blocks it could not.
      *
      * `empty_means` is on screen wherever it applies, because for these keys an
      * empty field is not "blank" - it means the page keeps the wording built
@@ -141,24 +144,30 @@ class AdminContentController extends Controller
     ];
 
     /**
-     * The per-slug singletons: a set of repeating blocks, once per country or
-     * region. SCHEMA above cannot describe these - it models a flat form - so
-     * they are declared here instead and the console renders them with a
-     * different screen. Same principle either way: the fields are written down
-     * once, on the server.
+     * The singletons made of repeating blocks — once per country or region for
+     * the first two, one of a kind for the rest. SCHEMA above cannot describe
+     * these - it models a flat form - so they are declared here instead and the
+     * console renders them with a different screen. Same principle either way:
+     * the fields are written down once, on the server.
      *
-     * Every field below is read off what js/render.js actually consumes. Where
-     * the renderer splits a value on newlines (region `facts`, services
-     * `offers`) the type is `lines`, and the screen says so.
+     * Every field below is read off what the frontend actually consumes -
+     * js/render.js for the country, region and services pages, and
+     * js/universities.js through PublicUniversityController::pageDefaults() for
+     * universityPage. Where the renderer splits a value on newlines (region
+     * `facts`, services `offers`) the type is `lines`, and the screen says so.
      *
-     * NOT INCLUDED, on purpose: the country pages carry eighteen
-     * `data-crender` attributes and render.js reads only four. admits,
-     * costLiving, costStudy, coursesBachelors, coursesMasters, eligBachelors,
-     * eligMasters, exams, intakes, overview, recruiters, requirements,
-     * visaCosts and visaDocs are hooks nothing listens to - those sections show
-     * their static HTML whatever is stored. Giving them an editor would let
-     * someone type for an hour into a field no visitor can ever see, which is
-     * worse than the gap. Wire the renderer first, then add them here.
+     * All eighteen country blocks are live. Fourteen of them were dead when this
+     * const was first written - the markup advertised a `data-crender` hook and
+     * js/render.js listened to only four - so they were deliberately left out
+     * rather than shipped as fields that save data no visitor can see. The
+     * renderer now reads all eighteen and the two pages that were missing their
+     * hooks (study-in-usa, study-in-ireland) have them, so the fields below all
+     * reach something.
+     *
+     * The one remaining gap is declared, not hidden: `absent_on`. The USA page
+     * has no Top Admits section and no recruiter strip at all - not a missing
+     * attribute, the markup simply is not there - so those two lists say so on
+     * screen for that country instead of quietly doing nothing.
      */
     private const GROUPED = [
         'countries' => [
@@ -212,6 +221,104 @@ class AdminContentController extends Controller
                         ['key' => 'a', 'label' => 'Answer', 'type' => 'textarea'],
                     ],
                 ],
+                [
+                    'key' => 'overview', 'label' => 'Why study here', 'singular' => 'reason',
+                    'item' => [
+                        ['key' => 'title', 'label' => 'Heading', 'type' => 'text'],
+                        ['key' => 'text', 'label' => 'Text', 'type' => 'textarea'],
+                        ['key' => 'tone', 'label' => 'Colour', 'type' => 'text', 'half' => true,
+                            'hint' => 'Optional. One of: blue, coral, gold, green, red, violet. Anything else keeps the colour the built-in card used.'],
+                        ['key' => 'icon', 'label' => 'Icon', 'type' => 'text', 'half' => true,
+                            'hint' => 'Optional. An icon name such as cap, briefcase, globe, shield, users, star, doc, money. An unknown name keeps the built-in icon.'],
+                    ],
+                ],
+                [
+                    'key' => 'coursesMasters', 'label' => 'Top courses - Masters', 'singular' => 'course',
+                    'lines' => true,
+                ],
+                [
+                    'key' => 'coursesBachelors', 'label' => 'Top courses - Bachelors', 'singular' => 'course',
+                    'lines' => true,
+                ],
+                [
+                    'key' => 'costStudy', 'label' => 'Cost of study', 'singular' => 'figure',
+                    'item' => [
+                        ['key' => 'amount', 'label' => 'Amount', 'type' => 'text', 'half' => true,
+                            'hint' => 'The large bold figure on the card.'],
+                        ['key' => 'label', 'label' => 'What it covers', 'type' => 'text', 'half' => true],
+                    ],
+                ],
+                [
+                    'key' => 'costLiving', 'label' => 'Cost of living', 'singular' => 'figure',
+                    'item' => [
+                        ['key' => 'amount', 'label' => 'Amount', 'type' => 'text', 'half' => true],
+                        ['key' => 'label', 'label' => 'What it covers', 'type' => 'text', 'half' => true],
+                    ],
+                ],
+                [
+                    'key' => 'intakes', 'label' => 'Intakes', 'singular' => 'intake',
+                    'item' => [
+                        ['key' => 'name', 'label' => 'Intake name', 'type' => 'text', 'half' => true,
+                            'hint' => 'The banner text, e.g. "Fall intake".'],
+                        ['key' => 'months', 'label' => 'Months', 'type' => 'text', 'half' => true],
+                        ['key' => 'desc', 'label' => 'Description', 'type' => 'textarea'],
+                        ['key' => 'apply', 'label' => 'Apply-by line', 'type' => 'text',
+                            'hint' => 'Written out in full, including any prefix - e.g. "Apply by: Dec - Mar".'],
+                    ],
+                ],
+                [
+                    'key' => 'eligBachelors', 'label' => 'Eligibility - Bachelors', 'singular' => 'point',
+                    'lines' => true,
+                ],
+                [
+                    'key' => 'eligMasters', 'label' => 'Eligibility - Masters', 'singular' => 'point',
+                    'lines' => true,
+                ],
+                [
+                    'key' => 'exams', 'label' => 'Entrance exams', 'singular' => 'exam',
+                    'item' => [
+                        ['key' => 'name', 'label' => 'Exam', 'type' => 'text', 'half' => true],
+                        ['key' => 'score', 'label' => 'Score needed', 'type' => 'text', 'half' => true],
+                    ],
+                ],
+                [
+                    'key' => 'requirements', 'label' => 'Application requirements', 'singular' => 'requirement',
+                    'item' => [
+                        ['key' => 'title', 'label' => 'Heading', 'type' => 'text'],
+                        ['key' => 'text', 'label' => 'Text', 'type' => 'textarea'],
+                        ['key' => 'icon', 'label' => 'Icon', 'type' => 'text', 'half' => true,
+                            'hint' => 'Optional. An icon name such as cap, briefcase, globe, shield, users, star, doc, money. An unknown name keeps the built-in icon.'],
+                    ],
+                ],
+                [
+                    'key' => 'visaCosts', 'label' => 'Visa fees and funds', 'singular' => 'figure',
+                    'item' => [
+                        ['key' => 'amount', 'label' => 'Amount', 'type' => 'text', 'half' => true],
+                        ['key' => 'label', 'label' => 'What it is for', 'type' => 'text', 'half' => true],
+                    ],
+                ],
+                [
+                    'key' => 'visaDocs', 'label' => 'Visa documents', 'singular' => 'document',
+                    'lines' => true,
+                ],
+                [
+                    'key' => 'recruiters', 'label' => 'Top recruiters', 'singular' => 'employer',
+                    'lines' => true,
+                    // The USA page has no recruiter strip in its markup at all.
+                    'absent_on' => ['usa'],
+                ],
+                [
+                    'key' => 'admits', 'label' => 'Top admits', 'singular' => 'student',
+                    'item' => [
+                        ['key' => 'name', 'label' => 'Student name', 'type' => 'text', 'half' => true],
+                        ['key' => 'uni', 'label' => 'University', 'type' => 'text', 'half' => true],
+                        ['key' => 'prog', 'label' => 'Programme', 'type' => 'text', 'half' => true],
+                        ['key' => 'initials', 'label' => 'Initials', 'type' => 'text', 'half' => true,
+                            'hint' => 'Optional - taken from the name when left empty.'],
+                    ],
+                    // Same: there is no Top Admits section on the USA page.
+                    'absent_on' => ['usa'],
+                ],
             ],
         ],
 
@@ -260,6 +367,68 @@ class AdminContentController extends Controller
                         ['key' => 'img', 'label' => 'Image slot', 'type' => 'text', 'half' => true],
                         ['key' => 'offers', 'label' => 'What is included', 'type' => 'lines',
                             'hint' => 'One item per line. Each line becomes a starred bullet.'],
+                    ],
+                ],
+            ],
+        ],
+
+        /*
+         * The copy every university DETAIL page falls back to when a university
+         * has none of its own: the intake season cards, the cost intro and
+         * footnote, the standard FAQ set, and the lead form's options.
+         *
+         * Here and not in SCHEMA because three of the seven things it holds are
+         * rows, not strings. Its stored shape is already
+         * {cost_intro: '…', seasons: [...], faqs: [...], interest_options: [...]},
+         * which is exactly what a GROUPED key with no slug level produces - so
+         * the console writes the same JSON the Filament screen has been writing
+         * and pageDefaults() goes on reading it untouched. Nothing migrates.
+         *
+         * Every field is one that PublicUniversityController::pageDefaults()
+         * serves AND js/universities.js reads; both ends were checked. The
+         * country pages are the reason that is worth stating: fourteen of their
+         * hooks have no renderer behind them, so an editor can fill those in
+         * for an hour and no visitor ever sees a word of it.
+         */
+        'universityPage' => [
+            'label' => 'University page defaults',
+            'blurb' => 'The wording a university page falls back to when that university has none of its own.',
+            'empty_means' => 'keeps the wording already built into the university page',
+            // No slug level: one set of defaults serves every university.
+            'groups' => [],
+            'fields' => [
+                ['key' => 'intake_footnote', 'label' => 'Footnote under the intake cards', 'type' => 'textarea'],
+                ['key' => 'cost_intro', 'label' => 'Cost to study: intro paragraph', 'type' => 'textarea',
+                    'hint' => 'Write {university} where the university’s name should appear.'],
+                ['key' => 'cost_footnote', 'label' => 'Cost to study: footnote under the table', 'type' => 'textarea'],
+                ['key' => 'scholarship_note', 'label' => 'Note shown when a university lists no scholarships', 'type' => 'textarea',
+                    'hint' => 'Write {university} where the university’s name should appear.'],
+            ],
+            'lists' => [
+                [
+                    'key' => 'seasons', 'label' => 'Intake season cards', 'singular' => 'season',
+                    'item' => [
+                        // The page looks a card up by this word and by nothing
+                        // else, so a row misspelling it is stored and never read.
+                        ['key' => 'key', 'label' => 'Season', 'type' => 'text', 'half' => true,
+                            'hint' => 'One of fall, spring, summer or winter. Any other word is never looked up.'],
+                        ['key' => 'month', 'label' => 'Month on the card', 'type' => 'text', 'half' => true],
+                        ['key' => 'note', 'label' => 'Note', 'type' => 'textarea'],
+                        ['key' => 'image', 'label' => 'Card image', 'type' => 'text',
+                            'hint' => 'A stored path such as media/universities/intakes/fall.jpg, or a full https:// address. Left empty, the card keeps its built-in photo.'],
+                    ],
+                ],
+                [
+                    'key' => 'faqs', 'label' => 'Default FAQs', 'singular' => 'question',
+                    'item' => [
+                        ['key' => 'q', 'label' => 'Question', 'type' => 'text'],
+                        ['key' => 'a', 'label' => 'Answer', 'type' => 'textarea'],
+                    ],
+                ],
+                [
+                    'key' => 'interest_options', 'label' => 'Lead form: “I’m interested in” options', 'singular' => 'option',
+                    'item' => [
+                        ['key' => 'label', 'label' => 'Option', 'type' => 'text'],
                     ],
                 ],
             ],

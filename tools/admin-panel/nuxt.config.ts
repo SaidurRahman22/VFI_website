@@ -98,6 +98,7 @@ export default defineNuxtConfig({
         '/text/countries',
         '/text/regions',
         '/text/services',
+        '/text/university',
         '/pages',
         '/images',
         '/backup',

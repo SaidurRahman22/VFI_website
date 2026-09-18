@@ -354,6 +354,94 @@
   }
 
   /* ---------------- country page overrides ---------------- */
+
+  /* A stored value only ever reaches a class attribute or a sprite href if it
+     is on one of these lists. Escaping is not enough in those two places: an
+     escaped tone still yields a class nobody wrote a rule for, and an escaped
+     icon name still yields a <use> pointing at a symbol that is not in the
+     sprite, so the card renders with a blank hole where the glyph should be. */
+  var C_TONES = ["blue", "coral", "gold", "green", "red", "violet"];
+  var C_ICONS = ["apple", "arrow", "award", "bed", "book", "briefcase", "building", "calendar",
+    "cap", "chat", "check", "check-c", "checks", "chevron", "clock", "compass", "doc", "globe",
+    "home", "img", "mail", "money", "news", "passport", "phone", "pin", "plane", "play",
+    "present", "quote", "search", "shield", "star", "thumb", "trophy", "users"];
+
+  function isArr(v) { return Object.prototype.toString.call(v) === "[object Array]"; }
+  function trim(s) { return String(s == null ? "" : s).replace(/^\s+|\s+$/g, ""); }
+  function allow(list, v, fallback) { return list.indexOf(String(v || "")) >= 0 ? String(v) : fallback; }
+  function cicon(name) { return '<svg class="ic"><use href="#i-' + name + '"/></svg>'; }
+
+  /* A row that is not an object would throw on its first field read and take
+     the whole country pass down with it, so it never reaches a builder. */
+  function crows(v) {
+    if (!isArr(v)) return [];
+    return v.filter(function (r) { return r && typeof r === "object"; });
+  }
+
+  /* Course lists, eligibility bullets, visa documents and recruiter chips are
+     one short line each. A textarea is far kinder there than a repeater of
+     one-field rows, so a plain string is split on newlines exactly as
+     applyRegion() splits a band's 'facts'. An array still works for anyone who
+     stores these as rows. */
+  function clines(v) {
+    var raw;
+    if (typeof v === "string") raw = v.replace(/\r\n?/g, "\n").split("\n");
+    else if (isArr(v)) raw = v.map(function (it) {
+      if (typeof it === "string") return it;
+      return it && typeof it === "object" ? (it.text || it.name) : "";
+    });
+    else return [];
+    return raw.map(trim).filter(function (t) { return t; });
+  }
+
+  /* Each country page paints these blocks from its own palette — the intake
+     banners are intake__top--uk-1 on the UK page and --ca-fall on Canada's, and
+     the visa cost cards carry --red, --navy, --green or no modifier at all.
+     Reading the modifiers off the built-in cards before they are replaced keeps
+     an edited section in its page's own colours, and spares this file a
+     per-country class table that would go stale the day a page is restyled. */
+  function cmods(host, sel, base, fallback) {
+    var re = new RegExp("(?:^|\\s)" + base + "--([a-z0-9-]+)");
+    var found = $$(sel, host).map(function (el) {
+      var m = re.exec(el.getAttribute("class") || "");
+      return m ? m[1] : "";
+    }).filter(function (t) { return t; });
+    return found.length ? found : fallback;
+  }
+
+  /* Same trick for the glyphs: the "why study here" and requirement cards use a
+     different icon per card and a different set per country. */
+  function cicons(host, sel, fallback) {
+    var found = $$(sel, host).map(function (el) {
+      var use = el.querySelector("use");
+      var m = use && /^#i-([a-z0-9-]+)$/.exec(use.getAttribute("href") || "");
+      return m ? m[1] : "";
+    }).filter(function (t) { return t; });
+    return found.length ? found : fallback;
+  }
+
+  function pick(list, i) { return list.length ? list[i % list.length] : ""; }
+
+  /* Only replace a section when there is something to put in it: a country with
+     no override, or one whose list was emptied in the admin panel, keeps the
+     hand-written markup rather than going blank. The builder is handed the host
+     so it can read the built-in cards before they are overwritten. */
+  function cfill(key, rows, build) {
+    if (!rows.length) return;
+    var host = $('[data-crender="' + key + '"]');
+    if (!host) return;
+    host.innerHTML = build(rows, host);
+  }
+
+  /* The built-in admit cards carry hand-picked initials. Deriving them from the
+     name means an editor who fills in only "Nusrat Islam" still gets NI in the
+     avatar instead of an empty coloured circle. */
+  function cinitials(name) {
+    var parts = trim(name).split(/\s+/).filter(function (w) { return w; });
+    if (!parts.length) return "";
+    return (parts[0].charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : "")).toUpperCase();
+  }
+
   function applyCountry() {
     var slug = document.body.getAttribute("data-country");
     if (!slug || !VFI.country) return;
@@ -409,6 +497,101 @@
       }).join("");
       if (window.VFIInitAccordions) window.VFIInitAccordions();
     }
+
+    // why study here
+    cfill("overview", crows(c.overview), function (rows, host) {
+      var tone = cmods(host, ".whyc__ic", "whyc__ic", C_TONES);
+      var icon = cicons(host, ".whyc__ic", ["cap", "briefcase", "globe", "shield", "users", "star"]);
+      return rows.map(function (r, i) {
+        return '<article class="whyc"><span class="whyc__ic whyc__ic--' + allow(C_TONES, r.tone, pick(tone, i)) + '">' +
+          cicon(allow(C_ICONS, r.icon, pick(icon, i))) + "</span>" +
+          "<h3>" + esc(r.title || "") + "</h3><p>" + esc(r.text || "") + "</p></article>";
+      }).join("");
+    });
+
+    // top courses, one list per tab
+    ["coursesMasters", "coursesBachelors"].forEach(function (key) {
+      cfill(key, clines(c[key]), function (rows) {
+        return rows.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
+      });
+    });
+
+    // cost of study / cost of living, one grid per tab
+    ["costStudy", "costLiving"].forEach(function (key) {
+      cfill(key, crows(c[key]), function (rows) {
+        return rows.map(function (r) {
+          return '<div class="costc"><b>' + esc(r.amount || "") + "</b><span>" + esc(r.label || "") + "</span></div>";
+        }).join("");
+      });
+    });
+
+    // intakes
+    cfill("intakes", crows(c.intakes), function (rows, host) {
+      var tone = cmods(host, ".intake__top", "intake__top", []);
+      return rows.map(function (r, i) {
+        var t = pick(tone, i);
+        return '<article class="intake">' +
+          '<div class="intake__top' + (t ? " intake__top--" + t : "") + '"><b>' + esc(r.name || "") + "</b></div>" +
+          '<div class="intake__body">' +
+          (r.months ? '<p class="intake__months">' + esc(r.months) + "</p>" : "") +
+          "<p>" + esc(r.desc || "") + "</p>" +
+          (r.apply ? '<span class="intake__apply">' + esc(r.apply) + "</span>" : "") +
+          "</div></article>";
+      }).join("");
+    });
+
+    // eligibility bullets and the visa checklist are the same tick-list shape
+    ["eligBachelors", "eligMasters", "visaDocs"].forEach(function (key) {
+      cfill(key, clines(c[key]), function (rows) {
+        return rows.map(function (t) {
+          return '<li><svg class="ic"><use href="#i-check"/></svg>' + esc(t) + "</li>";
+        }).join("");
+      });
+    });
+
+    // entrance exams — every tile links to the coaching page, as the built-in ones do
+    cfill("exams", crows(c.exams), function (rows) {
+      return rows.map(function (r) {
+        return '<a href="services.html" class="exam"><b>' + esc(r.name || "") + "</b><span>" +
+          esc(r.score || "") + "</span></a>";
+      }).join("");
+    });
+
+    // application requirements
+    cfill("requirements", crows(c.requirements), function (rows, host) {
+      var icon = cicons(host, ".reqc__ic", ["doc", "book", "globe", "compass", "users", "money"]);
+      return rows.map(function (r, i) {
+        return '<article class="reqc"><span class="reqc__ic">' + cicon(allow(C_ICONS, r.icon, pick(icon, i))) + "</span>" +
+          "<h3>" + esc(r.title || "") + "</h3><p>" + esc(r.text || "") + "</p></article>";
+      }).join("");
+    });
+
+    // visa fees and funds
+    cfill("visaCosts", crows(c.visaCosts), function (rows, host) {
+      var tone = cmods(host, ".visacost", "visacost", []);
+      return rows.map(function (r, i) {
+        var t = pick(tone, i);
+        return '<div class="visacost' + (t ? " visacost--" + t : "") + '"><b>' + esc(r.amount || "") +
+          "</b><span>" + esc(r.label || "") + "</span></div>";
+      }).join("");
+    });
+
+    // recruiter chips
+    cfill("recruiters", clines(c.recruiters), function (rows) {
+      return rows.map(function (t) { return '<span class="rlogo">' + esc(t) + "</span>"; }).join("");
+    });
+
+    // top admits
+    cfill("admits", crows(c.admits), function (rows, host) {
+      var tone = cmods(host, ".admit__ava", "admit__ava", ["a", "b", "c", "d"]);
+      return rows.map(function (r, i) {
+        return '<article class="admit"><span class="admit__ava admit__ava--' + pick(tone, i) + '">' +
+          esc(r.initials || cinitials(r.name)) + "</span>" +
+          "<b>" + esc(r.name || "") + "</b>" +
+          '<span class="admit__uni">' + esc(r.uni || "") + "</span>" +
+          '<span class="admit__prog">' + esc(r.prog || "") + "</span></article>";
+      }).join("");
+    });
 
     // repaint any image slots inside freshly rendered markup
     applyMedia();

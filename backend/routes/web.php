@@ -67,7 +67,7 @@ Route::prefix('api/admin')->group(function () {
         /*
          * The ten website-content collections as JSON, for the new console.
          * One controller for all ten (it serves its own field schema), so this
-         * is eight routes rather than eighty. `collections` is declared BEFORE
+         * is ten routes rather than eighty. `collections` is declared BEFORE
          * `{collection}` or the literal would be swallowed as a slug.
          * Every handler re-checks `content.manage` itself.
          *
@@ -83,10 +83,26 @@ Route::prefix('api/admin')->group(function () {
         Route::get('content/{collection}', [$coll, 'index']);
         Route::get('content/{collection}/trashed', [$coll, 'trashed']);
         Route::post('content/{collection}', [$coll, 'store']);
+        Route::post('content/{collection}/bulk', [$coll, 'bulk']);
         Route::put('content/{collection}/{id}', [$coll, 'update'])->whereNumber('id');
         Route::delete('content/{collection}/{id}', [$coll, 'destroy'])->whereNumber('id');
         Route::post('content/{collection}/{id}/restore', [$coll, 'restore'])->whereNumber('id');
         Route::put('content/{collection}/{id}/move', [$coll, 'move'])->whereNumber('id');
+
+        /*
+         * Erasing, which is NOT what delete does. `destroy` above soft-deletes
+         * and `restore` undoes it; until this route there was no way in any
+         * interface to clear the rows that accumulate, or to release the
+         * images they keep referenced. It is owner-only inside the handler —
+         * a step above the content.manage that may publish and unpublish —
+         * and it refuses a row that has not been removed first, so nothing is
+         * destroyed without a recoverable step before it.
+         *
+         * `bulk` sits in the slot `{id}` occupies above and cannot be taken
+         * for one, exactly as `trashed` does: every id route is numeric-
+         * constrained.
+         */
+        Route::delete('content/{collection}/{id}/force', [$coll, 'forceDestroy'])->whereNumber('id');
 
         // Phase 3D — page-visibility (owner-only, allow-listed, audited).
         Route::get('pages', [AdminPageController::class, 'index']);

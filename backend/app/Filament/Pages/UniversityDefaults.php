@@ -120,9 +120,26 @@ class UniversityDefaults extends Page
         // the write open.
         abort_unless(static::canAccess(), 403);
 
+        /*
+         * Bump the version, because this key now has TWO doors.
+         *
+         * Until the console gained a screen for `universityPage` this page was
+         * the only writer, so leaving `version` alone was harmless. It is not
+         * any more: AdminContentController uses `version` for optimistic
+         * concurrency, and a save here that left it untouched would make a
+         * console edit loaded BEFORE this save still look current - so the
+         * console would overwrite this without ever showing the 409 that exists
+         * precisely to stop that. Incrementing it means whoever saves second is
+         * told, instead of one of them losing their work silently.
+         */
+        // value() rather than first()->version: it reads the one column and
+        // returns null when there is no row yet, so the "first ever save"
+        // case needs no null-object dance.
+        $current = (int) (SiteContent::query()->where('key', self::KEY)->value('version') ?? 0);
+
         SiteContent::query()->updateOrCreate(
             ['key' => self::KEY],
-            ['value' => $this->form->getState()],
+            ['value' => $this->form->getState(), 'version' => $current + 1],
         );
 
         Notification::make()->success()->title('University page defaults saved')->send();
