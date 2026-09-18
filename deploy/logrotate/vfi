@@ -6,26 +6,37 @@
 #     sudo logrotate -d /etc/logrotate.d/vfi     # dry run: prints, changes nothing
 #     sudo logrotate -v /etc/logrotate.d/vfi     # first real run
 #
-# The chown is not optional and is not cosmetic: logrotate REFUSES a config file
-# it does not find owned by uid 0 ("Ignoring ... because the file owner is
-# wrong"), and the deploy chowns the whole checkout to www-data - so validating
-# this straight out of the repo path silently rotates nothing.
+# The chown is not optional and is not cosmetic: logrotate REFUSES a config it
+# does not find owned by uid 0, and the deploy chowns the whole checkout to
+# www-data - so validating this straight out of the repo path reports
+# "Handling 0 logs" and silently rotates nothing.
+#
+# Both dry runs must be run with sudo. Unprivileged, logrotate cannot honour an
+# `su` directive at all ("error switching euid from 1000 to 0: Operation not
+# permitted") and it skips the parent-directory permission check entirely, so a
+# clean run as a normal user proves only that the file parses.
 #
 # WHY: nothing rotated these. /etc/logrotate.d/ carried rules for nginx, both
 # PHP-FPM pools, postgres, redis and fail2ban, and none for this application. A
 # cron entry appends to vfi-schedule.log every minute of every day, so it grows
 # without limit; it was 2.6 MB and the deploy log 302 KB when this was written,
 # against 18 GB free. Not urgent - but "not yet" was the only thing wrong.
+#
+# ONE BLOCK PER WRITER. `create` is per-block, and these files are appended to
+# by different users, so a single shared block cannot give them the right owner.
+# Getting that wrong is not cosmetic either - see the scheduler block below.
 # =============================================================================
 
-# The three /var/log files. Rotated by RENAME, the logrotate default, which is
-# safe here because nothing holds these open: the deploy script and the cron
-# entry both use a shell `>>` that opens and closes on every run, once a minute.
-# Rename-and-create is preferable to copytruncate when it is available, because
-# it cannot lose the lines written between the copy and the truncate.
+# ---------------------------------------------------------------------------
+# The deploy log. Written by ROOT, from /etc/cron.d/vfi, via a shell `>>` that
+# opens and closes on every run.
+#
+# Rotated by RENAME, the logrotate default, which is safe precisely because of
+# that: nothing holds this file open between runs. Rename-and-create is
+# preferable to copytruncate wherever it is available, because it cannot lose
+# the lines written between the copy and the truncate.
+# ---------------------------------------------------------------------------
 /var/log/vfi-deploy.log
-/var/log/vfi-schedule.log
-/var/log/vfi-worker.log
 {
     daily
     rotate 14
@@ -34,27 +45,57 @@
     missingok
     notifempty
 
-    # 0640 root:adm - readable by the adm group, the way the rest of /var/log
-    # is, rather than world-readable as these files currently are. They carry
-    # raw artisan output, which can include a path, a query or an exception.
-    # NOTE this line only takes effect because the block does NOT use
+    # 0640 root:adm instead of the 0644 root:root it has now. It carries raw
+    # artisan output, which can include a path, a query or an exception.
+    #
+    # NOTE this line only takes effect because this block does NOT use
     # copytruncate: logrotate ignores `create` when copytruncating, since there
     # is no new file to create.
+    #
+    # TRADE-OFF, stated because it is a real one: `adm` is gid 4 and contains
+    # only `syslog` on this server, so after the first rotation the operator
+    # account cannot `tail` this without sudo. That account is in the sudo
+    # group, so nothing becomes unreachable. To get plain `tail` back:
+    #     sudo usermod -aG adm vfi     # optional; log out and in to take effect
     create 0640 root adm
 
-    # Required, and NOT because of these files - because of their directory.
-    # /var/log on this server is `drwxrwxr-x root:syslog`, i.e. group-writable
-    # by a group that is not root, and logrotate refuses to rotate anything in
-    # such a directory unless the config says whose identity to use:
+    # Required, and NOT because of this file - because of its directory.
+    # /var/log here is `drwxrwxr-x root:syslog`, i.e. group-writable by a group
+    # that is not root, and logrotate refuses to rotate anything in such a
+    # directory unless the config says whose identity to use:
     #   error: skipping "/var/log/vfi-deploy.log" because parent directory has
     #   insecure permissions (It's world writable or writable by group which is
     #   not "root") Set "su" directive in config file ...
-    # A dry run reported all three files skipped without this. The two other
-    # configs on this box that write to /var/log directly, postgresql-common
-    # and ubuntu-pro-client, both carry the same line.
+    # A root dry run reported every file in /var/log skipped without this. The
+    # two other configs on this box that write to /var/log directly,
+    # postgresql-common and ubuntu-pro-client, both carry the same line.
     su root root
 }
 
+# ---------------------------------------------------------------------------
+# The scheduler log. Written by WWW-DATA, from /etc/cron.d/vfi, via a shell
+# `>>` - again opened and closed every minute, so RENAME is safe here too.
+#
+# Its own block only because of the owner on `create`, and that detail is
+# load-bearing: if this file is recreated as root:adm 0640 then www-data can no
+# longer open it for append, and when a redirect fails the shell NEVER RUNS THE
+# COMMAND. `schedule:run` would stop dead every minute, log nothing saying so,
+# and take the nightly ingest and the document purge with it. So the file is
+# recreated owned by the user that writes to it.
+# ---------------------------------------------------------------------------
+/var/log/vfi-schedule.log
+{
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data adm
+    su root root
+}
+
+# ---------------------------------------------------------------------------
 # Laravel's own log, which is a different problem and gets a different answer.
 #
 # copytruncate HERE, deliberately: `php artisan queue:work` is a long-lived
@@ -69,9 +110,9 @@
 # anything in here is something that went wrong and wants looking at this week,
 # not archiving for a fortnight.
 #
-# `su` is required because storage/logs is group-writable by www-data, and
-# logrotate refuses to rotate inside a directory writable by anyone but the user
-# it is running as.
+# `su` is required here for the same reason as above but with different values:
+# storage/logs is `drwxrwxr-x www-data:www-data`, group-writable by www-data.
+# ---------------------------------------------------------------------------
 /var/www/vfi/backend/storage/logs/*.log
 {
     weekly
@@ -83,3 +124,23 @@
     copytruncate
     su www-data www-data
 }
+
+# ---------------------------------------------------------------------------
+# /var/log/vfi-worker.log IS DELIBERATELY NOT LISTED HERE.
+#
+# It is supervisor's, not ours. /etc/supervisor/conf.d/vfi-worker.conf sets
+# `stdout_logfile=/var/log/vfi-worker.log` with `redirect_stderr=true`, so
+# supervisord holds it open for the life of the queue worker - which restarts
+# only every `--max-time=3600`. Rotating it by rename would leave supervisor
+# appending to the renamed inode while the new file sat empty forever, exactly
+# the failure the Laravel block above is shaped to avoid.
+#
+# Nor does it need us. Supervisor rotates its own child logs; no
+# stdout_logfile_maxbytes is set anywhere in /etc/supervisor, so its defaults
+# apply - 50 MB with 10 backups. That bound is generous, but this file has
+# grown 318 bytes since 2026-09-02, so it will not be reached this decade.
+# Two rotators on one file is worse than one rotator that already works.
+#
+# If it ever does need rotating, the answer is stdout_logfile_maxbytes in that
+# supervisor conf - not a block here.
+# ---------------------------------------------------------------------------
