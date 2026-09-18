@@ -48,13 +48,18 @@ Check the licence line before reusing any of it anywhere else.
 - **Attribution:** Clemenspool / Wikimedia Commons (CC0 1.0)
 - **Stored:** 1003 KB after optimising
 
-## Logo and hero: NOT used
+## Logo: NOT used. Hero: used.
 
-`aalen-logo.jpg` and `aalen-hero.jpg` are downloaded and kept here, but the
-profile does NOT write them. A logo and a hero were uploaded through the admin
-form (`01M2SNB11DFP4B6KXNNWS9C7V3.png`, `01M2SNCATMM4CBZ4VFJ6AD1Z8Z.webp`) and
-both serve correctly, so writing over them would discard real work for no gain.
-The two files stay here as a licensed fallback if either upload is ever lost.
+`aalen-logo.jpg` is downloaded and kept here but NOT written. The university's
+own PNG logo was uploaded through the admin form
+(`01M2SNB11DFP4B6KXNNWS9C7V3.png`) and serves correctly, so replacing it with a
+Commons copy would be a downgrade. It stays as a licensed fallback.
+
+`aalen-hero.jpg` IS written. The hero slot had the logo uploaded into it - an
+easy mistake to make, because that field carried no size guidance at all - and
+the banner cover-crops from the centre at roughly 5:1, so a wordmark rendered as
+an unreadable blown-up pattern. Replaced with the CC0 campus photograph, which
+is what this file was downloaded for.
 
 ## Not used, deliberately
 

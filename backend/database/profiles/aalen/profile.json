@@ -288,6 +288,7 @@
     }
   ],
   "images": {
+    "hero_image_key": "aalen-hero.jpg",
     "gallery_json": [
       "aalen-campus-1.jpg",
       "aalen-campus-2.jpg",

@@ -39,10 +39,23 @@ class UniversityForm
                     // Re-encoded on save (downscale + EXIF strip). The cap is per surface: a
                     // logo rendered at ~120px has no use for a 2000px original.
                     ->saveUploadedFileUsing(ImageOptimiser::storeOptimised(800))
-                    ->helperText('Square logo works best. Leave empty to show an initials badge.'),
+                    ->helperText('Square, about 400 × 400 px. It renders in a small badge beside the '
+                        .'name, so a wide wordmark will sit letterboxed in the middle of it. Leave '
+                        .'empty to show an initials badge instead.'),
+                // This had no helper text at all - a bare drop zone next to one that
+                // said "square works best", so the logo ended up in both slots.
+                // The numbers are measured off the rendered page, not guessed:
+                // #uniBanner is full viewport width at height
+                // clamp(180px, 26vw, 320px), painted with background-size: cover
+                // and background-position: center.
                 FileUpload::make('hero_image_key')->label('Hero image')->image()->imageEditor()
                     ->disk('public')->directory('media/universities')->visibility('public')->maxSize(4096)
-                    ->saveUploadedFileUsing(ImageOptimiser::storeOptimised(2400)),
+                    ->saveUploadedFileUsing(ImageOptimiser::storeOptimised(2400))
+                    ->helperText('A wide landscape PHOTO of the campus — 1600 × 500 px or larger. It '
+                        .'spans the full width of the page as a banner about 320 px tall and is '
+                        .'cropped from the centre, so keep the subject in the middle and do not use '
+                        .'the logo here: it will be scaled up and cut off. Leave empty for the brand '
+                        .'gradient.'),
             ]),
 
             Section::make('At a glance')->description('Drives the filter chips in programme Search. These are not shown as text - they decide which searches this university appears in.')->columns(2)->schema([
