@@ -329,28 +329,26 @@ onMounted(async () => {
         </VCardItem>
 
         <!--
-          In its own row, NOT in VCardItem's #append: that slot reserves no
-          width for what it holds, and the three buttons were drawn on top of
-          each other - "7 Day30 Da90 Days".
+          Three plain buttons rather than a VBtnToggle. In the #append slot the
+          toggle was drawn with its three buttons on top of each other
+          ("7 Day30 Da90 Days"); moved into its own row it still collapsed the
+          group to 122px, giving each button 36px to hold 50px of text. A
+          v-btn-group sizes its children itself and wins the argument, so this
+          stops having the argument: the selected one is filled, the others are
+          tonal, and each is as wide as its own label.
         -->
-        <div class="px-4 pb-4">
-          <VBtnToggle
-            v-model="range"
-            density="compact"
-            variant="outlined"
-            divided
-            mandatory
+        <div class="d-flex flex-wrap gap-2 px-4 pb-4">
+          <VBtn
+            v-for="r in RANGES"
+            :key="r.days"
+            size="small"
+            :variant="range === r.days ? 'flat' : 'tonal'"
+            :color="range === r.days ? 'primary' : undefined"
+            :aria-pressed="range === r.days"
+            @click="range = r.days"
           >
-            <VBtn
-              v-for="r in RANGES"
-              :key="r.days"
-              :value="r.days"
-              size="small"
-              class="px-4"
-            >
-              {{ r.label }}
-            </VBtn>
-          </VBtnToggle>
+            {{ r.label }}
+          </VBtn>
         </div>
 
         <VDivider />
