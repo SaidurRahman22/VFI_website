@@ -1,0 +1,1 @@
+import{ba as e,R as t,G as o,bb as s}from"./DrtZbDWC.js";const r={},c={class:"layout-wrapper layout-blank","data-allow-mismatch":""};function l(a,n){return t(),o("div",c,[s(a.$slots,"default")])}const d=e(r,[["render",l]]);export{d as default};

@@ -199,10 +199,26 @@ class AdminApplicationController extends Controller
             $cursor->addDay();
         }
 
+        /*
+         * The most recent day with anything on it, EVEN IF it falls outside the
+         * window. An empty chart is a fair answer to "the last 30 days" and a
+         * useless one on its own: production's newest case arrived on 17 Aug, so
+         * the default window is honestly, unhelpfully blank. With this the card
+         * can say how far back the last activity was instead of just showing a
+         * flat line.
+         */
+        $latest = RlsBypass::run(fn () => max(
+            (string) Application::query()->withoutGlobalScope(BelongsToAgencyScope::class)
+                ->max('submitted_at'),
+            (string) ApplicationStatusEvent::query()->withoutGlobalScope(BelongsToAgencyScope::class)
+                ->whereNotNull('from_status')->max('occurred_at'),
+        ));
+
         return response()->json([
             'days' => $days,
             'from' => $from->toDateString(),
             'to' => now()->toDateString(),
+            'latest' => $latest !== '' ? substr($latest, 0, 10) : null,
             'points' => $points,
             'totals' => [
                 'arrived' => array_sum(array_column($points, 'arrived')),

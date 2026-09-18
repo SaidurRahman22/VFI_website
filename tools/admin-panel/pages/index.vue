@@ -72,6 +72,39 @@ const trendIsFlat = computed(() => {
   return !t || (t.arrived + t.decided) <= 1
 })
 
+const trendIsEmpty = computed(() => {
+  const t = trend.value?.totals
+
+  return !!trend.value && (!t || (t.arrived + t.decided) === 0)
+})
+
+/*
+  How stale the queue is, in days, from the newest thing anywhere - which the
+  endpoint reports even when it falls outside the window. Without this an empty
+  chart cannot tell "nothing has ever happened" from "nothing happened in the
+  last month", and those call for different reactions.
+*/
+const daysSinceLatest = computed(() => {
+  if (!trend.value?.latest)
+    return null
+
+  const then = new Date(`${trend.value.latest}T00:00:00`)
+  const now = new Date(`${trend.value.to}T00:00:00`)
+
+  return Math.round((now - then) / 86400000)
+})
+
+/* The smallest offered window that would actually contain that last activity. */
+const windowThatWouldShowIt = computed(() => {
+  const gap = daysSinceLatest.value
+
+  return gap === null ? null : (RANGES.find(r => r.days > gap) || null)
+})
+
+/* The largest count in either series, for the axis. */
+const trendPeak = computed(() => (trend.value?.points || [])
+  .reduce((m, p) => Math.max(m, p.arrived, p.decided), 0))
+
 const chartOptions = computed(() => ({
   chart: {
     type: 'area',
@@ -95,9 +128,12 @@ const chartOptions = computed(() => ({
     labels: { format: 'd MMM' },
   },
   yaxis: {
-    // Counts are whole cases. Without this a range of 0-1 draws 0.2, 0.4 …
+    // Counts are whole cases. Without min/max a range of 0-1 draws 0.2, 0.4 …
+    // and an all-zero series gives forceNiceScale a zero-height range to
+    // divide, which it labels "Infinity".
     min: 0,
-    forceNiceScale: true,
+    max: Math.max(2, trendPeak.value),
+    tickAmount: Math.min(4, Math.max(2, trendPeak.value)),
     labels: { formatter: v => String(Math.round(v)) },
   },
   // One tooltip carrying both numbers, because the comparison IS the point.
@@ -290,25 +326,32 @@ onMounted(async () => {
             Applications submitted by partners, against decisions VFI recorded on them.
           </VCardSubtitle>
 
-          <template #append>
-            <VBtnToggle
-              v-model="range"
-              density="compact"
-              variant="outlined"
-              divided
-              mandatory
-            >
-              <VBtn
-                v-for="r in RANGES"
-                :key="r.days"
-                :value="r.days"
-                size="small"
-              >
-                {{ r.label }}
-              </VBtn>
-            </VBtnToggle>
-          </template>
         </VCardItem>
+
+        <!--
+          In its own row, NOT in VCardItem's #append: that slot reserves no
+          width for what it holds, and the three buttons were drawn on top of
+          each other - "7 Day30 Da90 Days".
+        -->
+        <div class="px-4 pb-4">
+          <VBtnToggle
+            v-model="range"
+            density="compact"
+            variant="outlined"
+            divided
+            mandatory
+          >
+            <VBtn
+              v-for="r in RANGES"
+              :key="r.days"
+              :value="r.days"
+              size="small"
+              class="px-4"
+            >
+              {{ r.label }}
+            </VBtn>
+          </VBtnToggle>
+        </div>
 
         <VDivider />
 
@@ -366,8 +409,43 @@ onMounted(async () => {
               handful of cases in one week this line is flat because the
               business is young, not because something is broken.
             -->
+            <!--
+              An empty window is a fair answer and a useless one on its own, so
+              it says how far back the last activity was and offers the window
+              that would include it.
+            -->
+            <VAlert
+              v-if="trendIsEmpty && windowThatWouldShowIt"
+              type="info"
+              variant="tonal"
+              density="compact"
+              class="mb-0"
+            >
+              <span class="text-high-emphasis">
+                Nothing arrived or was decided in the last {{ range }} days. The most recent was
+                {{ daysSinceLatest }} {{ daysSinceLatest === 1 ? 'day' : 'days' }} ago.
+              </span>
+              <template #append>
+                <VBtn
+                  size="small"
+                  variant="tonal"
+                  @click="range = windowThatWouldShowIt.days"
+                >
+                  Show {{ windowThatWouldShowIt.label }}
+                </VBtn>
+              </template>
+            </VAlert>
+
             <p
-              v-if="trendIsFlat"
+              v-else-if="trendIsEmpty"
+              class="text-body-2 text-medium-emphasis mb-0"
+            >
+              Nothing has arrived or been decided yet. This reads the real queue, so it is
+              empty rather than illustrative.
+            </p>
+
+            <p
+              v-else-if="trendIsFlat"
               class="text-body-2 text-medium-emphasis mb-0"
             >
               There is almost nothing to plot yet — this fills in as applications arrive and
