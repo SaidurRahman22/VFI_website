@@ -19,6 +19,92 @@ const waiting = ref(0)
 const total = ref(0)
 const recent = ref([])
 
+/* ---- the trend chart ---- */
+
+/*
+  A separate request from the queue, because it answers a different question and
+  has its own control. The window re-queries rather than slicing a cached
+  series: the totals printed under the chart have to belong to the window the
+  buttons say is selected.
+*/
+const RANGES = [
+  { days: 7, label: '7 days' },
+  { days: 30, label: '30 days' },
+  { days: 90, label: '90 days' },
+]
+
+const range = ref(30)
+const trend = ref(null)
+const trendLoading = ref(true)
+const trendError = ref(null)
+
+async function loadTrend() {
+  trendLoading.value = true
+  trendError.value = null
+  try {
+    trend.value = await api.get(`/api/admin/applications/trend?days=${range.value}`)
+  }
+  catch (e) {
+    trendError.value = e.message || 'Could not load the trend.'
+  }
+  finally {
+    trendLoading.value = false
+  }
+}
+
+watch(range, loadTrend)
+
+/*
+  Two series against a real date axis. ApexCharts is already a dependency of
+  this template and ships a client-only wrapper, so there is no new library
+  here - and it must stay client-only, because the console is prerendered to
+  static HTML and a chart cannot be drawn at build time.
+*/
+const chartSeries = computed(() => [
+  { name: 'Arrived', data: (trend.value?.points || []).map(p => [`${p.date}T00:00:00`, p.arrived]) },
+  { name: 'Decided', data: (trend.value?.points || []).map(p => [`${p.date}T00:00:00`, p.decided]) },
+])
+
+/* Whether there is enough movement to be worth reading as a shape. */
+const trendIsFlat = computed(() => {
+  const t = trend.value?.totals
+
+  return !t || (t.arrived + t.decided) <= 1
+})
+
+const chartOptions = computed(() => ({
+  chart: {
+    type: 'area',
+    height: 280,
+    parentHeightOffset: 0,
+    toolbar: { show: false },
+    zoom: { enabled: false },
+    fontFamily: 'DM Sans, sans-serif',
+  },
+  // The site's own blue for work coming in, its green for work going out.
+  colors: ['#2f62a8', '#12a06a'],
+  dataLabels: { enabled: false },
+  stroke: { curve: 'smooth', width: 2 },
+  fill: { type: 'gradient', gradient: { opacityFrom: 0.28, opacityTo: 0.02 } },
+  legend: { position: 'top', horizontalAlign: 'right', markers: { radius: 4 } },
+  grid: { borderColor: 'rgba(20, 28, 38, 0.08)', strokeDashArray: 4 },
+  xaxis: {
+    type: 'datetime',
+    axisBorder: { show: false },
+    axisTicks: { show: false },
+    labels: { format: 'd MMM' },
+  },
+  yaxis: {
+    // Counts are whole cases. Without this a range of 0-1 draws 0.2, 0.4 …
+    min: 0,
+    forceNiceScale: true,
+    labels: { formatter: v => String(Math.round(v)) },
+  },
+  // One tooltip carrying both numbers, because the comparison IS the point.
+  tooltip: { shared: true, intersect: false, x: { format: 'EEEE d MMMM' } },
+  noData: { text: 'Nothing in this period.' },
+}))
+
 /* The statuses worth a tile, in the order a case actually travels. */
 const TILES = [
   { key: 'submitted', label: 'Submitted', icon: 'ri-inbox-line', color: 'primary' },
@@ -60,10 +146,14 @@ onMounted(async () => {
   */
   await loadUser()
 
-  if (can('applications.process'))
+  if (can('applications.process')) {
     await load()
-  else
+    await loadTrend()
+  }
+  else {
     loading.value = false
+    trendLoading.value = false
+  }
 })
 </script>
 
@@ -82,8 +172,8 @@ onMounted(async () => {
         v-if="can('applications.process')"
         variant="tonal"
         prepend-icon="ri-refresh-line"
-        :loading="loading"
-        @click="load"
+        :loading="loading || trendLoading"
+        @click="() => { load(); loadTrend() }"
       >
         Refresh
       </VBtn>
@@ -185,6 +275,107 @@ onMounted(async () => {
           </VCard>
         </VCol>
       </VRow>
+
+      <!--
+        👉 arrivals against decisions
+
+        NOT a chart of the tiles above: those already print the per-status
+        counts, and redrawing them would be decoration. This is the question the
+        tiles cannot answer - is work coming in faster than it is going out.
+      -->
+      <VCard class="mb-6">
+        <VCardItem>
+          <VCardTitle>Arriving and being decided</VCardTitle>
+          <VCardSubtitle>
+            Applications submitted by partners, against decisions VFI recorded on them.
+          </VCardSubtitle>
+
+          <template #append>
+            <VBtnToggle
+              v-model="range"
+              density="compact"
+              variant="outlined"
+              divided
+              mandatory
+            >
+              <VBtn
+                v-for="r in RANGES"
+                :key="r.days"
+                :value="r.days"
+                size="small"
+              >
+                {{ r.label }}
+              </VBtn>
+            </VBtnToggle>
+          </template>
+        </VCardItem>
+
+        <VDivider />
+
+        <VCardText>
+          <VAlert
+            v-if="trendError"
+            type="warning"
+            variant="tonal"
+            class="mb-4"
+          >
+            <span class="text-high-emphasis">{{ trendError }}</span>
+          </VAlert>
+
+          <div
+            v-else-if="trendLoading"
+            class="d-flex align-center justify-center"
+            style="min-height: 280px"
+          >
+            <VProgressCircular
+              indeterminate
+              size="32"
+              width="3"
+            />
+          </div>
+
+          <template v-else>
+            <div class="d-flex flex-wrap gap-6 mb-2">
+              <div>
+                <div class="text-disabled text-sm">
+                  Arrived
+                </div>
+                <span class="text-h5">{{ trend?.totals?.arrived ?? 0 }}</span>
+              </div>
+              <div>
+                <div class="text-disabled text-sm">
+                  Decided
+                </div>
+                <span class="text-h5">{{ trend?.totals?.decided ?? 0 }}</span>
+              </div>
+            </div>
+
+            <!--
+              Client-only: this console is prerendered to static HTML, so a
+              chart cannot be drawn at build time.
+            -->
+            <VueApexCharts
+              type="area"
+              height="280"
+              :options="chartOptions"
+              :series="chartSeries"
+            />
+
+            <!--
+              Said plainly rather than left for the reader to misread: with a
+              handful of cases in one week this line is flat because the
+              business is young, not because something is broken.
+            -->
+            <p
+              v-if="trendIsFlat"
+              class="text-body-2 text-medium-emphasis mb-0"
+            >
+              There is almost nothing to plot yet — this fills in as applications arrive and
+              get decided. It reads the real queue, so it is empty rather than illustrative.
+            </p>
+          </template>
+        </VCardText>
+      </VCard>
 
       <!-- 👉 latest cases -->
       <VCard title="Latest applications">

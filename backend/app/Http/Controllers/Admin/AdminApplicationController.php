@@ -126,6 +126,91 @@ class AdminApplicationController extends Controller
     }
 
     /** GET /api/admin/applications/{id} — one case, everything staff need. */
+    /**
+     * GET /api/admin/applications/trend — what the dashboard graph draws.
+     *
+     * Two series, because the tiles on that screen already print the current
+     * per-status counts and a chart of the same six numbers would be
+     * decoration. These answer the question the tiles cannot: is work arriving
+     * faster than it is being decided?
+     *
+     *   arrived  — applications.submitted_at, i.e. when a partner sent it
+     *   decided  — rows in application_status_events, the only place that
+     *              records that a decision happened ON a given day. A case's
+     *              own row remembers where it ended up, not when it moved.
+     *
+     * Grouped in SQL and gap-filled here, so a day with nothing in it is a
+     * zero rather than a hole the chart has to interpret.
+     */
+    public function trend(Request $request): JsonResponse
+    {
+        abort_unless(StaffAbilities::current('applications.process'), 403);
+
+        // The subscript binds tighter than ??, so reading the key straight off
+        // validate() throws when `days` was not sent at all.
+        $data = $request->validate([
+            'days' => ['nullable', 'integer', 'min:7', 'max:365'],
+        ]);
+        $days = (int) ($data['days'] ?? 30);
+
+        $from = now()->startOfDay()->subDays($days - 1);
+
+        [$arrived, $decided] = RlsBypass::run(function () use ($from) {
+            $byDay = fn ($q, string $column) => $q
+                ->where($column, '>=', $from)
+                ->selectRaw('date('.$column.') as d, count(*) as n')
+                ->groupBy('d')
+                ->pluck('n', 'd');
+
+            /*
+             * A decision is a move FROM one status TO another. PipelineService
+             * also writes an event when an application is first submitted, and
+             * that one carries from_status = null - so counting every event
+             * would put a "decision" on the arrival day of every case in the
+             * system and make the two lines the same line.
+             */
+            $decisions = ApplicationStatusEvent::query()
+                ->withoutGlobalScope(BelongsToAgencyScope::class)
+                ->whereNotNull('from_status');
+
+            return [
+                $byDay(
+                    Application::query()->withoutGlobalScope(BelongsToAgencyScope::class),
+                    'submitted_at'
+                ),
+                // occurred_at, NOT created_at: occurred_at is when the decision
+                // was made and is what PipelineService writes and what
+                // Application::statusEvents() orders by. created_at is when the
+                // row reached the database - the same thing today, and quietly
+                // not the same the moment any of this is backfilled or queued.
+                $byDay($decisions, 'occurred_at'),
+            ];
+        });
+
+        $points = [];
+        $cursor = $from->copy();
+        for ($i = 0; $i < $days; $i++) {
+            $key = $cursor->toDateString();
+            $points[] = [
+                'date' => $key,
+                'arrived' => (int) ($arrived[$key] ?? 0),
+                'decided' => (int) ($decided[$key] ?? 0),
+            ];
+            $cursor->addDay();
+        }
+
+        return response()->json([
+            'days' => $days,
+            'from' => $from->toDateString(),
+            'to' => now()->toDateString(),
+            'points' => $points,
+            'totals' => [
+                'arrived' => array_sum(array_column($points, 'arrived')),
+                'decided' => array_sum(array_column($points, 'decided')),
+            ],
+        ])->header('Cache-Control', 'no-store');
+    }
+
     public function show(Request $request, int $application): JsonResponse
     {
         $this->authorise();

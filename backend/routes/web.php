@@ -112,6 +112,8 @@ Route::prefix('api/admin')->group(function () {
          */
         $apps = AdminApplicationController::class;
         Route::get('applications', [$apps, 'index']);
+        // Before the {application} route, or the literal is read as an id.
+        Route::get('applications/trend', [$apps, 'trend']);
         Route::get('applications/{application}', [$apps, 'show'])->whereNumber('application');
         Route::post('applications/{application}/transition', [$apps, 'transition'])->whereNumber('application');
         Route::post('applications/{application}/notes', [$apps, 'addNote'])->whereNumber('application');
