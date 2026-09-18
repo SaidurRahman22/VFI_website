@@ -50,3 +50,7 @@ id_rsa.*
 *.pem
 *.key
 test/ui/panel-shots/
+
+# Playwright MCP writes page snapshots/console logs here during verification.
+# The repo root is the web root, so anything committed here is served publicly.
+.playwright-mcp/
