@@ -11,6 +11,7 @@ use App\Models\Student\Student;
 use App\Services\DocumentScanner;
 use App\Services\DocumentStorage;
 use App\Support\TenantContext;
+use App\Support\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -132,7 +133,26 @@ class PartnerEnquiryController extends Controller
         if (! $data) {
             abort(404);
         }
-        $doc = ProgramRequestDocument::withoutGlobalScopes()->find($data['doc_id']);
+        /*
+         * This route is PUBLIC by design — the opaque token IS the capability —
+         * so no tenant is bound when it runs. withoutGlobalScopes() dropped the
+         * Eloquent net only: `program_request_documents` carries Postgres RLS
+         * FORCE, and 2026_08_18_000002 left its policy STRICT on purpose ("the
+         * narrower the bypass, the better"), so it admits no app.rls_bypass.
+         * A tenant-less read therefore returned zero rows and this handler
+         * 404'd for every caller on the database production actually runs —
+         * invisible to SQLite, where there is no second net to fail.
+         *
+         * RlsBypass::run() is the wrong tool precisely because that policy has
+         * no bypass clause. The token records its owning agency when it is
+         * minted (see presign above), so adopt that tenant for the one lookup:
+         * a plain find() then scopes to exactly that agency, which is strictly
+         * tighter than removing the scope was.
+         */
+        $agencyId = (int) ($data['agency_id'] ?? 0);
+        $doc = $agencyId > 0
+            ? TenantScope::runAs($agencyId, fn () => ProgramRequestDocument::find($data['doc_id']))
+            : null;   // fail closed: a token minted before agency_id was stored
         if (! $doc || ! $doc->isReadable()) {
             abort(404);
         }
