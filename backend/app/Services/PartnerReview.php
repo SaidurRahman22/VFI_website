@@ -17,6 +17,7 @@ use App\Models\Partner\PartnerApplication;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Support\TenantContext;
+use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -126,10 +127,30 @@ class PartnerReview
         $agency->update(['status' => $status->value]);
 
         if (in_array($status, [AgencyStatus::Suspended, AgencyStatus::Closed], true)) {
-            $userIds = PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)
-                ->where('agency_id', $agency->id)->pluck('user_id');
-            DB::table('sessions')->whereIn('user_id', $userIds)->delete();
-            User::whereIn('id', $userIds)->update(['remember_token' => Str::random(60)]);
+            /*
+             * Name the tenant instead of relying on an ambient one.
+             *
+             * The member lookup reads an RLS FORCE table. Today every caller is a
+             * Filament table action (AgenciesTable.php:54, :67, :82), so
+             * StaffRlsRead has already turned the bypass on for the request and a
+             * bare withoutGlobalScope read works. That makes this correct BY
+             * ACCIDENT OF ITS CALLER: the same call from a console command, a
+             * queued job or an observer gets an empty list, deletes no sessions,
+             * rotates no tokens, and reports success. Cutting off a business's
+             * access is not a thing to leave depending on which middleware stack
+             * happened to run.
+             *
+             * runAs binds the one agency being acted on, which satisfies the
+             * policy's USING clause directly and restores the previous tenant in
+             * a finally. It is also tighter than the bypass: only this agency's
+             * seats are visible, not every tenant's.
+             */
+            TenantScope::runAs((int) $agency->id, function () use ($agency) {
+                $userIds = PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)
+                    ->where('agency_id', $agency->id)->pluck('user_id');
+                DB::table('sessions')->whereIn('user_id', $userIds)->delete();
+                User::whereIn('id', $userIds)->update(['remember_token' => Str::random(60)]);
+            });
         }
     }
 }

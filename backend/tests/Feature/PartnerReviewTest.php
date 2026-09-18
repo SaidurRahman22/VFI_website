@@ -17,6 +17,7 @@ use App\Models\Partner\PartnerApplication;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\PartnerReview;
+use App\Support\RlsBypass;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -58,9 +59,15 @@ class PartnerReviewTest extends TestCase
         $this->assertSame(AgencyStatus::Approved, $agency->status);
         $this->assertSame($staff->id, $agency->approved_by_user_id);
 
-        // exactly one owner seat, scoped to this agency
-        $members = PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)->get();
+        // Exactly one owner seat, scoped to this agency. No tenant is bound here
+        // (staff minted it), so net 2 has to come off through the app's own
+        // audited escape hatch - the members policy names its flag. No-op off
+        // Postgres, so this reads the same on both drivers.
+        $members = RlsBypass::run(
+            fn () => PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)->get()
+        );
         $this->assertCount(1, $members);
+        $this->assertSame($agency->id, $members->first()->agency_id);   // the comment's claim, asserted
         $this->assertSame(SeatRole::Owner, $members->first()->seat_role);
         $this->assertSame(MemberStatus::Active, $members->first()->status);
 
@@ -98,7 +105,12 @@ class PartnerReviewTest extends TestCase
         $this->review->reject($app, $staff, 'Documents did not match the agency name.');
 
         $this->assertSame(0, PartnerAgency::count());
-        $this->assertSame(0, PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)->count());
+        // Wrapped, because unwrapped this assertion CANNOT FAIL on Postgres: with
+        // no tenant bound the policy returns 0 rows whether or not a rejection
+        // wrongly minted a seat. It was green and proving nothing.
+        $this->assertSame(0, RlsBypass::run(
+            fn () => PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)->count()
+        ));
         $app->refresh();
         $this->assertSame(ApplicationReviewStatus::Rejected, $app->review_status);
         $this->assertStringContainsString('did not match', $app->review_notes);
@@ -122,8 +134,14 @@ class PartnerReviewTest extends TestCase
     {
         Mail::fake();
         $staff = User::factory()->create();
-        $agency = $this->review->approve($this->application(), $staff);
-        $ownerId = PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)->value('user_id');
+        $application = $this->application();
+        $agency = $this->review->approve($application, $staff);
+        // The application already names the user the owner seat was minted for,
+        // so take it from there rather than reading an RLS table with no tenant
+        // bound. Read that way on Postgres it was NULL, and both session rows
+        // below were then inserted against a NULL user_id - so the closing
+        // assertion passed or failed for a reason unrelated to revocation.
+        $ownerId = $application->user_id;
 
         DB::table('sessions')->insert([
             ['id' => 'sA', 'user_id' => $ownerId, 'ip_address' => '1.1.1.1', 'user_agent' => 'x', 'payload' => '', 'last_activity' => time()],

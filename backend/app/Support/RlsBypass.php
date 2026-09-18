@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\DB;
  * Without this the policy hides every row (app.agency_id is unset) and the flow
  * fails closed — which is safe, but wrong for these paths.
  *
- * Safety: the flag wraps a single closure and is always reset in `finally`; no
+ * Safety: the flag wraps a single closure and is always restored to its previous
+ * value in `finally` - restored, not blanked, because a staff request already
+ * holds the flag on via StaffRlsRead and blanking it would strip the bypass from
+ * the rest of that request; no
  * request-handling path leaves it on (EnsurePartner rebinds app.agency_id for
  * every console request). The policies' WITH CHECK clauses deliberately carry
  * NO bypass, so WRITES still require a real tenant. No-op off Postgres.
@@ -29,11 +32,31 @@ class RlsBypass
             return $fn();
         }
 
-        DB::statement("SET app.rls_bypass = 'on'");
+        /*
+         * RESTORE the previous value, do not blank it.
+         *
+         * This used to end with SET app.rls_bypass = '' unconditionally, which is
+         * wrong whenever the caller is already inside a bypass - and on a staff
+         * request it always is, because StaffRlsRead turns the flag on for the
+         * whole request. So the first RlsBypass::run() inside such a request
+         * switched the middleware's bypass OFF for everything that ran after it,
+         * and any later RLS-keyed read in that same request would quietly return
+         * zero rows. Nested calls had the same problem among themselves.
+         *
+         * set_config() rather than SET so the restored value is a bound
+         * parameter; SET takes no placeholders, and this value must never be
+         * built by string concatenation. current_setting(..., true) returns NULL
+         * rather than erroring when the GUC was never set at all.
+         */
+        $previous = (string) (DB::selectOne(
+            "select current_setting('app.rls_bypass', true) as value"
+        )->value ?? '');
+
+        DB::statement("select set_config('app.rls_bypass', 'on', false)");
         try {
             return $fn();
         } finally {
-            DB::statement("SET app.rls_bypass = ''");
+            DB::statement("select set_config('app.rls_bypass', ?, false)", [$previous]);
         }
     }
 }
