@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SiteContent;
 use App\Services\ImageService;
+use App\Support\ImageIdGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -188,11 +189,23 @@ class AdminMediaController extends Controller
             // cost of demanding it is a screen change rather than a silently
             // unguarded path that survives forever.
             'version' => ['required', 'integer', 'min:0'],
-            'imgId' => ['nullable', 'string', 'max:255'],
+
+            // Allow-listed, not merely bounded. These ten slots are the hero
+            // and the coloured bands of the HOME page: an unchecked value here
+            // painted an attacker-chosen picture on the most-visited page of
+            // the site for every anonymous visitor. `string|max:255` is a size
+            // limit, and a size limit is not a decision about what may be
+            // fetched.
+            'imgId' => ImageIdGuard::rules(),
         ]);
 
-        $imgId = $data['imgId'] ?? null;
-        $clearing = $imgId === null || $imgId === '';
+        // api/admin/media* is NOT exempt from TrimStrings, so this is already
+        // trimmed — cleaned anyway so the endpoint does not depend on a
+        // middleware exemption list it does not own to store a valid id.
+        // clean() collapses "absent", null and "" to one empty string, so there
+        // is a single way to say "no picture" from here on.
+        $imgId = ImageIdGuard::clean($data['imgId'] ?? null);
+        $clearing = $imgId === '';
 
         $row = SiteContent::query()->where('key', 'media')->first();
         $currentVersion = (int) ($row->version ?? 0);

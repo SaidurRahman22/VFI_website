@@ -10,28 +10,20 @@
   var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
   var esc = VFI.esc;
 
-  /* The url was interpolated into a url() token unquoted, and
-     `background-image: url(a), url(b)` is valid CSS — so a stored id ending
-     `.jpg), url(https://evil.example/beacon.png` painted a second, attacker-
-     chosen background on every anonymous visitor's page. Quoting the token and
-     dropping the characters that could close the quote leaves a malformed
-     value that simply fails to parse. */
-  function bg(el, url) {
-    el.style.backgroundImage = 'url("' + String(url).replace(/["\\\n\r]/g, "") + '")';
-    el.style.backgroundSize = "cover";
-    el.style.backgroundPosition = "center";
-  }
-
-  /* The same allow-list the server applies when an image id is saved, mirrored
-     here because the browser must not assume a clean database: rows written
-     before that guard existed are already stored, `content:import` copies
-     legacy JSON in verbatim, and the retired admin.html wrote arbitrary ids
-     into the editor's own browser. Anything not on the list is dropped rather
-     than fetched, so one bad row cannot turn a page load into a third-party
-     beacon that leaks every visitor's IP and Referer.
+  /* The same allow-list the server applies when an image id is saved
+     (App\Support\ImageIdGuard), mirrored here because the browser must not
+     assume a clean database: rows written before that guard existed are already
+     stored, `content:import` copies legacy JSON in verbatim, and the retired
+     admin.html wrote arbitrary ids into the editor's own browser. Anything not
+     on the list is dropped rather than fetched, so one bad row cannot turn a
+     page load into a third-party beacon that leaks every visitor's IP and
+     Referer.
      Three shapes are real: a managed upload, a photo bundled in the repo
      (whose ?v= cache-buster is same-origin and so carries no such risk), and
-     the data: URL a legacy IndexedDB upload resolves to. */
+     the data: URL a legacy IndexedDB upload resolves to. The server refuses the
+     ?v= form — it never writes one, so a value carrying one was typed or
+     imported — which makes this list deliberately the wider of the two: it
+     guards what may be FETCHED, including rows no controller ever saw. */
   var IMG_MANAGED = /^\/storage\/media\/[0-9a-f]{64}\.jpg$/;
   var IMG_BUNDLED = /^assets\/img\/[A-Za-z0-9_-][A-Za-z0-9._-]*\.(?:jpe?g|png|webp|gif)(?:\?[A-Za-z0-9._=&-]*)?$/;
   var IMG_DATA = /^data:image\/(?:jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
@@ -42,12 +34,39 @@
     return (IMG_MANAGED.test(s) || IMG_BUNDLED.test(s) || IMG_DATA.test(s)) ? s : "";
   }
 
-  /* paint an element's background from a stored image id */
+  /* Paint a background, and refuse anything not on the list above.
+     The check is HERE and not in the four callers on purpose: three of them did
+     not have it, so an image id from a collection row or a home-page media slot
+     was fetched whatever it said. A guard each caller has to remember to apply
+     is a guard the next caller will not.
+     Returns whether it painted, because the callers that follow a picture with
+     `has-photo` hide the drawing built into the markup when they add it — so a
+     refused value without an answer here leaves an empty box where the fallback
+     used to be.
+     Separately, the url is assigned rather than interpolated into markup: the
+     value was once built into a `style="…url('…')"` string, and
+     `background-image: url(a), url(b)` is valid CSS, so an id ending
+     `.jpg), url(https://evil.example/beacon.png` painted a second, attacker-
+     chosen background. Quoting the token and dropping what could close the
+     quote leaves a value that simply fails to parse. */
+  function bg(el, url) {
+    var safe = safeImgUrl(url);
+    if (!el || !safe) return false;
+    el.style.backgroundImage = 'url("' + safe.replace(/["\\\n\r]/g, "") + '")';
+    el.style.backgroundSize = "cover";
+    el.style.backgroundPosition = "center";
+    return true;
+  }
+
+  /* Paint an element's background from a stored image id.
+     `then` is returned so a caller that follows the picture with a class can
+     wait for the answer — see the services rows, where .has-photo hides the
+     icon the card draws for itself. */
   function paint(el, imgId) {
-    if (!el || !imgId) return;
-    VFI.getImage(imgId).then(function (url) {
-      if (!url) return;
-      bg(el, url);
+    if (!el || !imgId) return Promise.resolve(false);
+
+    return VFI.getImage(imgId).then(function (url) {
+      return !!url && bg(el, url);
     });
   }
 
@@ -283,9 +302,10 @@
       slot.cover.className = "bp-cover bp-cover--" + (post.color || "a");
       if (post.imgId) {
         VFI.getImage(post.imgId).then(function (url) {
-          if (!url) return;
-          bg(slot.cover, url);
-          slot.cover.classList.add("has-photo");
+          // has-photo only if bg() accepted it: the class swaps the coloured
+          // cover for a photograph, so adding it for a refused id leaves a
+          // blank panel instead of the colour the post was designed with.
+          if (url && bg(slot.cover, url)) slot.cover.classList.add("has-photo");
         });
       }
     }
@@ -372,8 +392,11 @@
       var imgId = VFI.media(el.getAttribute("data-media"));
       if (!imgId) return;
       VFI.getImage(imgId).then(function (url) {
-        if (!url) return;
-        bg(el, url);
+        // Same bargain as the blog cover, and it matters more here: these slots
+        // sit over the drawings on the home page, and has-photo hides them. A
+        // refused id that still added the class would erase the hero artwork
+        // and put nothing in its place.
+        if (!url || !bg(el, url)) return;
         el.classList.add("has-photo");
         if (el.classList.contains("bhero__photo")) {
           var svg = $(".bhero__svg", el.parentNode);
@@ -740,8 +763,13 @@
         (flip ? media + text : text + media) + "</article>";
     }).join("");
     $$("[data-img]", host).forEach(function (el) {
+      // Only once the paint is known to have happened: style.css hides
+      // .svcphoto__ic under .has-photo, so adding it for an id the allow-list
+      // refuses takes away the drawn icon and puts nothing in its place. New
+      // writes cannot produce such an id — the field is declared `image` and
+      // guarded server-side — but a legacy row or a content:import can.
       var id = el.getAttribute("data-img");
-      if (id) { paint(el, id); el.classList.add("has-photo"); }
+      if (id) paint(el, id).then(function (painted) { if (painted) el.classList.add("has-photo"); });
     });
   }
 

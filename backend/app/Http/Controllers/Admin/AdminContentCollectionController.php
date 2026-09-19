@@ -16,6 +16,7 @@ use App\Models\Content\PpQuicklink;
 use App\Models\Content\PpUpdate;
 use App\Models\ContentAuditLog;
 use App\Services\ImageService;
+use App\Support\ImageIdGuard;
 use App\Support\StaffAbilities;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -980,7 +981,14 @@ class AdminContentCollectionController extends Controller
                 // A relative page name OR a full URL, so no `url` rule: these
                 // are escaped at render and never interpolated into markup.
                 'url' => ['nullable', 'string', 'max:500'],
-                'image' => ['nullable', 'string', 'max:255'],
+                // Allow-listed, not merely bounded. This was `string|max:255`,
+                // which accepted `https://evil.example/beacon.png` — a value
+                // events.html, news.html, the blog list and blog-post.html all
+                // paint as a background, so one edited row made every anonymous
+                // visitor's browser announce itself to a third party. The
+                // singleton editor had refused exactly that since it gained
+                // image fields; this path never had the check.
+                'image' => ImageIdGuard::rules(),
                 'select' => ['nullable', 'string', Rule::in(array_column($f['options'], 'value'))],
                 default => ['nullable', 'string', 'max:500'],
             };
@@ -992,7 +1000,26 @@ class AdminContentCollectionController extends Controller
             $rules[$f['key']] = $rule;
         }
 
-        return $request->validate($rules);
+        $data = $request->validate($rules);
+
+        /*
+         * Store the id the guard judged, not the one that arrived.
+         *
+         * ImageIdGuard::rules() trims before deciding, so " assets/img/a.jpg"
+         * passes — and these routes are exempt from Laravel's TrimStrings
+         * (bootstrap/app.php keeps "" meaningful for content), so without this
+         * the untrimmed value is what lands in the column. The browser's
+         * safeImgUrl would then refuse it and the picture would simply not
+         * appear, with the row looking correct in the editor: the worst kind of
+         * failure, one that is invisible on the screen that caused it.
+         */
+        foreach (self::SCHEMA[$collection]['fields'] as $f) {
+            if ($f['type'] === 'image' && array_key_exists($f['key'], $data)) {
+                $data[$f['key']] = ImageIdGuard::clean($data[$f['key']]);
+            }
+        }
+
+        return $data;
     }
 
     /**

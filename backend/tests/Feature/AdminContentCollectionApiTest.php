@@ -679,7 +679,7 @@ class AdminContentCollectionApiTest extends TestCase
         $this->assertSame(['img_id', 'caption', 'alt'], $keys);
 
         $res = $this->postJson('/api/admin/content/photos', [
-            'img_id' => '/storage/media/abc.jpg',
+            'img_id' => 'assets/img/campus.jpg',
             'caption' => 'Graduation day',
             'alt' => 'Students in gowns throwing their caps',
         ])->assertCreated();

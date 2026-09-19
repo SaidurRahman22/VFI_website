@@ -84,6 +84,21 @@ class AdminMediaSlotsTest extends TestCase
         return $u->fresh();
     }
 
+    /**
+     * A managed image id the allow-list accepts, named so the assertions below
+     * still read as English.
+     *
+     * The literals here used to be `/storage/media/new-hero.jpg` and the like.
+     * ImageIdGuard refuses those now - a managed id is the sha256 of the
+     * re-encoded bytes, and a request the validator throws out cannot prove
+     * anything about the version conflict or the slot allow-list each of these
+     * tests is actually about.
+     */
+    private function imgId(string $name): string
+    {
+        return '/storage/media/'.hash('sha256', $name).'.jpg';
+    }
+
     // ---------------------------------------------------------------- access
 
     public function test_the_slots_need_an_admin_session(): void
@@ -106,7 +121,7 @@ class AdminMediaSlotsTest extends TestCase
         $this->actingAs($this->staff(Role::StaffPartnerOps));
 
         $this->getJson('/api/admin/media/slots')->assertStatus(403);
-        $this->putJson('/api/admin/media/slot/hero', ['version' => 0, 'imgId' => '/storage/media/x.jpg'])
+        $this->putJson('/api/admin/media/slot/hero', ['version' => 0, 'imgId' => $this->imgId('x')])
             ->assertStatus(403);
 
         $this->assertNull(SiteContent::value('media'), 'a refused write must leave no row behind');
@@ -127,7 +142,7 @@ class AdminMediaSlotsTest extends TestCase
         // The row as an import or the live server leaves it.
         SiteContent::query()->create([
             'key' => 'media',
-            'value' => array_fill_keys(self::PRODUCTION_KEYS, '/storage/media/seed.jpg'),
+            'value' => array_fill_keys(self::PRODUCTION_KEYS, $this->imgId('seed')),
             'version' => 1,
         ]);
         $this->actingAs($this->staff());
@@ -235,7 +250,7 @@ class AdminMediaSlotsTest extends TestCase
 
         SiteContent::query()->create([
             'key' => 'media',
-            'value' => ['hero' => '/storage/media/abc.jpg'],
+            'value' => ['hero' => $this->imgId('abc')],
             'version' => 7,
         ]);
 
@@ -248,14 +263,14 @@ class AdminMediaSlotsTest extends TestCase
             'key' => 'media',
             // '' is what a cleared slot looks like in an older payload; it means
             // empty, and a screen must not try to render it as an image.
-            'value' => ['hero' => '/storage/media/abc.jpg', 'students' => ''],
+            'value' => ['hero' => $this->imgId('abc'), 'students' => ''],
             'version' => 1,
         ]);
         $this->actingAs($this->staff());
 
         $bykey = collect($this->getJson('/api/admin/media/slots')->json('slots'))->keyBy('key');
 
-        $this->assertSame('/storage/media/abc.jpg', $bykey['hero']['imgId']);
+        $this->assertSame($this->imgId('abc'), $bykey['hero']['imgId']);
         $this->assertNull($bykey['students']['imgId']);
         $this->assertNull($bykey['collage1']['imgId'], 'a slot never set has no image');
     }
@@ -308,7 +323,7 @@ class AdminMediaSlotsTest extends TestCase
             // A correct version goes with it. The validator answers 422 as
             // well, so a body it would have rejected anyway could not tell us
             // whether the allow-list is still there; the message can.
-            $this->putJson("/api/admin/media/slot/{$key}", ['version' => 0, 'imgId' => '/storage/media/x.jpg'])
+            $this->putJson("/api/admin/media/slot/{$key}", ['version' => 0, 'imgId' => $this->imgId('x')])
                 ->assertStatus(422)
                 ->assertJsonPath('message', 'Unknown image slot.');
         }
@@ -335,14 +350,14 @@ class AdminMediaSlotsTest extends TestCase
 
         SiteContent::query()->create([
             'key' => 'media',
-            'value' => ['hero' => '/storage/media/abc.jpg', 'country_uk_hero' => $orphan],
+            'value' => ['hero' => $this->imgId('abc'), 'country_uk_hero' => $orphan],
             'version' => 3,
         ]);
         $this->actingAs($this->staff());
 
         // Nothing declares country_uk_hero, so it cannot be pointed at a
         // different image — not even now that it exists.
-        $this->putJson('/api/admin/media/slot/country_uk_hero', ['version' => 3, 'imgId' => '/storage/media/other.jpg'])
+        $this->putJson('/api/admin/media/slot/country_uk_hero', ['version' => 3, 'imgId' => $this->imgId('other')])
             ->assertStatus(422)->assertJsonPath('message', 'Unknown image slot.');
 
         $this->assertSame($orphan, SiteContent::value('media')['country_uk_hero']);
@@ -357,7 +372,7 @@ class AdminMediaSlotsTest extends TestCase
 
         // The declared slot sharing the row is untouched, and the key is no
         // more creatable now than it was before it was cleared.
-        $this->assertSame(['hero' => '/storage/media/abc.jpg'], SiteContent::value('media'));
+        $this->assertSame(['hero' => $this->imgId('abc')], SiteContent::value('media'));
 
         $this->putJson('/api/admin/media/slot/country_uk_hero', ['version' => 4, 'imgId' => $orphan])
             ->assertStatus(422)->assertJsonPath('message', 'Unknown image slot.');
@@ -376,19 +391,19 @@ class AdminMediaSlotsTest extends TestCase
     {
         SiteContent::query()->create([
             'key' => 'media',
-            'value' => ['hero' => '/storage/media/old-hero.jpg'],
+            'value' => ['hero' => $this->imgId('old-hero')],
             'version' => 1,
         ]);
 
         // Both editors read version 1. The first one saves.
         $this->actingAs($this->staff());
-        $this->putJson('/api/admin/media/slot/hero', ['version' => 1, 'imgId' => '/storage/media/new-hero.jpg'])
+        $this->putJson('/api/admin/media/slot/hero', ['version' => 1, 'imgId' => $this->imgId('new-hero')])
             ->assertOk()->assertJsonPath('version', 2);
 
         // The second still holds version 1, and is setting a different slot —
         // the collision is in the row, not in the slot, which is exactly why
         // it went unnoticed.
-        $this->putJson('/api/admin/media/slot/collage1', ['version' => 1, 'imgId' => '/storage/media/card.jpg'])
+        $this->putJson('/api/admin/media/slot/collage1', ['version' => 1, 'imgId' => $this->imgId('card')])
             ->assertStatus(409)
             ->assertJsonPath('message', 'This content was changed by someone else. Reload and reapply your edits.')
             ->assertJsonPath('currentVersion', 2);
@@ -396,7 +411,7 @@ class AdminMediaSlotsTest extends TestCase
         // Refused means nothing was written: not the collage card the second
         // editor asked for, and above all not the hero they would have carried
         // backwards with it.
-        $this->assertSame(['hero' => '/storage/media/new-hero.jpg'], SiteContent::value('media'));
+        $this->assertSame(['hero' => $this->imgId('new-hero')], SiteContent::value('media'));
         $this->assertSame(2, SiteContent::query()->where('key', 'media')->value('version'));
     }
 
@@ -409,22 +424,22 @@ class AdminMediaSlotsTest extends TestCase
     {
         SiteContent::query()->create([
             'key' => 'media',
-            'value' => ['hero' => '/storage/media/new-hero.jpg'],
+            'value' => ['hero' => $this->imgId('new-hero')],
             'version' => 2,
         ]);
         $this->actingAs($this->staff());
 
         $version = $this->getJson('/api/admin/media/slots')->assertOk()->json('version');
 
-        $this->putJson('/api/admin/media/slot/collage1', ['version' => $version, 'imgId' => '/storage/media/card.jpg'])
+        $this->putJson('/api/admin/media/slot/collage1', ['version' => $version, 'imgId' => $this->imgId('card')])
             ->assertOk()
-            ->assertJsonPath('media.hero', '/storage/media/new-hero.jpg')
-            ->assertJsonPath('media.collage1', '/storage/media/card.jpg')
+            ->assertJsonPath('media.hero', $this->imgId('new-hero'))
+            ->assertJsonPath('media.collage1', $this->imgId('card'))
             ->assertJsonPath('version', 3);
 
         $bykey = collect($this->getJson('/api/admin/media/slots')->json('slots'))->keyBy('key');
-        $this->assertSame('/storage/media/new-hero.jpg', $bykey['hero']['imgId'], 'both edits survive');
-        $this->assertSame('/storage/media/card.jpg', $bykey['collage1']['imgId']);
+        $this->assertSame($this->imgId('new-hero'), $bykey['hero']['imgId'], 'both edits survive');
+        $this->assertSame($this->imgId('card'), $bykey['collage1']['imgId']);
     }
 
     /**
@@ -437,14 +452,14 @@ class AdminMediaSlotsTest extends TestCase
     {
         SiteContent::query()->create([
             'key' => 'media',
-            'value' => ['hero' => '/storage/media/old-hero.jpg'],
+            'value' => ['hero' => $this->imgId('old-hero')],
             'version' => 1,
         ]);
         $this->actingAs($this->staff());
 
-        $this->putJson('/api/admin/media/slot/hero', ['imgId' => '/storage/media/new-hero.jpg'])
+        $this->putJson('/api/admin/media/slot/hero', ['imgId' => $this->imgId('new-hero')])
             ->assertStatus(422)->assertJsonValidationErrors('version');
 
-        $this->assertSame(['hero' => '/storage/media/old-hero.jpg'], SiteContent::value('media'));
+        $this->assertSame(['hero' => $this->imgId('old-hero')], SiteContent::value('media'));
     }
 }

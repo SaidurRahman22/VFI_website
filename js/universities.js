@@ -296,15 +296,25 @@
      Anything not on the list paints nothing rather than being trusted. */
   var U_IMG_MANAGED = /^\/storage\/media\/[0-9a-f]{64}\.(?:jpe?g|png|webp|gif)$/i;
   var U_IMG_BUNDLED = /^assets\/img\/[A-Za-z0-9_-][A-Za-z0-9._-]*\.(?:jpe?g|png|webp|gif)$/i;
-  /* Also permitted because they are the documented, already-stored shapes for
-     the university page defaults: a relative path under media/ (what
-     ImageOptimiser writes for university logos, heroes and intake photos) and a
-     plain https:// address, which that field's own hint invites. Narrowing to
-     the first two would have silently blanked pictures that work today - the
-     allow-list is here to bound what can be pointed at, not to redesign the
-     field. */
-  var U_IMG_STORED = /^media\/[A-Za-z0-9_\-\/]+\.(?:jpe?g|png|webp|gif)$/i;
-  var U_IMG_HTTPS = /^https:\/\/[A-Za-z0-9.-]+(?::\d+)?\/[^\s"'\\]*$/i;
+  /* Also permitted: a picture uploaded on the university screens. Filament
+     stores those as a disk KEY (media/universities/intakes/fall.jpg) and the
+     API hands them out through assetUrl()/publicUrl(), which prefix /storage/ —
+     so /storage/media/… is the shape that actually arrives here.
+
+     It used to be anchored on ^media/, which the API never sends, so a
+     Filament-uploaded logo, hero or intake photo was silently DROPPED and the
+     page fell back to its built-in picture. The comment here claimed the extra
+     width existed to avoid blanking pictures that work today; measured against
+     what the API emits, it was blanking them, and the only thing the width
+     bought was the plain-https branch that a content editor could point at any
+     server in the world. Both halves are corrected: the real shape is allowed,
+     and the remote one is not.
+
+     Remote addresses are gone deliberately. `universities:import` still copies
+     a CSV's logo_url/hero_url into the column verbatim, so one can still be
+     STORED; it will now simply not render, which is the safe direction for a
+     value that decides what a visitor's browser connects to. */
+  var U_IMG_STORED = /^\/storage\/media\/[A-Za-z0-9_\-\/.]+\.(?:jpe?g|png|webp|gif)$/i;
 
   function uSafeImg(url) {
     var v = String(url == null ? "" : url);
@@ -312,7 +322,7 @@
     // cheapest way to rule out traversal in every shape below at once.
     if (v.indexOf("..") !== -1) return "";
     return (U_IMG_MANAGED.test(v) || U_IMG_BUNDLED.test(v)
-      || U_IMG_STORED.test(v) || U_IMG_HTTPS.test(v)) ? v : "";
+      || U_IMG_STORED.test(v)) ? v : "";
   }
 
   /* Set a background through the CSSOM, never through markup.
@@ -403,15 +413,27 @@
     if ($("#uniCrumb")) $("#uniCrumb").textContent = u.name;
 
     /* ---- hero identity card ---- */
-    if (u.hero) { var bn = $("#uniBanner"); if (bn) bn.style.backgroundImage = "url('" + u.hero + "')"; }
+    /* Through uPaintBg, which is both the allow-list and the CSSOM assignment.
+       This line built `url('…')` by concatenation with the value unescaped —
+       the exact pattern the comment above uPaintBg warns against — so a hero
+       ending `x'), url('https://evil.example/b.png` painted a second,
+       attacker-chosen background. u.hero comes from heroUrl(), which passes an
+       absolute URL through, and universities:import writes that column straight
+       from a third-party CSV. */
+    if (u.hero) uPaintBg($("#uniBanner"), u.hero);
     var loc = [u.city, u.province_state, u.country].filter(Boolean).join(", ");
     var sub = [];
     if (u.tagline) sub.push('<span>' + esc(u.tagline) + '</span>');
     if (loc) sub.push('<span><svg class="ic ic--sm"><use href="#i-pin"/></svg> ' + esc(loc) + '</span>');
     if (u.website) sub.push('<a href="' + esc(u.website) + '" target="_blank" rel="noopener nofollow">' + esc(String(u.website).replace(/^https?:\/\//, "")) + '</a>');
     var hero = $("#uniHero");
+    var ulogo = uSafeImg(u.logo);
     if (hero) hero.innerHTML =
-      '<span class="uhero__logo">' + (u.logo ? '<img src="' + esc(u.logo) + '" alt="' + esc(u.name) + ' logo">' : esc(initials(u.name))) + '</span>'
+      // uSafeImg before esc(): esc() stops the value breaking out of the
+      // attribute, it does not stop the browser fetching whatever host it
+      // names. A logo that fails the list falls back to the initials, which is
+      // already what a university with no logo shows.
+      '<span class="uhero__logo">' + (ulogo ? '<img src="' + esc(ulogo) + '" alt="' + esc(u.name) + ' logo">' : esc(initials(u.name))) + '</span>'
       + '<div class="uhero__txt"><h1>' + esc(u.name) + '</h1>'
       + (sub.length ? '<div class="uhero__sub">' + sub.join("") + '</div>' : '') + '</div>'
       + '<div class="uhero__cta"><button class="btn btn--enquire btn--lg" data-apply type="button">Apply with VFI</button></div>';
@@ -589,9 +611,13 @@
     }
 
     // Gallery
-    if (p.gallery && p.gallery.length) {
+    // Filtered before the length check, so a gallery of nothing but refused
+    // urls renders no empty panel at all. Same reasoning as the logo: esc()
+    // guards the attribute, not the fetch.
+    var gallery = (p.gallery || []).map(uSafeImg).filter(Boolean);
+    if (gallery.length) {
       push("gallery", "Gallery", '<div class="ugallery">'
-        + p.gallery.map(function (g) { return '<img src="' + esc(g) + '" alt="' + esc(u.name) + '" loading="lazy">'; }).join("") + '</div>');
+        + gallery.map(function (g) { return '<img src="' + esc(g) + '" alt="' + esc(u.name) + '" loading="lazy">'; }).join("") + '</div>');
     }
 
     // FAQs — this university's, else the admin default set, else the built-in

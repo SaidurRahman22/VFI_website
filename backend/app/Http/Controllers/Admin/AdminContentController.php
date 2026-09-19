@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteContent;
+use App\Support\ImageIdGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -474,8 +475,28 @@ class AdminContentController extends Controller
                             'hint' => 'One of fall, spring, summer or winter. Any other word is never looked up.'],
                         ['key' => 'month', 'label' => 'Month on the card', 'type' => 'text', 'half' => true],
                         ['key' => 'note', 'label' => 'Note', 'type' => 'textarea'],
-                        ['key' => 'image', 'label' => 'Card image', 'type' => 'text',
-                            'hint' => 'A stored path such as media/universities/intakes/fall.jpg, or a full https:// address. Left empty, the card keeps its built-in photo.'],
+                        /*
+                         * `asset`, not `text`, and not `image`.
+                         *
+                         * It was `text`, so the allow-list every other picture
+                         * field goes through never ran on it — and this one is
+                         * painted on university.html, a public page. A content
+                         * editor could put `https://evil.example/beacon.png`
+                         * here and every anonymous visitor's browser would fetch
+                         * it. The hint used to invite exactly that ("or a full
+                         * https:// address"); a public page is not ours to point
+                         * at someone else's server, so the invitation is gone.
+                         *
+                         * Not `image` either: this holds the DISK KEY Filament's
+                         * upload writes, which assetUrl() prefixes with
+                         * /storage/ on the way out. An id that is already a URL
+                         * would come back as /storage/storage/… and render
+                         * nothing.
+                         */
+                        ['key' => 'image', 'label' => 'Card image', 'type' => 'asset',
+                            'hint' => 'A picture stored on this site, such as media/universities/intakes/fall.jpg. '
+                                .'Uploading one on the University defaults screen fills this in for you. '
+                                .'Left empty, the card keeps its built-in photo.'],
                     ],
                 ],
                 [
@@ -751,14 +772,20 @@ class AdminContentController extends Controller
             // cannot see the reason for.
             $id = is_string($value) ? trim($value) : '';
 
-            abort_if(
-                $id !== '' && ! self::isUsableImageId($id),
-                422,
-                "“{$where}”: the website cannot load that image. Upload one, or name a photo already bundled "
-                    .'with the site (assets/img/…).',
-            );
+            abort_if($id !== '' && ! ImageIdGuard::isUsable($id), 422, "“{$where}”: ".ImageIdGuard::MESSAGE);
 
             return $id;
+        }
+
+        if ($field['type'] === 'asset') {
+            // A file on the public disk, stored as the key rather than the URL.
+            // See the `seasons[].image` declaration above for why that is its
+            // own type and not a second meaning for `image`.
+            $key = is_string($value) ? trim($value) : '';
+
+            abort_if($key !== '' && ! ImageIdGuard::isUsableAssetKey($key), 422, "“{$where}”: ".ImageIdGuard::ASSET_MESSAGE);
+
+            return $key;
         }
 
         if ($field['type'] === 'slot') {
@@ -793,35 +820,5 @@ class AdminContentController extends Controller
         abort_if(mb_strlen($value) > $max, 422, "“{$where}” is longer than {$max} characters.");
 
         return $value;
-    }
-
-    /** What ImageService::store() returns, and a photo bundled in the repo. */
-    private const IMG_MANAGED_UPLOAD = '#^/storage/media/[0-9a-f]{64}\.jpg$#';
-
-    private const IMG_BUNDLED_ASSET = '#^assets/img/[a-z0-9._-]+\.(?:jpe?g|png|webp|gif)$#';
-
-    /**
-     * The two id shapes a declared image field may hold.
-     *
-     * Everything else is refused, a remote URL and an SVG included: the value
-     * ends up inside a CSS url() on a public page, so it has to be something
-     * this site serves, and it has to have come through the re-encode that
-     * strips whatever else was in the file.
-     *
-     * The browser keeps a copy of this list, in
-     * tools/admin-panel/composables/useVfiImageUpload.js, but only to decide
-     * what to draw and when to warn. This is the one that decides.
-     */
-    private static function isUsableImageId(string $id): bool
-    {
-        // Refused ahead of the patterns rather than trusted to them: the
-        // bundled name class allows a dot, so `..` is a traversal attempt, not
-        // a filename.
-        if (str_contains($id, '..')) {
-            return false;
-        }
-
-        return preg_match(self::IMG_MANAGED_UPLOAD, $id) === 1
-            || preg_match(self::IMG_BUNDLED_ASSET, $id) === 1;
     }
 }
