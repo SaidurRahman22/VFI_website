@@ -21,6 +21,18 @@
   Deleting a row is deliberately two clicks and never silent: a repeating block
   has no trash to restore from, unlike the content collections, so the only
   protection is not doing it by accident.
+
+  A field declared `image` carries a picture on the row itself - the id the
+  upload endpoint returns, stored beside that university's name. It is not a
+  media slot: the slot registry is a fixed list of positions in hand-written
+  markup, so the only key it could offer a repeater is the row's number, and
+  row numbers move the moment someone reorders the list. The logo would stay
+  behind on row two while the university it belongs to moved to row four.
+  Because the id travels with the row, reordering and removing just work.
+
+  A row keeps working with no picture: the country pages draw a coloured crest
+  or a set of initials underneath, and that fallback is what an empty value
+  means. So clearing an image writes '', it does not remove the key.
 */
 const props = defineProps({
   singletonKey: { type: String, required: true },
@@ -29,6 +41,19 @@ const props = defineProps({
 
 const api = useVfiApi()
 const { can, load: loadUser } = useVfiUser()
+
+/* The upload the content-collections dialog already performs, not a second one
+   written for this screen. Everything about it is the same three steps; only
+   the in-flight token differs, because this page shows many rows at once. */
+const {
+  uploading,
+  uploadErrors,
+  imageSrc,
+  isKnownImageId,
+  isUnusableImageId,
+  uploadImage,
+  clearUploadError,
+} = useVfiImageUpload()
 
 const booting = ref(true)
 const allowed = ref(false)
@@ -116,6 +141,65 @@ function moveRow(list, i, delta) {
   const [row] = arr.splice(i, 1)
   arr.splice(j, 0, row)
   confirmDelete.value = null
+}
+
+/* ---------------------------------------------------------------- images */
+
+/* Which control an upload belongs to. The row's position is part of it because
+   six universities on screen all have a field called `img`, and a spinner on
+   the wrong row - or an error message under the wrong one - is worse than
+   none at all. */
+function imgToken(list, i, fieldKey) {
+  return `${list.key}:${i}:${fieldKey}`
+}
+
+/* The same thing again without colons, for aria-labelledby. The visible field
+   name has to be the file input's accessible name too, and a bare <label>
+   element next to a Vuetify input labels nothing: the control it would point
+   at is generated inside the component. */
+function imgDomId(list, i, fieldKey) {
+  return `gce-img-${list.key}-${i}-${fieldKey}`
+}
+
+/* True while this row is waiting on an upload. Removing or reverting now would
+   throw away the object the upload is about to write into, so the id would
+   land in a detached row and the editor would be told neither that it arrived
+   nor that it was lost. */
+function rowIsUploading(list, i) {
+  return Boolean(uploading.value) && uploading.value.startsWith(`${list.key}:${i}:`)
+}
+
+/* Back to the picture the page draws on its own. Empty string, not a deleted
+   key: '' is what the renderer reads as "no photo, keep the crest", and what
+   the server's schema walk expects to find in a declared image field. */
+function clearImage(row, fieldKey, token) {
+  row[fieldKey] = ''
+  clearUploadError(token)
+}
+
+/* token -> how many times that file input has been rebuilt. It is part of the
+   input's `key`, so a failed upload replaces the control with a fresh one.
+
+   Without it a retry is impossible: a file input fires no change event when
+   the same file is chosen twice running, so after a failure that dropped the
+   connection, picking the very same file again does nothing at all and the
+   editor is left tapping a control that has stopped responding. */
+const imgRetry = ref({})
+
+async function runUpload(row, list, i, fieldKey, files) {
+  const file = Array.isArray(files) ? files[0] : files
+
+  // Clearing the input fires this too, with nothing in it. Ignored rather than
+  // counted as a failure: it would rebuild the control for no reason.
+  if (!file)
+    return
+
+  const token = imgToken(list, i, fieldKey)
+
+  const ok = await uploadImage(row, fieldKey, token, file)
+
+  if (!ok)
+    imgRetry.value[token] = (imgRetry.value[token] || 0) + 1
 }
 
 async function load() {
@@ -216,21 +300,33 @@ onMounted(async () => {
           </p>
         </div>
 
+        <!--
+          Both are withheld while a picture is uploading. A save that lands
+          mid-upload stores the row without the id that arrives a second later,
+          and an undo replaces the row object the upload is about to write
+          into - in either case the editor is shown a success and ends up with
+          a card that has no photo, with nothing on screen saying why.
+        -->
         <div class="d-flex align-center gap-2">
           <VBtn
             v-if="dirty"
             variant="text"
-            :disabled="saving"
+            :disabled="saving || !!uploading"
             @click="revert"
           >
             Undo changes
           </VBtn>
           <VBtn
             :loading="saving"
-            :disabled="!dirty"
+            :disabled="!dirty || !!uploading"
             @click="save"
           >
-            {{ dirty ? 'Save changes' : 'No changes' }}
+            <template v-if="uploading">
+              Uploading…
+            </template>
+            <template v-else>
+              {{ dirty ? 'Save changes' : 'No changes' }}
+            </template>
           </VBtn>
         </div>
       </div>
@@ -419,6 +515,7 @@ onMounted(async () => {
                   size="x-small"
                   :variant="confirmDelete === `${list.key}:${i}` ? 'flat' : 'text'"
                   :color="confirmDelete === `${list.key}:${i}` ? 'error' : undefined"
+                  :disabled="rowIsUploading(list, i)"
                   @click="removeRow(list, i)"
                 >
                   {{ confirmDelete === `${list.key}:${i}` ? 'Tap again to remove' : 'Remove' }}
@@ -433,8 +530,117 @@ onMounted(async () => {
                 cols="12"
                 :md="f.half ? 6 : 12"
               >
+                <!--
+                  A picture for this row: what it holds now, a way to replace
+                  it, a way to put it back to the card the page draws on its
+                  own. Same control as the content-collections dialog, because
+                  an editor who has uploaded a blog image has already learnt
+                  this one.
+                -->
+                <template v-if="f.type === 'image'">
+                  <div
+                    role="group"
+                    :aria-labelledby="imgDomId(list, i, f.key)"
+                  >
+                    <div
+                      :id="imgDomId(list, i, f.key)"
+                      class="text-body-2 font-weight-medium mb-2"
+                    >
+                      {{ f.label }}
+                    </div>
+
+                    <div class="d-flex align-center gap-4 mb-2">
+                      <VAvatar
+                        size="72"
+                        rounded
+                        variant="tonal"
+                      >
+                        <VImg
+                          v-if="isKnownImageId(row[f.key])"
+                          :src="imageSrc(row[f.key])"
+                          :alt="`Current ${f.label.toLowerCase()}`"
+                          cover
+                        />
+                        <VIcon
+                          v-else
+                          icon="ri-image-line"
+                        />
+                      </VAvatar>
+
+                      <div class="flex-grow-1">
+                        <!--
+                          Every other image input on the page is disabled while
+                          one upload is in flight. Starting a second would take
+                          over the single in-flight token, so the first row's
+                          spinner would stop and Save would unlock while its
+                          request was still running - which is the exact save
+                          that loses an id.
+                        -->
+                        <VFileInput
+                          :key="`${imgDomId(list, i, f.key)}-${imgRetry[imgToken(list, i, f.key)] || 0}`"
+                          :label="row[f.key] ? 'Replace image' : 'Choose an image'"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          density="compact"
+                          prepend-icon=""
+                          prepend-inner-icon="ri-upload-2-line"
+                          :loading="uploading === imgToken(list, i, f.key)"
+                          :disabled="!!uploading && uploading !== imgToken(list, i, f.key)"
+                          :error-messages="uploadErrors[imgToken(list, i, f.key)] || []"
+                          :hint="f.hint"
+                          persistent-hint
+                          hide-details="auto"
+                          @update:model-value="files => runUpload(row, list, i, f.key, files)"
+                        />
+                      </div>
+
+                      <VBtn
+                        v-if="row[f.key]"
+                        variant="text"
+                        size="small"
+                        color="error"
+                        :disabled="!!uploading"
+                        @click="clearImage(row, f.key, imgToken(list, i, f.key))"
+                      >
+                        Remove image
+                      </VBtn>
+                    </div>
+
+                    <!--
+                      The stored id, shown rather than hidden: it is the string
+                      the public page loads, so when a picture looks wrong this
+                      is the line that says why. It is also how a row is
+                      pointed at a photo already bundled with the site instead
+                      of uploading a second copy of it.
+                    -->
+                    <VTextField
+                      v-model="row[f.key]"
+                      density="compact"
+                      label="Stored image id"
+                      hide-details="auto"
+                    />
+
+                    <!--
+                      Said here rather than left for the save to refuse. The
+                      server allow-lists this value, so a pasted web address or
+                      a mistyped id costs an editor a 422 on a form with forty
+                      fields in it and no clue which one was at fault.
+                    -->
+                    <VAlert
+                      v-if="isUnusableImageId(row[f.key])"
+                      type="warning"
+                      variant="tonal"
+                      density="compact"
+                      class="mt-2"
+                    >
+                      The website cannot load this. Choose an image above, or
+                      use one already bundled with the site — those start with
+                      <code>assets/img/</code>. Saving as it stands will be refused.
+                    </VAlert>
+                  </div>
+                </template>
+
                 <VTextarea
-                  v-if="f.type === 'textarea' || f.type === 'lines'"
+                  v-else-if="f.type === 'textarea' || f.type === 'lines'"
                   v-model="row[f.key]"
                   :label="f.label"
                   :hint="f.type === 'lines' ? (f.hint || 'One per line.') : f.hint"

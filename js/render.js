@@ -10,14 +10,44 @@
   var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
   var esc = VFI.esc;
 
+  /* The url was interpolated into a url() token unquoted, and
+     `background-image: url(a), url(b)` is valid CSS — so a stored id ending
+     `.jpg), url(https://evil.example/beacon.png` painted a second, attacker-
+     chosen background on every anonymous visitor's page. Quoting the token and
+     dropping the characters that could close the quote leaves a malformed
+     value that simply fails to parse. */
+  function bg(el, url) {
+    el.style.backgroundImage = 'url("' + String(url).replace(/["\\\n\r]/g, "") + '")';
+    el.style.backgroundSize = "cover";
+    el.style.backgroundPosition = "center";
+  }
+
+  /* The same allow-list the server applies when an image id is saved, mirrored
+     here because the browser must not assume a clean database: rows written
+     before that guard existed are already stored, `content:import` copies
+     legacy JSON in verbatim, and the retired admin.html wrote arbitrary ids
+     into the editor's own browser. Anything not on the list is dropped rather
+     than fetched, so one bad row cannot turn a page load into a third-party
+     beacon that leaks every visitor's IP and Referer.
+     Three shapes are real: a managed upload, a photo bundled in the repo
+     (whose ?v= cache-buster is same-origin and so carries no such risk), and
+     the data: URL a legacy IndexedDB upload resolves to. */
+  var IMG_MANAGED = /^\/storage\/media\/[0-9a-f]{64}\.jpg$/;
+  var IMG_BUNDLED = /^assets\/img\/[A-Za-z0-9_-][A-Za-z0-9._-]*\.(?:jpe?g|png|webp|gif)(?:\?[A-Za-z0-9._=&-]*)?$/;
+  var IMG_DATA = /^data:image\/(?:jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+
+  function safeImgUrl(url) {
+    var s = String(url == null ? "" : url);
+    if (s.indexOf("..") !== -1) return "";
+    return (IMG_MANAGED.test(s) || IMG_BUNDLED.test(s) || IMG_DATA.test(s)) ? s : "";
+  }
+
   /* paint an element's background from a stored image id */
   function paint(el, imgId) {
     if (!el || !imgId) return;
     VFI.getImage(imgId).then(function (url) {
       if (!url) return;
-      el.style.backgroundImage = "url(" + url + ")";
-      el.style.backgroundSize = "cover";
-      el.style.backgroundPosition = "center";
+      bg(el, url);
     });
   }
 
@@ -251,9 +281,7 @@
       if (post.imgId) {
         VFI.getImage(post.imgId).then(function (url) {
           if (!url) return;
-          slot.cover.style.backgroundImage = "url(" + url + ")";
-          slot.cover.style.backgroundSize = "cover";
-          slot.cover.style.backgroundPosition = "center";
+          bg(slot.cover, url);
           slot.cover.classList.add("has-photo");
         });
       }
@@ -341,9 +369,7 @@
       if (!imgId) return;
       VFI.getImage(imgId).then(function (url) {
         if (!url) return;
-        el.style.backgroundImage = "url(" + url + ")";
-        el.style.backgroundSize = "cover";
-        el.style.backgroundPosition = "center";
+        bg(el, url);
         el.classList.add("has-photo");
         if (el.classList.contains("bhero__photo")) {
           var svg = $(".bhero__svg", el.parentNode);
@@ -422,6 +448,32 @@
 
   function pick(list, i) { return list.length ? list[i % list.length] : ""; }
 
+  /* A country card draws its own fallback underneath the photograph — a
+     coloured crest with a cap glyph, a set of initials — and .has-photo hides
+     that fallback. paint() commits the moment an id resolves to a URL, so a
+     swept file or a mistyped id would hide a working fallback and leave an
+     empty coloured circle. Probing the URL first and committing only on load
+     means a picture that cannot load changes nothing about the card.
+     The value is read back out of the attribute and handed to the CSSOM, never
+     re-injected as markup, and safeImgUrl keeps a legacy row from pointing the
+     probe at a third party. */
+  function cphoto(host) {
+    $$("[data-img]", host).forEach(function (el) {
+      var id = el.getAttribute("data-img");
+      if (!id) return;
+      VFI.getImage(id).then(function (url) {
+        var src = safeImgUrl(url);
+        if (!src) return;
+        var probe = new Image();
+        probe.onload = function () {
+          bg(el, src);
+          el.classList.add("has-photo");
+        };
+        probe.src = src;
+      });
+    });
+  }
+
   /* Only replace a section when there is something to put in it: a country with
      no override, or one whose list was emptied in the admin panel, keeps the
      hand-written markup rather than going blank. The builder is handed the host
@@ -431,6 +483,9 @@
     var host = $('[data-crender="' + key + '"]');
     if (!host) return;
     host.innerHTML = build(rows, host);
+    /* Painting from here rather than from the one builder that needs it today
+       means a block that gains an image field later cannot be forgotten. */
+    cphoto(host);
   }
 
   /* The built-in admit cards carry hand-picked initials. Deriving them from the
@@ -457,15 +512,23 @@
     // universities
     var uHost = $('[data-crender="universities"]');
     if (uHost && c.universities && c.universities.length) {
+      /* Read the page's own crest colours before the cards are replaced. The
+         built-in UK tiles are --uk1..--uk4, Canada's are --ca1..--ca4; the old
+         hard-coded ["a","b","c"] repainted an edited list in the generic
+         palette, so the moment an editor filled this section in, four crests
+         changed colour and the section stopped matching the page around it. */
+      var uTone = cmods(uHost, ".unic__logo", "unic__logo", ["a", "b", "c"]);
       uHost.innerHTML = c.universities.map(function (u, i) {
         return '<article class="unic">' +
-          '<div class="unic__logo unic__logo--' + (["a", "b", "c"][i % 3]) + '" data-media="country_' + esc(slug) + "_uni" + (i + 1) + '"><svg class="ic"><use href="#i-cap"/></svg></div>' +
+          '<div class="unic__logo unic__logo--' + pick(uTone, i) + '" data-img="' + esc(u.img || "") + '">' +
+            '<svg class="ic"><use href="#i-cap"/></svg></div>' +
           "<h3>" + esc(u.name || "") + "</h3>" +
           '<p class="unic__loc"><svg class="ic ic--sm"><use href="#i-pin"/></svg> ' + esc(u.loc || "") + "</p>" +
           '<ul class="unic__meta">' + (u.note1 ? "<li>" + esc(u.note1) + "</li>" : "") + (u.note2 ? "<li>" + esc(u.note2) + "</li>" : "") + "</ul>" +
           '<div class="unic__cta"><a href="contact.html" class="btn btn--outline btn--sm">Know More</a>' +
           '<a href="contact.html" class="btn btn--enquire btn--sm">Apply Now</a></div></article>';
       }).join("");
+      cphoto(uHost);   /* this block assigns innerHTML itself, so cfill's paint never runs for it */
     }
 
     // scholarships
@@ -585,16 +648,14 @@
     cfill("admits", crows(c.admits), function (rows, host) {
       var tone = cmods(host, ".admit__ava", "admit__ava", ["a", "b", "c", "d"]);
       return rows.map(function (r, i) {
-        return '<article class="admit"><span class="admit__ava admit__ava--' + pick(tone, i) + '">' +
+        return '<article class="admit"><span class="admit__ava admit__ava--' + pick(tone, i) +
+          '" data-img="' + esc(r.img || "") + '">' +
           esc(r.initials || cinitials(r.name)) + "</span>" +
           "<b>" + esc(r.name || "") + "</b>" +
           '<span class="admit__uni">' + esc(r.uni || "") + "</span>" +
           '<span class="admit__prog">' + esc(r.prog || "") + "</span></article>";
       }).join("");
     });
-
-    // repaint any image slots inside freshly rendered markup
-    applyMedia();
   }
 
   /* ---------------- region hub overrides ---------------- */
@@ -685,10 +746,15 @@
   var P_FIELDS = ["title", "text", "quote", "name", "desc", "location", "type", "q", "a"];
   var P_LISTS = ["features", "steps", "testimonials", "jobs", "faqs"];
 
-  /* show a stored photo in place of the built-in mock-up */
+  /* show a stored photo in place of the built-in mock-up.
+     This is the one place a stored id becomes an <img src>, which fetches on
+     sight with no CSS parser in front of it, so the id is allow-listed before
+     it is set: a rejected value leaves the built-in mock-up visible, which is
+     what the page shows when nothing is stored anyway. */
   function pshot(img, url) {
-    if (!img || !url) return;
-    img.setAttribute("src", url);
+    var src = safeImgUrl(url);
+    if (!img || !src) return;
+    img.setAttribute("src", src);
     img.removeAttribute("hidden");
     var wrap = img.closest ? img.closest("[data-pshot]") : null;
     if (wrap) wrap.classList.add("has-img");

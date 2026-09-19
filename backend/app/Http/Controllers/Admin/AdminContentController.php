@@ -23,6 +23,31 @@ class AdminContentController extends Controller
         'universityPage',
     ];
 
+    /*
+     * How much one repeating-block save may hold.
+     *
+     * The per-type lengths are the ones the collections editor already applies
+     * (AdminContentCollectionController::validated), so a paragraph that fits
+     * in a blog body fits in a country FAQ and an editor never meets two
+     * different limits for the same kind of box.
+     *
+     * There is a limit at all because this row is not private. Every value
+     * written here is served verbatim to every anonymous visitor at
+     * /api/content/bundle, which md5s the whole bundle per request to build its
+     * ETag - so one oversized save is paid for on every page load of the public
+     * site, by everyone, until somebody notices.
+     */
+    private const MAX_ROWS = 100;
+
+    private const MAX_TEXT = 500;
+
+    private const MAX_TEXTAREA = 40000;
+
+    /** countries nests value → slug → list → row, so four, plus one spare. */
+    private const MAX_DEPTH = 5;
+
+    private const MAX_BYTES = 262144;
+
     /**
      * The FLAT singletons, as a form the console can render.
      *
@@ -164,10 +189,23 @@ class AdminContentController extends Controller
      * hooks (study-in-usa, study-in-ireland) have them, so the fields below all
      * reach something.
      *
-     * The one remaining gap is declared, not hidden: `absent_on`. The USA page
-     * has no Top Admits section and no recruiter strip at all - not a missing
-     * attribute, the markup simply is not there - so those two lists say so on
-     * screen for that country instead of quietly doing nothing.
+     * Nothing is declared `absent_on` any more. That key exists because the USA
+     * page used to be missing its Top Admits section and its recruiter strip
+     * outright - not a missing attribute, the markup simply was not there - and
+     * a list that saves nowhere has to say so on screen rather than quietly
+     * doing nothing. Both sections are now in study-in-usa.html, so all six
+     * pages carry the same eighteen hooks; CountryPageMarkupTest is what keeps
+     * that true, because a hook that goes missing again is silent by nature.
+     *
+     * Two lists carry an `image` field. It is a type, not a text box, and that
+     * distinction is the whole point: update() below allow-lists the value of
+     * every field declared `image`, so the only ids that can be stored are the
+     * ones the upload pipeline produced and the photos bundled with the repo.
+     * The region bands' img1/img2/img3 are still `text`, which is how an id
+     * that never passed that pipeline - a remote URL, an SVG - could be typed
+     * straight into a background-image on a public page. They are left alone
+     * here only because changing them is a separate migration, not because the
+     * shape is right.
      */
     private const GROUPED = [
         'countries' => [
@@ -195,6 +233,19 @@ class AdminContentController extends Controller
                         ['key' => 'loc', 'label' => 'Location', 'type' => 'text', 'half' => true],
                         ['key' => 'note1', 'label' => 'First note', 'type' => 'text', 'half' => true],
                         ['key' => 'note2', 'label' => 'Second note', 'type' => 'text', 'half' => true],
+                        // The crest circle is the one part of this card a photo
+                        // can occupy without redrawing it - style.css hides the
+                        // cap glyph the moment .has-photo lands on the tile,
+                        // and until now nothing ever put a picture there.
+                        //
+                        // `image`, not the `text` the region bands use for
+                        // img1/img2/img3: a typed box is how an id that never
+                        // passed the upload pipeline - a remote URL, an SVG -
+                        // reaches a background-image on a public page. The type
+                        // is what gives the screen a file input and gives
+                        // update() below something to allow-list.
+                        ['key' => 'img', 'label' => 'Logo', 'type' => 'image',
+                            'hint' => 'Square, about 200 × 200 px. Left empty, the card keeps the coloured circle and cap icon it has today.'],
                     ],
                 ],
                 [
@@ -304,8 +355,6 @@ class AdminContentController extends Controller
                 [
                     'key' => 'recruiters', 'label' => 'Top recruiters', 'singular' => 'employer',
                     'lines' => true,
-                    // The USA page has no recruiter strip in its markup at all.
-                    'absent_on' => ['usa'],
                 ],
                 [
                     'key' => 'admits', 'label' => 'Top admits', 'singular' => 'student',
@@ -315,9 +364,13 @@ class AdminContentController extends Controller
                         ['key' => 'prog', 'label' => 'Programme', 'type' => 'text', 'half' => true],
                         ['key' => 'initials', 'label' => 'Initials', 'type' => 'text', 'half' => true,
                             'hint' => 'Optional - taken from the name when left empty.'],
+                        // The avatar circle. The initials stay as the fallback
+                        // rather than being replaced by it: a row whose photo
+                        // is missing, or whose file has been swept, keeps the
+                        // card it has today instead of showing an empty disc.
+                        ['key' => 'img', 'label' => 'Photo', 'type' => 'image',
+                            'hint' => 'Square, about 180 × 180 px. Left empty, the circle shows the initials.'],
                     ],
-                    // Same: there is no Top Admits section on the USA page.
-                    'absent_on' => ['usa'],
                 ],
             ],
         ],
@@ -342,9 +395,15 @@ class AdminContentController extends Controller
                         ['key' => 'desc', 'label' => 'Description', 'type' => 'textarea'],
                         ['key' => 'facts', 'label' => 'Quick facts', 'type' => 'lines',
                             'hint' => 'One fact per line. Each line becomes a ticked bullet.'],
-                        ['key' => 'img1', 'label' => 'Image 1 slot', 'type' => 'text', 'half' => true],
-                        ['key' => 'img2', 'label' => 'Image 2 slot', 'type' => 'text', 'half' => true],
-                        ['key' => 'img3', 'label' => 'Image 3 slot', 'type' => 'text', 'half' => true],
+                        // 'slot', not 'image': these hold the NAME of a media slot
+                        // (asia_japan_1), not a path to a file, which is why the labels
+                        // say slot. Typed as `image` they refused every value already
+                        // stored. Typed as nothing they accepted a full https:// address,
+                        // which VFI.getImage resolves to itself - a third-party request
+                        // on a public page. `slot` accepts an identifier and no more.
+                        ['key' => 'img1', 'label' => 'Image 1 slot', 'type' => 'slot', 'half' => true],
+                        ['key' => 'img2', 'label' => 'Image 2 slot', 'type' => 'slot', 'half' => true],
+                        ['key' => 'img3', 'label' => 'Image 3 slot', 'type' => 'slot', 'half' => true],
                     ],
                 ],
             ],
@@ -364,7 +423,8 @@ class AdminContentController extends Controller
                         ['key' => 'name', 'label' => 'Service name', 'type' => 'text'],
                         ['key' => 'anchor', 'label' => 'Anchor', 'type' => 'text', 'half' => true,
                             'hint' => 'Used in the #link. Left empty, it is made from the name.'],
-                        ['key' => 'img', 'label' => 'Image slot', 'type' => 'text', 'half' => true],
+                        // A slot name, same as the region bands above.
+                        ['key' => 'img', 'label' => 'Image slot', 'type' => 'slot', 'half' => true],
                         ['key' => 'offers', 'label' => 'What is included', 'type' => 'lines',
                             'hint' => 'One item per line. Each line becomes a starred bullet.'],
                     ],
@@ -497,6 +557,15 @@ class AdminContentController extends Controller
             'value' => ['present'],
         ]);
 
+        // `present` is as much as one rule can say about a value whose shape
+        // changes with the key, so the repeating-block keys are checked against
+        // the schema that declares them instead, before anything is written.
+        // What lands in this row is not private: it is served verbatim to every
+        // anonymous visitor at /api/content/bundle.
+        if (isset(self::GROUPED[$key])) {
+            $data['value'] = $this->checkedGroupedValue($key, $data['value']);
+        }
+
         $row = SiteContent::query()->where('key', $key)->first();
         $currentVersion = $row?->version ?? 0;
 
@@ -518,5 +587,241 @@ class AdminContentController extends Controller
             'value' => $row->value,
             'version' => $row->version,
         ])->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * A grouped value this server is willing to publish, or a 422 saying which
+     * field is in the way.
+     *
+     * Two rules, and the difference between them is the important part.
+     *
+     * DECLARED fields are held to what GROUPED says they are: a row count, a
+     * length per type, and for an `image` the allow-list of ids that can
+     * actually load. That last one is why declaring a type was worth doing -
+     * the stored-id box on the screen is free text, and without a check here an
+     * editor write of https://evil.example/beacon.png becomes a background-image
+     * on six public pages, fetched by every anonymous visitor from a third-party
+     * host that then holds their IP and the page they were reading.
+     *
+     * UNDECLARED keys are bounded but KEPT. The console merges its form over the
+     * value it loaded and posts the whole object back, the services blocks still
+     * carry `desc`, `ctaLabel` and `ctaHref` that this const has never described,
+     * and content:import copies legacy JSON in verbatim. Dropping what the schema
+     * does not mention would delete live page copy on the first save an editor
+     * made - which is why two tests already insist an undescribed key survives.
+     *
+     * Refused, not silently corrected. A save that stored the row with the bad
+     * field blanked would look like it worked and cost the editor the picture
+     * they were pointing at, on a form with forty fields and no clue which one
+     * was at fault.
+     */
+    private function checkedGroupedValue(string $key, mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            // "" is how a cleared singleton round-trips (Phase 0 landmine: the
+            // empty-string middleware is off for these routes). Any other
+            // scalar is a shape no screen sends and no renderer reads.
+            abort_unless($value === '', 422, "This page's content has to be saved as an object.");
+
+            return $value;
+        }
+
+        // Size first: a value that passes every other check can still be large
+        // enough to matter, because the public bundle is rebuilt and re-hashed
+        // from these rows on every request that misses the 60-second cache.
+        $encoded = json_encode($value);
+        abort_if(
+            $encoded === false || strlen($encoded) > self::MAX_BYTES,
+            422,
+            'This is too large to save. Every visitor downloads this content with the page, so it is capped at '
+                .(int) (self::MAX_BYTES / 1024).' KB.',
+        );
+
+        $this->checkShape($value, 1, '');
+
+        $spec = self::GROUPED[$key];
+        if ($spec['groups'] === []) {
+            return $this->checkedBody($value, $spec, '');
+        }
+
+        $labels = array_column($spec['groups'], 'label', 'slug');
+        foreach ($value as $slug => $body) {
+            if (is_array($body)) {
+                $value[$slug] = $this->checkedBody($body, $spec, ($labels[$slug] ?? $slug).' — ');
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * Depth, leaf types and string length, for the keys the schema has no
+     * opinion about.
+     *
+     * Without this the only bound on an undeclared key is the byte cap, and a
+     * single deeply nested value is cheap to post and expensive to json_encode
+     * on every public page load afterwards.
+     */
+    private function checkShape(mixed $node, int $depth, string $where): void
+    {
+        if (is_array($node)) {
+            abort_if($depth > self::MAX_DEPTH, 422, 'This content is nested deeper than any page reads.');
+            foreach ($node as $k => $child) {
+                $this->checkShape($child, $depth + 1, $where === '' ? (string) $k : $where.' → '.$k);
+            }
+
+            return;
+        }
+
+        if ($node === null || is_bool($node) || is_int($node) || is_float($node)) {
+            return;
+        }
+
+        abort_unless(is_string($node), 422, "“{$where}” is not something this content can hold.");
+        abort_if(
+            mb_strlen($node) > self::MAX_TEXTAREA,
+            422,
+            "“{$where}” is longer than ".self::MAX_TEXTAREA.' characters.',
+        );
+    }
+
+    /**
+     * One slug's bucket, or the whole value for a page that is one of a kind.
+     *
+     * @param  array<string, mixed>  $body
+     * @param  array<string, mixed>  $spec  the GROUPED entry that describes it
+     * @param  string  $where  what to call this bucket in a message to an editor
+     * @return array<string, mixed>
+     */
+    private function checkedBody(array $body, array $spec, string $where): array
+    {
+        foreach ($spec['fields'] as $field) {
+            if (array_key_exists($field['key'], $body)) {
+                $body[$field['key']] = $this->checkedValue($body[$field['key']], $field, $where.$field['label']);
+            }
+        }
+
+        foreach ($spec['lists'] as $list) {
+            if (! array_key_exists($list['key'], $body)) {
+                continue;
+            }
+            $rows = $body[$list['key']];
+
+            // A `lines` list is one newline-separated string, not rows, because
+            // that is the shape js/render.js clines() reads. checkShape has
+            // already bounded it either way.
+            if (! empty($list['lines']) || ! is_array($rows)) {
+                continue;
+            }
+
+            abort_if(
+                count($rows) > self::MAX_ROWS,
+                422,
+                "“{$where}{$list['label']}” has more than ".self::MAX_ROWS.' rows. No page renders a list that long.',
+            );
+
+            foreach ($rows as $i => $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                foreach ($list['item'] as $field) {
+                    if (array_key_exists($field['key'], $row)) {
+                        $row[$field['key']] = $this->checkedValue(
+                            $row[$field['key']],
+                            $field,
+                            $where.$list['singular'].' '.((int) $i + 1).' — '.$field['label'],
+                        );
+                    }
+                }
+                $rows[$i] = $row;
+            }
+
+            $body[$list['key']] = $rows;
+        }
+
+        return $body;
+    }
+
+    /** One declared field's value, held to what its declared type means. */
+    private function checkedValue(mixed $value, array $field, string $where): mixed
+    {
+        if ($field['type'] === 'image') {
+            // Trimmed before it is judged: this value can be pasted by hand, and
+            // an id that fails only on a trailing space is a refusal an editor
+            // cannot see the reason for.
+            $id = is_string($value) ? trim($value) : '';
+
+            abort_if(
+                $id !== '' && ! self::isUsableImageId($id),
+                422,
+                "“{$where}”: the website cannot load that image. Upload one, or name a photo already bundled "
+                    .'with the site (assets/img/…).',
+            );
+
+            return $id;
+        }
+
+        if ($field['type'] === 'slot') {
+            /*
+             * A media slot NAME, not a path. Guarded because the sink is
+             * generous: VFI.getImage() resolves anything carrying a scheme, a
+             * slash or an image extension to itself, so an unguarded slot box
+             * accepts `https://evil.example/beacon.png` and the public page
+             * fetches it - a third-party beacon on a visitor's browser.
+             *
+             * An identifier cannot express any of that. No dot, so no
+             * extension; no slash or colon, so no path and no scheme; no quote,
+             * so nothing to break out of an attribute with.
+             */
+            $slot = is_string($value) ? trim($value) : '';
+
+            abort_if(
+                $slot !== '' && preg_match('/^[A-Za-z0-9_-]{1,64}$/', $slot) !== 1,
+                422,
+                "“{$where}”: that is not an image slot name. Use letters, numbers, underscores "
+                    .'or hyphens - for example asia_japan_1.',
+            );
+
+            return $slot;
+        }
+
+        if (! is_string($value)) {
+            return $value;   // already bounded by checkShape
+        }
+
+        $max = in_array($field['type'], ['textarea', 'lines'], true) ? self::MAX_TEXTAREA : self::MAX_TEXT;
+        abort_if(mb_strlen($value) > $max, 422, "“{$where}” is longer than {$max} characters.");
+
+        return $value;
+    }
+
+    /** What ImageService::store() returns, and a photo bundled in the repo. */
+    private const IMG_MANAGED_UPLOAD = '#^/storage/media/[0-9a-f]{64}\.jpg$#';
+
+    private const IMG_BUNDLED_ASSET = '#^assets/img/[a-z0-9._-]+\.(?:jpe?g|png|webp|gif)$#';
+
+    /**
+     * The two id shapes a declared image field may hold.
+     *
+     * Everything else is refused, a remote URL and an SVG included: the value
+     * ends up inside a CSS url() on a public page, so it has to be something
+     * this site serves, and it has to have come through the re-encode that
+     * strips whatever else was in the file.
+     *
+     * The browser keeps a copy of this list, in
+     * tools/admin-panel/composables/useVfiImageUpload.js, but only to decide
+     * what to draw and when to warn. This is the one that decides.
+     */
+    private static function isUsableImageId(string $id): bool
+    {
+        // Refused ahead of the patterns rather than trusted to them: the
+        // bundled name class allows a dot, so `..` is a traversal attempt, not
+        // a filename.
+        if (str_contains($id, '..')) {
+            return false;
+        }
+
+        return preg_match(self::IMG_MANAGED_UPLOAD, $id) === 1
+            || preg_match(self::IMG_BUNDLED_ASSET, $id) === 1;
     }
 }

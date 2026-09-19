@@ -29,6 +29,8 @@ class ImageService
     /** Models that carry an img_id (for reference counting). */
     private const IMG_MODELS = [Event::class, Blog::class, NewsItem::class, Photo::class];
 
+    public function __construct(private readonly ImageOptimiser $optimiser) {}
+
     /**
      * Validate, re-encode/downscale, store; return the new managed image id
      * (a path-style URL the frontend getImage() passes through unchanged).
@@ -37,6 +39,16 @@ class ImageService
     {
         // Magic-byte validation: decode the ACTUAL bytes, not the extension.
         $raw = file_get_contents($file->getRealPath());
+
+        /*
+         * Dimensions BEFORE the decode, or the decode is the attack.
+         * `max:6144` on the request bounds the bytes on the wire, not the
+         * bitmap they expand to: a ~100 KB 20000x20000 single-colour PNG is a
+         * legitimate-looking upload that then asks gd for ~1.6 GB. The gate is
+         * ImageOptimiser's, called rather than copied so there is one limit.
+         */
+        $this->optimiser->assertSafeToDecode($raw);
+
         $src = @imagecreatefromstring($raw);
         if ($src === false) {
             throw new \RuntimeException('Not a valid image.');
@@ -84,6 +96,52 @@ class ImageService
             if ($v === $id) {
                 $n++;
             }
+        }
+
+        /*
+         * The JSON singletons hold image ids too, and missing them deletes a
+         * picture out from under a live page.
+         *
+         * An upload is named after the sha256 of its re-encoded bytes, so the
+         * SAME photograph uploaded twice gets the SAME id. Put a campus photo on
+         * a blog row and also on a country's university card, then erase the
+         * blog: referenceCount saw only the four img_id models and the flat
+         * `media` map, returned 0, and deleted the file - taking the country
+         * page's logo with it. Country images made that reachable; regions and
+         * servicesPage have had the same hole since they gained image fields.
+         *
+         * Recursive because the shape differs per key: countries nest
+         * slug -> list -> row -> field, regions nest bands with img1/img2/img3,
+         * servicesPage is a flat list of blocks. An exact string match over
+         * every scalar is both simpler and safer than teaching this method each
+         * of those shapes - a shape it does not know about would silently count
+         * zero, which is the failure being fixed.
+         *
+         * Only on the delete path, so four extra reads cost nothing.
+         */
+        foreach (self::JSON_IMAGE_KEYS as $key) {
+            $n += self::countInTree(SiteContent::value($key, []), $id);
+        }
+
+        return $n;
+    }
+
+    /** Singletons whose stored JSON can hold an image id anywhere inside it. */
+    private const JSON_IMAGE_KEYS = ['countries', 'regions', 'servicesPage', 'universityPage'];
+
+    /** Every scalar in the tree that equals this id, however deeply nested. */
+    private static function countInTree(mixed $node, string $id): int
+    {
+        if (is_string($node)) {
+            return $node === $id ? 1 : 0;
+        }
+        if (! is_array($node)) {
+            return 0;
+        }
+
+        $n = 0;
+        foreach ($node as $child) {
+            $n += self::countInTree($child, $id);
         }
 
         return $n;

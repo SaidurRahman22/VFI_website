@@ -288,6 +288,19 @@ class ImageOptimiser
     }
 
     /**
+     * The decompression-bomb gate, for callers that decode bytes themselves.
+     *
+     * ImageService::store() does its own imagecreatefromstring() and had no
+     * pixel check at all, so a ~100 KB 20000x20000 single-colour PNG passed
+     * validation and then asked gd for roughly 1.6 GB. Exposing the gate keeps
+     * one implementation of the limit rather than a second copy that drifts.
+     */
+    public function assertSafeToDecode(string $bytes): void
+    {
+        $this->headerDimensions($bytes);
+    }
+
+    /**
      * Dimensions from the header only — no canvas is allocated yet. This is the
      * decompression-bomb gate, so it runs before imagecreatefromstring().
      *

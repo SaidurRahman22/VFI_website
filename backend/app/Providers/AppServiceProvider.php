@@ -18,6 +18,7 @@ use App\Services\Money\NullWalletGateway;
 use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -86,6 +87,19 @@ class AppServiceProvider extends ServiceProvider
 
         // OTP verify: per-IP ceiling on top of the per-flow 5-attempt cap.
         RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(20)->by('ip:'.$request->ip()));
+
+        // Image upload: writes a file and runs GD on every call, and had no
+        // throttle of any kind. Keyed on the signed-in user, not the IP - these
+        // are named accounts behind a login and an office shares one address.
+        RateLimiter::for('media-upload', function (Request $request) {
+            // Auth::id() rather than $request->user()?->id: a limiter closure is
+            // invoked by the framework and must not assume the guard has already
+            // resolved, and Auth::id() is honestly nullable where the nullsafe
+            // chain reads as though it cannot be.
+            $id = Auth::id();
+
+            return Limit::perMinute(30)->by($id !== null ? 'user:'.$id : 'ip:'.$request->ip());
+        });
 
         // Student sign-in (docs §1.4): mirror of admin-login.
         RateLimiter::for('student-login', function (Request $request) {

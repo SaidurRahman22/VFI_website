@@ -111,7 +111,7 @@ Route::prefix('api/admin')->group(function () {
         // Phase 3F — image upload + media-slot registry (content_editor/owner).
         // `media/slots` reads the registry back with the slot list the console
         // renders; without it the map could only ever be written blind.
-        Route::post('media', [AdminMediaController::class, 'upload']);
+        Route::post('media', [AdminMediaController::class, 'upload'])->middleware('throttle:media-upload');
         Route::get('media/slots', [AdminMediaController::class, 'slots']);
         Route::put('media/slot/{key}', [AdminMediaController::class, 'setSlot']);
 

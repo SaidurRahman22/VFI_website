@@ -289,10 +289,54 @@
       img: cms.image || base.img
     };
   }
+  /* The same allow-list the server applies when an image id is saved. Mirrored
+     here for the same reason js/render.js mirrors it: the browser must not
+     assume a clean database - rows written before that guard existed are
+     already stored, and `content:import` copies legacy JSON in verbatim.
+     Anything not on the list paints nothing rather than being trusted. */
+  var U_IMG_MANAGED = /^\/storage\/media\/[0-9a-f]{64}\.(?:jpe?g|png|webp|gif)$/i;
+  var U_IMG_BUNDLED = /^assets\/img\/[A-Za-z0-9_-][A-Za-z0-9._-]*\.(?:jpe?g|png|webp|gif)$/i;
+  /* Also permitted because they are the documented, already-stored shapes for
+     the university page defaults: a relative path under media/ (what
+     ImageOptimiser writes for university logos, heroes and intake photos) and a
+     plain https:// address, which that field's own hint invites. Narrowing to
+     the first two would have silently blanked pictures that work today - the
+     allow-list is here to bound what can be pointed at, not to redesign the
+     field. */
+  var U_IMG_STORED = /^media\/[A-Za-z0-9_\-\/]+\.(?:jpe?g|png|webp|gif)$/i;
+  var U_IMG_HTTPS = /^https:\/\/[A-Za-z0-9.-]+(?::\d+)?\/[^\s"'\\]*$/i;
+
+  function uSafeImg(url) {
+    var v = String(url == null ? "" : url);
+    // `..` anywhere, at all: no legitimate value contains it, and it is the
+    // cheapest way to rule out traversal in every shape below at once.
+    if (v.indexOf("..") !== -1) return "";
+    return (U_IMG_MANAGED.test(v) || U_IMG_BUNDLED.test(v)
+      || U_IMG_STORED.test(v) || U_IMG_HTTPS.test(v)) ? v : "";
+  }
+
+  /* Set a background through the CSSOM, never through markup.
+     Building `style="background-image:url('" + esc(v) + "')"` looks escaped and
+     is not: esc() writes &#39; and the browser decodes it back to a quote before
+     the CSS parser runs, so the value can close the url() and inject rules. In
+     a property assignment a quote is data. */
+  function uPaintBg(el, url) {
+    var safe = uSafeImg(url);
+    if (!el || !safe) return;
+    el.style.backgroundImage = 'url("' + safe.replace(/["\\\n\r]/g, "") + '")';
+  }
+
+  /* Paint every deferred background inside a freshly written container. */
+  function uPaintAll(root) {
+    if (!root) return;
+    var nodes = root.querySelectorAll("[data-uimg]");
+    for (var i = 0; i < nodes.length; i++) uPaintBg(nodes[i], nodes[i].getAttribute("data-uimg"));
+  }
+
   function intakeCard(name, month, note, key, image) {
     var img = image || season(key).img;
     return '<article class="uintake">'
-      + '<div class="uintake__img" style="background-image:url(\'' + esc(img) + '\')"></div>'
+      + '<div class="uintake__img" data-uimg="' + esc(uSafeImg(img)) + '"></div>'
       + '<div class="uintake__body"><h3 class="uintake__name">' + esc(name) + '</h3>'
       + (month ? '<span class="uintake__month">' + esc(month) + '</span>' : '')
       + (note ? '<p class="uintake__note">' + esc(note) + '</p>' : '')
@@ -578,6 +622,10 @@
 
     var wrap = $("#uniDetail");
     wrap.innerHTML = body;
+    // Backgrounds are set here, after the markup is in the document, because
+    // they are assigned as CSS properties rather than written into a style
+    // attribute - see uPaintBg.
+    uPaintAll(wrap);
 
     // delegated: apply buttons + tab switching
     wrap.addEventListener("click", function (e) {

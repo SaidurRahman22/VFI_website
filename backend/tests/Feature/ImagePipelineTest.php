@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\Role;
+use App\Models\Content\Blog;
 use App\Models\Content\Event;
+use App\Models\SiteContent;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\ImageService;
@@ -99,5 +101,42 @@ class ImagePipelineTest extends TestCase
 
         Storage::disk('public')->assertMissing('media/'.basename($a));
         Storage::disk('public')->assertExists('media/'.basename($b));
+    }
+
+    /**
+     * A picture used by a country page survives deleting the blog that shares it.
+     *
+     * Managed ids are the sha256 of the re-encoded bytes, so the same photograph
+     * uploaded twice IS the same id. referenceCount() counted the four img_id
+     * models and the flat `media` map and nothing else, so a country, region or
+     * services image was invisible to it - and deleteIfUnreferenced() then
+     * deleted a file that a live page was still painting.
+     */
+    public function test_an_image_a_country_page_uses_is_not_deleted_with_the_blog_that_shares_it(): void
+    {
+        $images = app(ImageService::class);
+
+        // one file, referenced from a blog row AND from a country university card
+        $id = '/storage/media/'.str_repeat('a', 64).'.jpg';
+        Storage::disk('public')->put('media/'.str_repeat('a', 64).'.jpg', 'bytes');
+
+        Blog::create(['title' => 'Campus tour', 'img_id' => $id]);
+        SiteContent::query()->updateOrCreate(['key' => 'countries'], ['value' => [
+            'uk' => ['universities' => [['name' => 'Leeds', 'img' => $id]]],
+        ], 'version' => 1]);
+
+        $this->assertSame(2, $images->referenceCount($id), 'the country card must be counted');
+
+        // erasing the blog must NOT take the country page's picture with it
+        Blog::query()->forceDelete();
+        $images->deleteIfUnreferenced($id);
+
+        Storage::disk('public')->assertExists('media/'.str_repeat('a', 64).'.jpg');
+        $this->assertSame(1, $images->referenceCount($id));
+
+        // and once the country stops using it too, it really does go
+        SiteContent::query()->where('key', 'countries')->update(['value' => json_encode([])]);
+        $images->deleteIfUnreferenced($id);
+        Storage::disk('public')->assertMissing('media/'.str_repeat('a', 64).'.jpg');
     }
 }

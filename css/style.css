@@ -1479,6 +1479,11 @@ html:not(.js) .acc[open] .acc__body{max-height:none}
 /* uploaded photo fills a hero / card slot */
 .dhero.has-photo .dhero__sky{opacity:.25}
 .unic__logo.has-photo .ic,.whyvfi__orb.has-photo .ic{display:none}
+/* The initials in an admit avatar are a FALLBACK, not a caption. Without this
+   the first student photo an editor uploads renders with large white initials
+   sitting across the face, on a public page, with nothing in the console that
+   could fix it. */
+.admit__ava.has-photo{color:transparent}
 .reel.has-photo{background-blend-mode:normal}
 
 /* ---- UNITED KINGDOM destination variant ---- */
