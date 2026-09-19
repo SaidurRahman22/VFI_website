@@ -171,7 +171,10 @@
   function renderPhotos(host) {
     var items = VFI.list("photos");
     if (!items.length) {
-      host.innerHTML = '<p class="gal-empty">No photos have been added yet. Open the admin panel to upload some.</p>';
+      // Written for the VISITOR. This is a public page; "open the admin panel"
+      // is an instruction they cannot follow and a detail they do not need.
+      host.innerHTML = '<p class="gal-empty">Photos from our events are on the way — '
+        + 'check back soon, or <a href="contact.html">get in touch</a> to hear about the next one.</p>';
       return;
     }
     host.innerHTML = items.map(function (p) {
@@ -291,9 +294,10 @@
     if (slot.body) {
       var html = articleHTML(post.body);
       if (!html) {
+        // Same reasoning as the gallery: a reader is told the article is not
+        // finished, not where the CMS field for it lives.
         html = (post.excerpt ? "<p>" + esc(post.excerpt) + "</p>" : "") +
-          '<p class="bp-note">The full text of this post has not been published yet. ' +
-          'Add it in the admin panel under Blogs → Body / article content.</p>';
+          '<p class="bp-note">The full article is being written and will be published shortly.</p>';
       }
       slot.body.innerHTML = html;
     }
