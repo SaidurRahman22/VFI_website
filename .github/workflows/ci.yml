@@ -379,5 +379,15 @@ jobs:
           BUILD_OUTCOME: ${{ steps.build.outcome }}
       # Push + `cosign sign` + SBOM/SLSA attestation are wired once GHCR creds
       # and the OIDC trust policy exist (needs the org's cloud accounts).
+      # The explanation lives in a YAML comment, NOT inside the run: scalar.
+      # It used to read `run: echo "... # gated on registry setup"`, and in a
+      # plain YAML scalar a space followed by # starts a comment — so bash was
+      # handed `echo "cosign sign $IMAGE:<sha>` with the quote never closed, and
+      # answered with a syntax error and exit 2. Third fault in this one job,
+      # and like the other two it had never been seen, because the step had
+      # never been reached.
+      #
+      # Push + `cosign sign` + SBOM/SLSA attestation get wired here once GHCR
+      # credentials and the OIDC trust policy exist (needs the org's accounts).
       - name: Sign (keyless) — enabled once registry creds are set
-        run: echo "cosign sign $IMAGE:${{ github.sha }}  # gated on registry setup"
+        run: echo "would sign $IMAGE:${{ github.sha }} once registry creds are set"
