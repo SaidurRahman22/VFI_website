@@ -303,7 +303,61 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - uses: sigstore/cosign-installer@v3
       - name: Build image
-        run: docker build -t ghcr.io/${{ github.repository }}/api:${{ github.sha }} ./backend
+        id: build
+        run: |
+          set -o pipefail
+          docker build --progress=plain \
+            -t ghcr.io/${{ github.repository }}/api:${{ github.sha }} ./backend \
+            2>&1 | tee /tmp/docker-build.log
+
+      # Same reasoning as the postgres job above, and the same disease: this step
+      # has failed on every commit for at least six of them, and the reason lives
+      # in a run log that needs authentication to read. "build + cosign sign +
+      # SBOM (WARN): failure" has therefore been public and useless for weeks - a
+      # permanently red job trains people to stop reading CI, which costs more
+      # than the job is worth.
+      #
+      # There is no local Docker in the environment this is developed from, so
+      # the build cannot be reproduced off CI; the output has to come back out
+      # through an annotation, which a public repo serves unauthenticated.
+      - name: Report why the image build failed
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os
+
+          path = '/tmp/docker-build.log'
+          if not os.path.exists(path):
+              print('::warning::the build step wrote no log at all')
+              raise SystemExit(0)
+
+          with open(path, encoding='utf-8', errors='replace') as fh:
+              lines = [l.rstrip() for l in fh.read().splitlines()]
+
+          if os.environ.get('BUILD_OUTCOME') == 'success':
+              print('::notice::image build is GREEN')
+              raise SystemExit(0)
+
+          # buildkit prefixes every line with a step number; the useful part is
+          # the tail, plus any line that names itself an error.
+          errors = [l for l in lines if 'ERROR' in l or l.lower().startswith('error')]
+          tail = lines[-45:]
+
+          def emit(title, text):
+              encoded = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error title=%s::%s' % (title, encoded))
+
+          if errors:
+              emit('image build: the error lines', '\n'.join(errors[-10:])[:3500])
+          emit('image build: last 45 lines', '\n'.join(tail)[:3500])
+
+          summary = os.environ.get('GITHUB_STEP_SUMMARY')
+          if summary:
+              with open(summary, 'a', encoding='utf-8') as fh:
+                  fh.write('### image build failed\n\n```\n' + '\n'.join(tail) + '\n```\n')
+          PY
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
       # Push + `cosign sign` + SBOM/SLSA attestation are wired once GHCR creds
       # and the OIDC trust policy exist (needs the org's cloud accounts).
       - name: Sign (keyless) — enabled once registry creds are set
