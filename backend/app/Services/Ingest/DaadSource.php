@@ -88,7 +88,8 @@ class DaadSource implements IngestSource
                 'has_own_english_test' => false,
                 'affordability_band' => 'low',        // German public unis: little/no tuition
                 'tuition_deposit_policy' => 'none',
-                'vfi_represented' => true,
+                // Not a partner: DAAD is a public catalogue of German institutions,
+                // and ingesting one says nothing about a relationship with it.
                 'offer_tat_band' => 'standard',
                 'external_ref' => 'daad:inst:'.md5($uni),
             ],

@@ -73,7 +73,9 @@ class SeedSource implements IngestSource
                     'affordability_band' => ['low', 'medium', 'high'][($u + 1) % 3],
                     'tuition_deposit_policy' => ['none', 'low', 'standard'][$u % 3],
                     'interview_required' => ($u % 4) === 3,
-                    'vfi_represented' => true, 'external_ref' => $uref,
+                    // No partnership is asserted here. The catalogue is seeded to give
+                    // the site something to show; a real partner is ticked in /manage.
+                    'external_ref' => $uref,
                 ];
 
                 for ($p = 0; $p < $progsPer; $p++) {

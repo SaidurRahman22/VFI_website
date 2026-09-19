@@ -52,8 +52,15 @@ class IngestProgramsTest extends TestCase
 
         $total = DB::table('program_search')->count();
 
-        // universal seed tokens: every row is vfi-represented, open, and (no maths req) waivable
-        $this->assertSame($total, DB::table('program_search')->where('flags', 'like', '% vfi %')->count());
+        // NO row carries `vfi`. Ingesting a public catalogue says nothing about a
+        // relationship with the institutions in it, and every source used to
+        // hard-code vfi_represented => true - which put a "VFI partner" badge on
+        // 391 universities the client has no agreement with. Asserted as an
+        // absence on purpose: this is the line that catches a source doing it
+        // again.
+        $this->assertSame(0, DB::table('program_search')->where('flags', 'like', '% vfi %')->count());
+
+        // universal seed tokens: every row is open and (no maths req) waivable
         $this->assertSame($total, DB::table('program_search')->where('flags', 'like', '% open %')->count());
         $this->assertSame($total, DB::table('program_search')->where('flags', 'like', '% waive_maths %')->count());
 

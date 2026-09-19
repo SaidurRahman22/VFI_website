@@ -257,7 +257,8 @@ class CollegeScorecardSource implements IngestSource
             'province_state' => $state !== '' ? $state : null,
             'city' => $city !== '' ? $city : null,
             'is_major_city' => in_array($city, ['New York', 'Los Angeles', 'Chicago', 'Boston', 'Houston', 'Seattle', 'San Francisco', 'Washington'], true),
-            'vfi_represented' => true,
+            // Not a partner: College Scorecard is a US government dataset. Ingesting
+            // a university from it says nothing about a relationship with it.
             'offer_tat_band' => 'standard',
             'website' => $this->url($school['school.school_url'] ?? null),
             'overview_stats' => $stats,
