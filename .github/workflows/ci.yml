@@ -302,12 +302,24 @@ jobs:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - uses: sigstore/cosign-installer@v3
+      # ghcr.io rejects a tag with a capital in it, and this repository is
+      # `SaidurRahman22/VFI_website`. So `ghcr.io/${{ github.repository }}/api`
+      # was never a legal tag and the build had never once started — every red
+      # run for at least six commits was this one line, failing before Docker
+      # read the Dockerfile.
+      #
+      # ${VAR,,} is bash's lowercase expansion; there is no lowercase function
+      # in an Actions expression, which is how the capital survived. Computed
+      # once into the environment so the build and the sign step cannot drift.
+      - name: Work out the image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/api" >> "$GITHUB_ENV"
+
       - name: Build image
         id: build
         run: |
           set -o pipefail
           docker build --progress=plain \
-            -t ghcr.io/${{ github.repository }}/api:${{ github.sha }} ./backend \
+            -t "$IMAGE:${{ github.sha }}" ./backend \
             2>&1 | tee /tmp/docker-build.log
 
       # Same reasoning as the postgres job above, and the same disease: this step
@@ -361,4 +373,4 @@ jobs:
       # Push + `cosign sign` + SBOM/SLSA attestation are wired once GHCR creds
       # and the OIDC trust policy exist (needs the org's cloud accounts).
       - name: Sign (keyless) — enabled once registry creds are set
-        run: echo "cosign sign ghcr.io/${{ github.repository }}/api:${{ github.sha }}  # gated on registry setup"
+        run: echo "cosign sign $IMAGE:${{ github.sha }}  # gated on registry setup"
