@@ -318,8 +318,15 @@ jobs:
         id: build
         run: |
           set -o pipefail
+          # The context is `.` and not `./backend` because this workflow sets
+          # `defaults.run.working-directory: backend` at the top, so every run
+          # step already starts there — `./backend` was resolving to
+          # backend/backend and failing with "path not found". That was the
+          # SECOND thing wrong with this step, hidden behind the first: the tag
+          # was rejected before the context was ever evaluated, so fixing the
+          # capital letter is what let this surface at all.
           docker build --progress=plain \
-            -t "$IMAGE:${{ github.sha }}" ./backend \
+            -t "$IMAGE:${{ github.sha }}" . \
             2>&1 | tee /tmp/docker-build.log
 
       # Same reasoning as the postgres job above, and the same disease: this step
