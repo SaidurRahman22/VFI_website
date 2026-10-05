@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Partner;
 use App\Enums\StudentSource;
 use App\Http\Controllers\Controller;
 use App\Models\Student\Student;
+use App\Support\IntakeLabel;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -115,7 +116,7 @@ class PartnerStudentController extends Controller
             'email' => $s->email,
             'phone' => trim(($s->phone_cc ?? '').' '.($s->phone ?? '')),
             'destination_country' => $s->destination_country,
-            'intake' => trim(($s->intake_month ?? '').' '.($s->intake_year ?? '')),
+            'intake' => IntakeLabel::for($s->intake_month, $s->intake_year),
             'source' => $s->source?->value,
             'archived' => $s->archived_at !== null,
             'created_at' => optional($s->created_at)->toIso8601String(),

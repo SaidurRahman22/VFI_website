@@ -168,6 +168,60 @@
       list.map(function (x) { return "<option>" + x + "</option>"; }).join("");
   }
 
+  /* Intake years, generated rather than written down.
+     partner-students.html had 2025/2026/2027 hardcoded in its filter, which
+     quietly stops being useful the year somebody applies for 2028. One list,
+     computed from today, so the form and that filter cannot drift apart or go
+     stale while nobody is looking. */
+  function yearList() {
+    var y = new Date().getFullYear(), out = [], i;
+    for (i = -1; i <= 4; i++) out.push(String(y + i));
+    return out;
+  }
+  function yearOptions() {
+    return '<option value="" selected>Not decided yet</option>' +
+      yearList().map(function (y) { return '<option value="' + y + '">' + y + "</option>"; }).join("");
+  }
+
+  /* Fill every [data-pp-tax] select from the taxonomy the server already
+     publishes at /api/taxonomy — the same vocabulary the programme catalogue is
+     ingested against.
+
+     This exists because the alternative is a fourth hardcoded copy. portal.js
+     already carried DESTS = ["USA", "UK", …], and the catalogue stores
+     "United States" and "United Kingdom", so a student saved against "USA"
+     could never be matched to a programme or found by the country filter. The
+     seeder's own docblock says this endpoint was added to replace exactly these
+     divergent lists; the wiring was simply never done.
+
+     REPLACE, not append: these selects ship with one placeholder option and
+     nothing else, and the request can be retried. Appending would double the
+     list on a retry. Failure is silent and leaves the placeholder — a partner
+     who cannot pick a destination can still register the student, which is the
+     part that matters. */
+  function loadPortalTaxonomy() {
+    var sels = $$("[data-pp-tax]");
+    if (!sels.length || !window.VFIApi) return;
+
+    window.VFIApi.get("/api/taxonomy?kinds=country,intake", { noRedirect: true })
+      .then(function (res) {
+        var vocab = (res && res.vocabularies) || {};
+        sels.forEach(function (sel) {
+          var terms = vocab[sel.getAttribute("data-pp-tax")];
+          if (!terms || !terms.length) return;
+          var ph = sel.options.length ? sel.options[0] : null;
+          sel.innerHTML = "";
+          if (ph) sel.appendChild(ph);
+          terms.forEach(function (t) {
+            var o = document.createElement("option");
+            o.value = t.value;          // the slug the API filters and stores on
+            o.textContent = t.label;    // what the partner reads
+            sel.appendChild(o);
+          });
+        });
+      })["catch"](function () { /* placeholder stands; registering still works */ });
+  }
+
   /* ------------------------------------------------------------- MODALS */
   var MODAL_REGISTER =
     '<div class="pp-modal" id="ppModalRegister" role="dialog" aria-modal="true" aria-labelledby="ppRegTitle">' +
@@ -190,6 +244,29 @@
               '<input class="pp-input pp-phone__num" name="mobile" data-pp-only="digits" inputmode="numeric" maxlength="15" placeholder="Mobile Number"></div>' +
               '<span class="pp-field__err" data-err="mobile"></span></div>' +
             field("Email Address", true, '<div class="pp-input-wrap"><input class="pp-input" type="email" name="email" placeholder="Enter Email Address" autocomplete="off"><span class="pp-input-wrap__ic"><svg class="ic ic--sm"><use href="#pi-mail"/></svg></span></div>', "email") +
+          "</div>" +
+          /* Where and when. The students table has had Destination and Intake
+             columns all along and this form had no way to fill either, so both
+             printed an em-dash for every student ever registered — while the API
+             had accepted destination_country, intake_month and intake_year since
+             the day it was written.
+
+             Optional, all three. A partner registering a walk-in often does not
+             know yet, and a required field would make them invent an answer that
+             then looks like a decision the student made.
+
+             data-pp-tax, NOT data-tax. js/portal-search.js owns [data-tax] with a
+             DOCUMENT-WIDE sweep and fillSelect() appends rather than replaces —
+             and this modal is injected into every partner page including
+             partner-search.html, so sharing the attribute would have appended the
+             whole country list onto these selects a second time, on that page
+             only. Two owners, one attribute, is a bug that would have looked like
+             a browser quirk. */
+          '<p class="pp-modal__group">Study Plan <span class="pp-modal__hint">Optional — you can add this later</span></p>' +
+          '<div class="pp-form-grid">' +
+            field("Study Abroad Destination", false, '<select class="pp-select" name="destination" data-pp-tax="country"><option value="" selected>Not decided yet</option></select>') +
+            field("Intake", false, '<select class="pp-select" name="intake_month" data-pp-tax="intake"><option value="" selected>Not decided yet</option></select>') +
+            field("Intake Year", false, '<select class="pp-select" name="intake_year">' + yearOptions() + "</select>") +
           "</div>" +
           '<div class="pp-modal__foot" style="border:0;padding:20px 0 0"><button type="submit" class="pp-btn pp-btn--primary pp-btn--lg">Register new student</button></div>' +
         "</form>" +
@@ -248,6 +325,22 @@
   }
   document.body.insertAdjacentHTML("beforeend", NOTIF_POP + USER_POP + MODAL_REGISTER + MODAL_PROGRAM +
     '<div class="pp-scrim" id="ppScrim"></div><div class="pp-toasts" id="ppToasts"></div>');
+
+  /* After the modals are in the DOM, so the register form's selects are present,
+     and after any page markup that carries data-pp-tax of its own. */
+  (function fillYearSelects() {
+    $$("select[data-pp-years]").forEach(function (sel) {
+      var ph = sel.options.length ? sel.options[0] : null;
+      sel.innerHTML = "";
+      if (ph) sel.appendChild(ph);
+      yearList().forEach(function (y) {
+        var o = document.createElement("option");
+        o.value = y; o.textContent = y;
+        sel.appendChild(o);
+      });
+    });
+  })();
+  loadPortalTaxonomy();
 
   /* --------------------------------------------------------- sidebar state */
   var body = document.body;
@@ -450,6 +543,14 @@
         mobile: el.mobile.value.trim(),
         email: el.email.value.trim()
       };
+      /* Only sent when chosen. All three are nullable server-side, and
+         /api/partner/students is NOT on the ConvertEmptyStringsToNull exception
+         list in bootstrap/app.php, so an empty string would reach the validator
+         as null anyway — but omitting it keeps the request honest about what the
+         partner actually said. */
+      if (el.destination && el.destination.value) body.destination_country = el.destination.value;
+      if (el.intake_month && el.intake_month.value) body.intake_month = el.intake_month.value;
+      if (el.intake_year && el.intake_year.value) body.intake_year = Number(el.intake_year.value);
       window.VFIApi.post("/api/partner/students", body, { noRedirect: true }).then(function () {
         if (btn) btn.disabled = false;
         window.VFIToast("Student registered.", "ok");

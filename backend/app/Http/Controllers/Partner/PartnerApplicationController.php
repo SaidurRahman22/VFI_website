@@ -10,6 +10,7 @@ use App\Models\Partner\ApplicationStatusEvent;
 use App\Models\Student\Student;
 use App\Services\ApplicationReadiness;
 use App\Services\PipelineService;
+use App\Support\IntakeLabel;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -96,7 +97,7 @@ class PartnerApplicationController extends Controller
                     'email' => $s->email,
                 ],
                 'status' => $app->status->value,
-                'intake' => trim(($app->intake_month ?? '').' '.($app->intake_year ?? '')),
+                'intake' => IntakeLabel::for($app->intake_month, $app->intake_year),
                 'ack_no' => $app->ack_no,
                 'deadline_at' => optional($app->deadline_at)->toIso8601String(),
                 'submitted_at' => optional($app->submitted_at)->toIso8601String(),

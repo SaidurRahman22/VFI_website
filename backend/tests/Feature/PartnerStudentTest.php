@@ -124,6 +124,69 @@ class PartnerStudentTest extends TestCase
             ->assertStatus(200)->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.email', 'b1@x.test');
     }
 
+    /**
+     * The intake a partner sees, versus the slug the database holds.
+     *
+     * intake_month stores a taxonomy slug — the Apply button on a shortlist
+     * already posts `fall` straight from the catalogue's season_label — and
+     * both tables used to print it raw, so a partner read "fall 2026" and
+     * reasonably concluded their own data was broken. The programme search has
+     * always capitalised the same value, so the two screens disagreed about one
+     * field.
+     */
+    public function test_the_intake_is_shown_capitalised_not_as_the_raw_slug(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        Student::create([
+            'agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'slug@x.test',
+            'first_name' => 'Slug', 'student_ref' => 'RS1',
+            'intake_month' => 'fall', 'intake_year' => 2026,
+        ]);
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/students')
+            ->assertStatus(200)->assertJsonPath('data.0.intake', 'Fall 2026');
+    }
+
+    /** A student with no intake yet must read as blank, not as a stray year. */
+    public function test_an_unset_intake_is_empty_rather_than_half_printed(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        Student::create([
+            'agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'none@x.test',
+            'first_name' => 'None', 'student_ref' => 'RS2',
+        ]);
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/students')
+            ->assertStatus(200)->assertJsonPath('data.0.intake', '');
+    }
+
+    /**
+     * The two filters the console could not previously send. They were built
+     * server-side and then left unreachable: the controls above the table had
+     * no id and nothing in js/ read them.
+     */
+    public function test_the_intake_and_year_filters_narrow_the_list(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        foreach ([['f1@x.test', 'fall', 2026], ['s1@x.test', 'spring', 2027], ['f2@x.test', 'fall', 2027]] as $i => [$email, $season, $year]) {
+            Student::create([
+                'agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => $email,
+                'first_name' => 'S'.$i, 'student_ref' => 'RF'.$i,
+                'intake_month' => $season, 'intake_year' => $year,
+            ]);
+        }
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/students?intake=fall')
+            ->assertStatus(200)->assertJsonPath('meta.total', 2);
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/students?year=2027')
+            ->assertStatus(200)->assertJsonPath('meta.total', 2);
+
+        // together, not either/or
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/students?intake=fall&year=2027')
+            ->assertStatus(200)->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.email', 'f2@x.test');
+    }
+
     public function test_archived_list_is_separate(): void
     {
         [$agency, $user] = $this->agencyOwner('A');

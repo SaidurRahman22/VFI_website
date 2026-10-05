@@ -39,17 +39,25 @@
           <span>01 Jan 2025 – 08 Aug 2026</span>
           <button type="button" class="pp-daterange__x" id="ppStuDates" aria-label="Clear dates"><svg class="ic ic--sm"><use href="#pi-x"/></svg></button>
         </div>
-        <div class="pp-field"><select class="pp-select" aria-label="Country">
-          <option value="" disabled selected>Country</option>
-          <option>USA</option><option>Canada</option><option>UK</option><option>Australia</option><option>Ireland</option><option>New Zealand</option><option>Germany</option>
+        <!--
+          These three were decorative: no id, no name, nothing in js/ could read
+          them, while the API had supported ?country=, ?intake= and ?year= all
+          along. Their options were wrong as well as unread — "USA" and "UK"
+          cannot match the stored "United States" and "United Kingdom", and
+          Jan/May/Sep is a different vocabulary from the seasons the programme
+          catalogue uses, so a student's intake could never be compared with a
+          programme's. js/portal.js now fills the first two from /api/taxonomy
+          (the vocabulary the catalogue is ingested against) and the third from
+          the current year, so none of it can go stale sitting here.
+        -->
+        <div class="pp-field"><select class="pp-select" id="ppStuCountry" data-pp-tax="country" aria-label="Destination country">
+          <option value="" selected>Any destination</option>
         </select></div>
-        <div class="pp-field"><select class="pp-select" aria-label="Intake">
-          <option value="" disabled selected>Intake</option>
-          <option>Jan</option><option>May</option><option>Sep</option>
+        <div class="pp-field"><select class="pp-select" id="ppStuIntake" data-pp-tax="intake" aria-label="Intake">
+          <option value="" selected>Any intake</option>
         </select></div>
-        <div class="pp-field"><select class="pp-select" aria-label="Year">
-          <option value="" disabled selected>Year</option>
-          <option>2025</option><option>2026</option><option>2027</option>
+        <div class="pp-field"><select class="pp-select" id="ppStuYear" data-pp-years aria-label="Intake year">
+          <option value="" selected>Any year</option>
         </select></div>
         <div class="pp-field"><select class="pp-select" aria-label="Status">
           <option value="" disabled selected>Status</option>
@@ -91,9 +99,9 @@
   <script src="js/api.js?v=51967f55"></script>
   <script src="/api/content/bootstrap.js"></script>
   <script src="js/store.js?v=643c4a7a"></script>
-  <script src="js/portal.js?v=573b4130"></script>
+  <script src="js/portal.js?v=e13f6d9a"></script>
   <script src="js/portal-render.js?v=27b4b87c"></script>
-  <script src="js/portal-data.js?v=a46e0819"></script>
+  <script src="js/portal-data.js?v=61bf2d61"></script>
   <script>
     /* Search and Archived are handled by js/portal-data.js, which really queries
        /api/partner/students. Placeholder toasts used to live here from before

@@ -107,6 +107,17 @@
       var qs = [];
       var kw = $("#ppStuKeyword");
       if (kw && kw.value.trim()) qs.push("q=" + encodeURIComponent(kw.value.trim()));
+      /* The three filter selects. index() has supported country, intake and
+         year since it was written; nothing had ever sent them, so the controls
+         above the table were decoration. Read on submit rather than on change,
+         because this page has an explicit Search button (#ppStuSearch, already
+         wired below) and firing a request per keystroke-equivalent would fight
+         its own contract. */
+      [["#ppStuCountry", "country"], ["#ppStuIntake", "intake"], ["#ppStuYear", "year"]]
+        .forEach(function (pair) {
+          var el = $(pair[0]);
+          if (el && el.value) qs.push(pair[1] + "=" + encodeURIComponent(el.value));
+        });
       if (archived) qs.push("archived=1");
       window.VFIApi.get("/api/partner/students" + (qs.length ? "?" + qs.join("&") : ""), {})
         .then(function (res) {
