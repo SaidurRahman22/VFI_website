@@ -174,20 +174,46 @@ class PartnerProgramController extends Controller
          * of its rows is, and min picks 0 over 1. Expressed as an aggregate so
          * it is legal beside the GROUP BY on both drivers.
          */
-        $grouped->orderBy('seed_rank', 'asc');
+        // The aggregate again rather than the alias, so this block has ONE rule
+        // with no exceptions: never name an output alias in an ORDER BY here.
+        // A bare alias does happen to be legal in Postgres, but "legal when it
+        // stands alone and not otherwise" is exactly the distinction that cost
+        // a production outage three lines below.
+        $grouped->orderByRaw("min(case when source = 'seed' then 1 else 0 end) asc");
 
         if ($col !== 'id') {
-            // The aggregate matching the direction: soonest deadline, cheapest
-            // tuition, fastest offer for 'asc'; the largest for 'desc'. Aliased
-            // so the ORDER BY can name it on both drivers.
+            /*
+             * The aggregate matching the direction: soonest deadline, cheapest
+             * tuition, fastest offer for 'asc'; the largest for 'desc'.
+             *
+             * The nulls-last clause REPEATS the aggregate and does not name the
+             * alias, and that is the whole point of this comment.
+             * `orderByRaw('sort_key is null')` reads fine and runs fine on
+             * SQLite, and Postgres rejects it: an output-column alias may be
+             * used in ORDER BY only when it stands alone, never inside an
+             * expression, so `sort_key` there is resolved against the INPUT
+             * columns of program_search, which has no such column. Four of the
+             * five sorts - including the default - answered 500 on live while
+             * the whole SQLite suite stayed green.
+             *
+             * This is the second instance of that class of bug in this one
+             * block; the comment a few lines above takes credit for catching
+             * the first. Repeating the expression is the portable form, and the
+             * only form worth writing here.
+             *
+             * $agg and $col are not user input: $agg is the ternary below and
+             * $col comes from self::SORTS, which Rule::in has already
+             * constrained.
+             */
             $agg = $dir === 'desc' ? 'max' : 'min';
             $grouped->selectRaw("{$agg}({$col}) as sort_key")
-                ->orderByRaw('sort_key is null')
-                ->orderBy('sort_key', $dir);
+                ->orderByRaw("{$agg}({$col}) is null")
+                ->orderByRaw("{$agg}({$col}) {$dir}");
         }
         // 'newest' sorts on the row id; the newest row a programme owns is its
         // newest intake, which is the same ordering the un-grouped query gave.
-        $grouped->selectRaw('max(id) as newest_row')->orderBy('newest_row', 'desc');
+        // Same rule: the aggregate, not the alias.
+        $grouped->selectRaw('max(id) as newest_row')->orderByRaw('max(id) desc');
 
         $page = $grouped->paginate($data['per_page'] ?? 24)->withQueryString();
 
