@@ -301,6 +301,55 @@ class PartnerProgramSearchTest extends TestCase
     }
 
     /** The extra terms earn their place: `software` reaches "Software Engineering". */
+    /**
+     * A discipline the catalogue does not classify is still reachable.
+     *
+     * Measured on live: 17 of 18 taxonomy disciplines reach rows through
+     * discipline_area, and Cybersecurity reaches none — not because the
+     * programmes are absent but because every one of them is filed under
+     * discipline_area "Computer Science", with the distinction living only in
+     * the title. A dropdown option that returns nothing while the programmes
+     * plainly exist is the fake control this whole pass is about.
+     */
+    public function test_cybersecurity_is_found_by_title_when_the_discipline_column_hides_it(): void
+    {
+        $row = DB::table('program_search')->where('is_stale', false)->first();
+        DB::table('program_search')->where('id', $row->id)->update([
+            'title' => 'Cyber Security (MSc)',
+            'discipline_area' => 'Computer Science',   // what the feed really files it as
+        ]);
+
+        $res = $this->partner()->getJson('/api/partner/programs/search?discipline_area=cybersecurity&per_page=50')
+            ->assertStatus(200);
+
+        $this->assertSame(1, $res->json('meta.total'), 'the title is where the distinction lives');
+        $this->assertSame((int) $row->program_id, $res->json('data.0.program_id'));
+    }
+
+    /**
+     * And the title fallback must not leak to the other disciplines, or a
+     * classification filter quietly becomes a keyword search.
+     */
+    public function test_the_title_fallback_does_not_widen_other_disciplines(): void
+    {
+        $row = DB::table('program_search')->where('is_stale', false)->first();
+        DB::table('program_search')->where('id', $row->id)->update([
+            'title' => 'Business Law and Society (LLB)',
+            'discipline_area' => 'Business Administration',
+        ]);
+
+        $res = $this->partner()->getJson('/api/partner/programs/search?discipline_area=law&per_page=50')
+            ->assertStatus(200);
+
+        foreach ($res->json('data') as $card) {
+            $this->assertNotSame(
+                (int) $row->program_id,
+                $card['program_id'],
+                'a law-titled business programme must not answer the Law discipline filter'
+            );
+        }
+    }
+
     public function test_each_seeded_discipline_is_reachable_from_its_slug(): void
     {
         foreach (['mechanical' => 'Mechanical Engineering', 'software' => 'Software Engineering'] as $slug => $wording) {

@@ -343,8 +343,10 @@ class PartnerProgramController extends Controller
             return;
         }
 
+        $titleTerms = self::DISCIPLINE_TITLE_TERMS[$this->disciplineSlug($value)] ?? [];
+
         // Grouped, so the OR-set cannot escape and widen the other filters.
-        $query->where(function ($w) use ($terms) {
+        $query->where(function ($w) use ($terms, $titleTerms) {
             foreach ($terms as $term) {
                 // lower(col) LIKE lower-cased bound value is the portable form:
                 // SQLite's LIKE folds ASCII case by default and Postgres's does
@@ -353,7 +355,49 @@ class PartnerProgramController extends Controller
                 // already cost this project two outages.
                 $w->orWhereRaw('lower(discipline_area) like ?', ['%'.$term.'%']);
             }
+            foreach ($titleTerms as $term) {
+                $w->orWhereRaw('lower(title) like ?', ['%'.$term.'%']);
+            }
         });
+    }
+
+    /**
+     * Disciplines the CATALOGUE does not classify, matched on the title instead.
+     *
+     * Measured against live: 17 of the 18 taxonomy disciplines reach real rows
+     * through discipline_area. Cybersecurity reaches none — and not because the
+     * programmes are missing. "Cybersecurity (MSc)", "Cybersecurity (BSc)" and
+     * "Computer Science — Cyber Security (MSc)" are all in the index, every one
+     * of them filed under discipline_area "Computer Science", which is not a
+     * taxonomy term at all.
+     *
+     * Widening the slug to "computer science" would have been the easy fix and
+     * the wrong one: it answers "show me cybersecurity" with every computer
+     * science degree in the catalogue, which is a filter lying in the other
+     * direction. The title is where the distinction actually lives, so that is
+     * where this looks.
+     *
+     * Deliberately a short declared list and not a general rule. Matching every
+     * discipline against the title would make "Law" match any programme with
+     * the word in its name — "Law and Society", "Business Law" — and quietly
+     * turn a classification filter into a keyword search.
+     */
+    private const DISCIPLINE_TITLE_TERMS = [
+        'cybersecurity' => ['cybersecurity', 'cyber security', 'information security'],
+    ];
+
+    /** The taxonomy SLUG for a value that may have arrived as a label. */
+    private function disciplineSlug(string $value): string
+    {
+        $term = TaxonomyTerm::query()
+            ->where('kind', 'discipline_area')
+            ->where('active', true)
+            ->where(function ($w) use ($value) {
+                $w->where('value', $value)->orWhereRaw('lower(label) = ?', [mb_strtolower($value)]);
+            })
+            ->value('value');
+
+        return (string) ($term ?? $value);
     }
 
     /**
