@@ -236,7 +236,18 @@ class PartnerApplicationController extends Controller
                 'public_ref' => $s?->student_ref,
             ],
             'status' => $a->status->value,
-            'intake' => trim(($a->intake_month ?? '').' '.($a->intake_year ?? '')),
+            /*
+             * The SAME helper show() uses, which is the whole point of the
+             * helper existing.
+             *
+             * A previous pass claimed the label was "built in one place for
+             * both tables" and converted only show(). This method is what the
+             * LIST reads, so /api/partner/applications went on returning the
+             * raw slug — "fall 2026" — on every row of the applications table
+             * while the single-case panel beside it read "Fall 2026". Two
+             * screens, one field, two answers.
+             */
+            'intake' => IntakeLabel::for($a->intake_month, $a->intake_year),
             'ack_no' => $a->ack_no,
             'deadline_at' => optional($a->deadline_at)->toIso8601String(),
             'submitted_at' => optional($a->submitted_at)->toIso8601String(),

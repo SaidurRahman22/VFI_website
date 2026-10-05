@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Partner;
 use App\Http\Controllers\Controller;
 use App\Models\Catalogue\Program;
 use App\Models\Catalogue\ProgramSearchRow;
+use App\Models\TaxonomyTerm;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -37,6 +39,35 @@ class PartnerProgramController extends Controller
         'waive_gmat', 'waive_english', 'waive_maths',
     ];
 
+    /**
+     * Catalogue wordings the curated label does not reach on its own.
+     *
+     * Every entry was measured against a sample of the live index rather than
+     * guessed, and each earns its place: "Agriculture" alone finds 3 rows where
+     * "agricultur" finds 26 ("Agricultural Business And Management.",
+     * "Agricultural Mechanization."); "Pharmacy" misses "Pharmacology And
+     * Toxicology."; "Law" misses "Legal Professions And Studies, Other.".
+     *
+     * Deliberately NOT a general stemmer. A stemmer would also turn "Design"
+     * into "Desig" and start matching things nobody asked for; this is a short
+     * list of known spellings, and a wrong entry is visible and removable.
+     *
+     * @var array<string, list<string>>
+     */
+    private const DISCIPLINE_EXTRA_TERMS = [
+        'agriculture' => ['agricultur', 'agronom', 'horticultur'],
+        'ai_ml' => ['machine learning'],
+        'architecture' => ['architect'],
+        'cybersecurity' => ['cyber', 'information security'],
+        'economics' => ['econom'],
+        'electrical' => ['electronic'],
+        'finance' => ['financial'],
+        'law' => ['legal'],
+        'pharmacy' => ['pharmac'],
+        'psychology' => ['psycholog'],
+        'software' => ['software'],
+    ];
+
     /** sort key => [column, direction]. Applied nulls-last; id is the tiebreaker. */
     private const SORTS = [
         'deadline' => ['application_deadline_at', 'asc'],
@@ -56,6 +87,10 @@ class PartnerProgramController extends Controller
             'levels' => ['nullable', 'array', 'max:20'],
             'levels.*' => ['string', 'max:60'],
             'study_area' => ['nullable', 'string', 'max:60'],
+            // 90 = program_search.discipline_area's own width. Anything longer
+            // could not match a stored value, so it is a bad request, not a
+            // search that happens to find nothing.
+            'discipline_area' => ['nullable', 'string', 'max:90'],
             'duration_band' => ['nullable', 'string', 'max:30'],
             'intake' => ['nullable', 'string', 'max:20'],
             'year' => ['nullable', 'integer', 'min:2020', 'max:2100'],
@@ -82,6 +117,11 @@ class PartnerProgramController extends Controller
             if (! empty($data[$param])) {
                 $query->where($col, $data[$param]);
             }
+        }
+        // NOT in the loop above, because discipline_area is not a controlled
+        // vocabulary in this table the way the other three are. See the method.
+        if (! empty($data['discipline_area'])) {
+            $this->whereDiscipline($query, (string) $data['discipline_area']);
         }
         // level accepts a single value or a set (the UI's level checkboxes)
         $levels = array_values(array_unique(array_filter(array_merge(
@@ -246,6 +286,125 @@ class PartnerProgramController extends Controller
                 'per_page' => $page->perPage(),
             ],
         ])->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * The discipline filter — and why it is NOT `where('discipline_area', $v)`.
+     *
+     * `country`, `level`, `study_area` and `duration_band` are controlled: the
+     * ingest allow-lists each of them against the taxonomy before it writes
+     * (IngestPrograms::allowed/softValue), so the column holds the same SLUG
+     * the dropdown posts and an equality match is exactly right.
+     *
+     * `discipline_area` is not. IngestPrograms stores whatever the feed calls
+     * the subject, trimmed to 90 characters and never checked against any
+     * vocabulary — Scorecard writes CIP titles ("Registered Nursing, Nursing
+     * Administration, Nursing Research And Clinical Nursing."), DAAD writes its
+     * own subject strings ("Agricultural Science"), the seed writes a tidy
+     * title ("Public Health"). I counted 241 distinct spellings in a 1,073-row
+     * sample of the live index; the real catalogue has hundreds.
+     *
+     * The dropdown, meanwhile, is fed from the `discipline_area` TAXONOMY — 18
+     * curated slugs. So the two sides speak different vocabularies, and
+     * `where('discipline_area', 'public_health')` would match zero rows for
+     * every one of the 18 options. That is the decorative control this task
+     * exists to remove, re-created one layer down, and it would look like a
+     * working filter over an empty catalogue.
+     *
+     * So a taxonomy value is resolved to its LABEL and matched as text:
+     *
+     *   - label parts, split on `&`, `/` and `,`, each matched as a substring.
+     *     "Finance & Accounting" therefore finds both "Finance And Financial
+     *     Management Services." and "Accounting And Related Services.".
+     *   - plus DISCIPLINE_EXTRA_TERMS at the top of this class, for the
+     *     handful whose catalogue wording the label does not reach.
+     *
+     * Anything that names no taxonomy term is matched EXACTLY (case-folded),
+     * because the only thing that sends one is a caller echoing a card's own
+     * `discipline_area` back at us, and that caller means that one value.
+     *
+     * Cost: lower() defeats any index, so this is a scan of program_search
+     * (~41k rows, no index on this column either way). Measured in milliseconds
+     * at this size; if the catalogue grows an order of magnitude this wants a
+     * normalised discipline column written by the indexer, not a cleverer WHERE.
+     *
+     * @param  Builder<ProgramSearchRow>  $query
+     */
+    private function whereDiscipline(Builder $query, string $value): void
+    {
+        $terms = $this->disciplineTerms($value);
+
+        if ($terms === null) {
+            // lower(col) = lower(?) rather than `where(col, $value)`: SQLite's
+            // = is case-sensitive too, and the catalogue's capitalisation is
+            // the feed's, not something a caller should have to reproduce.
+            $query->whereRaw('lower(discipline_area) = ?', [mb_strtolower($value)]);
+
+            return;
+        }
+
+        // Grouped, so the OR-set cannot escape and widen the other filters.
+        $query->where(function ($w) use ($terms) {
+            foreach ($terms as $term) {
+                // lower(col) LIKE lower-cased bound value is the portable form:
+                // SQLite's LIKE folds ASCII case by default and Postgres's does
+                // not, so without lower() this filter would behave differently
+                // in the suite and in production — the exact blindness that has
+                // already cost this project two outages.
+                $w->orWhereRaw('lower(discipline_area) like ?', ['%'.$term.'%']);
+            }
+        });
+    }
+
+    /**
+     * The lower-cased substrings a taxonomy discipline term should match, or
+     * null when the input names no taxonomy term at all.
+     *
+     * The VALUE or the LABEL is accepted — `data_science` or
+     * "Data Science & Analytics" — because a <select> built from
+     * /api/taxonomy can reasonably post either, the two are indistinguishable
+     * from this side, and a filter that works for one and silently returns
+     * nothing for the other is the dead control this method exists to prevent.
+     * The label is compared case-folded for the same reason.
+     *
+     * @return list<string>|null
+     */
+    private function disciplineTerms(string $value): ?array
+    {
+        $term = TaxonomyTerm::query()
+            ->where('kind', 'discipline_area')
+            ->where('active', true)
+            ->where(function ($w) use ($value) {
+                $w->where('value', $value)->orWhereRaw('lower(label) = ?', [mb_strtolower($value)]);
+            })
+            ->first(['value', 'label']);
+
+        if (! $term instanceof TaxonomyTerm || trim((string) $term->label) === '') {
+            return null;
+        }
+
+        $parts = preg_split('#[&/,]#', mb_strtolower((string) $term->label)) ?: [];
+        $terms = [];
+
+        foreach (array_merge($parts, self::DISCIPLINE_EXTRA_TERMS[(string) $term->value] ?? []) as $part) {
+            /*
+             * LIKE metacharacters are STRIPPED, not escaped. Escaping would
+             * need an ESCAPE clause, and the two drivers disagree about the
+             * default escape character — SQLite has none at all, so a
+             * backslash there is a literal backslash and would silently stop
+             * the term matching. No taxonomy label contains % or _; dropping
+             * them can only narrow a term that was never going to match.
+             */
+            $part = trim(str_replace(['%', '_', '\\'], ' ', $part));
+            if ($part !== '') {
+                $terms[] = $part;
+            }
+        }
+
+        // A label of nothing but punctuation is not a filter; fall back to the
+        // exact branch rather than returning an empty OR-set, which would match
+        // every row and silently widen the search.
+        return $terms !== [] ? array_values(array_unique($terms)) : null;
     }
 
     /** GET /api/partner/programs/compare?ids=1,2,3 — up to 4 programs side by side. */

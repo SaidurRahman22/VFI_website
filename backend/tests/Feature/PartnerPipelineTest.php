@@ -138,4 +138,41 @@ class PartnerPipelineTest extends TestCase
             ->assertJsonPath('in_7_days', 2)     // today + day5
             ->assertJsonPath('in_14_days', 2);   // day20 excluded
     }
+
+    /**
+     * The LIST and the single case must print the intake the same way.
+     *
+     * `intake_month` holds a taxonomy slug — the Apply button on a shortlist
+     * posts `fall` straight from the catalogue's season_label — so printing it
+     * raw gives "fall 2026", which a partner reads as a bug in their own data.
+     * IntakeLabel exists to settle that in one place, and an earlier pass
+     * claimed it had been applied to "both tables" while converting only show().
+     * The list went on serving the slug, which is the half a partner actually
+     * looks at. This pins BOTH endpoints to the same string from the same row,
+     * so the next person to convert one of them cannot leave the other behind.
+     */
+    public function test_the_list_and_the_single_case_agree_on_the_intake_label(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        app(TenantContext::class)->setAgencyId($agency->id);
+        $s = $this->student($agency->id, 'slug@x.test');
+        $app = app(PipelineService::class)->create($s, ['intake_month' => 'fall', 'intake_year' => 2026], $user->id);
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/applications')
+            ->assertStatus(200)->assertJsonPath('data.0.intake', 'Fall 2026');
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/applications/'.$app->id)
+            ->assertStatus(200)->assertJsonPath('application.intake', 'Fall 2026');
+    }
+
+    /** A case with no intake reads as blank, not as a stray year or a bare space. */
+    public function test_an_unset_intake_is_empty_in_the_list(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        app(TenantContext::class)->setAgencyId($agency->id);
+        app(PipelineService::class)->create($this->student($agency->id, 'none@x.test'), [], $user->id);
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/applications')
+            ->assertStatus(200)->assertJsonPath('data.0.intake', '');
+    }
 }

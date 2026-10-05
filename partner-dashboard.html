@@ -12,6 +12,27 @@
   <link rel="stylesheet" href="css/partner-portal.css?v=0f2e7337" />
   <script>document.documentElement.className += " js";</script>
   <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png?v=6d9b6c48" />
+  <style>
+    /* page-scoped — every selector prefixed .pg-dash or scoped to this page */
+    /* Two real date inputs living inside the existing teal date pill, so the
+       filter row keeps the look it had when the range was a dead <span>. */
+    .pg-dash__date {
+      border: 0; background: transparent; color: inherit;
+      font: inherit; font-weight: 600; padding: 0; min-width: 0; width: 8.6em;
+    }
+    .pg-dash__date:focus { outline: 2px solid var(--pp-teal); outline-offset: 2px; border-radius: 4px; }
+    .pg-dash__sep { opacity: .7; }
+    /* .pp-soon greys out its own button child; a disabled <select>, and the
+       assistant's send button and input (which sit outside the wrapper and
+       carry their own backgrounds), need the same treatment — a control that
+       still looks live is the thing being fixed here */
+    .pp-soon > .pp-select { opacity: .55; cursor: not-allowed; filter: grayscale(35%); }
+    .pp-assistant__send[disabled] { opacity: .5; cursor: not-allowed; filter: grayscale(45%); }
+    .pp-assistant .pp-input[disabled] { background: var(--pp-card-2); color: var(--pp-muted); cursor: not-allowed; }
+    /* what the KPI tiles are currently counting — the filter has to be visible
+       in the result, or "Apply" is indistinguishable from a plain refresh */
+    .pg-dash__scope { margin: 10px 2px 0; font-size: 13px; color: var(--pp-muted); font-weight: 600; }
+  </style>
 </head>
 <body class="pp" data-pp-page="dashboard">
   <a class="pp-skip" href="#pp-main">Skip to content</a>
@@ -73,14 +94,58 @@
             </div>
           </div>
 
-          <!-- filters -->
+          <!-- filters
+               These four controls were decoration of the worst kind. None of
+               them had an id or a name, so nothing in js/ could read them, yet
+               "Apply Filters" called loadKpis() — which takes no arguments and
+               genuinely refetched /dashboard/kpis with NO query string. The
+               numbers visibly refreshed while the selection was thrown away, so
+               a counsellor had every reason to believe the filter had worked.
+
+               GET /api/partner/dashboard/kpis (PartnerApplicationController::kpis)
+               accepts exactly four parameters — year, intake, from, to — so
+               those four are now real inputs carrying data-pp-filter, which the
+               script at the foot of this page reads on Apply.
+
+               There is no fifth to wire: `applications` carries no destination
+               column, so the server cannot total by country however the request
+               is phrased. The Countries select is therefore shown disabled and
+               labelled rather than left looking operational. /dashboard/deadlines
+               takes no parameters at all, which is why Apply deliberately does
+               not refetch it — refreshing an unfilterable panel next to a
+               filtered one is the same lie in a smaller font. -->
           <div class="pp-card pp-anim">
             <div class="pp-filters" style="border:0;box-shadow:none;padding:0">
-              <div class="pp-daterange" style="flex:1 1 220px"><svg class="ic ic--sm"><use href="#pi-calendar"/></svg><span>01/04/2026 – 08/08/2026</span><button class="pp-daterange__x" aria-label="Clear dates"><svg class="ic ic--sm"><use href="#pi-x"/></svg></button></div>
-              <div class="pp-field"><select class="pp-select" aria-label="Intake"><option>Intake</option><option>Jan</option><option>May</option><option>Sep</option></select></div>
-              <div class="pp-field"><select class="pp-select" aria-label="Year"><option>Year</option><option>2026</option><option>2027</option></select></div>
-              <div class="pp-field"><select class="pp-select" aria-label="Countries"><option>Countries</option><option>USA</option><option>Canada</option><option>UK</option><option>Australia</option></select></div>
-              <button class="pp-btn pp-btn--soft" id="ppApplyFilters">Apply Filters</button>
+              <div class="pp-daterange" style="flex:1 1 300px">
+                <svg class="ic ic--sm"><use href="#pi-calendar"/></svg>
+                <input class="pg-dash__date" type="date" id="ppKpiFrom" data-pp-filter="from" aria-label="Applications filed from">
+                <span class="pg-dash__sep" aria-hidden="true">–</span>
+                <input class="pg-dash__date" type="date" id="ppKpiTo" data-pp-filter="to" aria-label="Applications filed up to">
+                <button type="button" class="pp-daterange__x" id="ppKpiDatesClear" aria-label="Clear dates"><svg class="ic ic--sm"><use href="#pi-x"/></svg></button>
+              </div>
+              <!-- Filled from /api/taxonomy by js/portal.js (data-pp-tax) and from
+                   the current year (data-pp-years) — the same vocabulary the
+                   catalogue is ingested against, so "fall" here matches the
+                   "fall" stored on an application. The old Jan/May/Sep list could
+                   never have matched anything. -->
+              <div class="pp-field"><select class="pp-select" id="ppKpiIntake" data-pp-filter="intake" data-pp-tax="intake" aria-label="Intake">
+                <option value="" selected>Any intake</option>
+              </select></div>
+              <div class="pp-field"><select class="pp-select" id="ppKpiYear" data-pp-filter="year" data-pp-years aria-label="Intake year">
+                <option value="" selected>Any year</option>
+              </select></div>
+              <div class="pp-field">
+                <span class="pp-soon" data-soon="Applications don't record a destination country yet, so the dashboard cannot total by one.">
+                  <select class="pp-select" aria-label="Destination country — not available yet" disabled aria-disabled="true">
+                    <option>Destination</option>
+                  </select>
+                </span>
+                <!-- visible, not only a hover tooltip: a disabled select takes no
+                     keyboard focus, so the tooltip alone would reach nobody -->
+                <span class="pp-soon__tag" style="align-self:flex-start">Not available yet</span>
+              </div>
+              <button type="button" class="pp-btn pp-btn--soft" id="ppApplyFilters">Apply Filters</button>
+              <button type="button" class="pp-btn pp-btn--ghost" id="ppResetFilters">Reset</button>
             </div>
           </div>
 
@@ -95,20 +160,38 @@
             <div class="pp-stat pp-stat--def"><div class="pp-stat__top"><span class="pp-stat__label">Deferrals</span></div><div class="pp-stat__value" data-pp-kpi="deferral">0</div></div>
             <div class="pp-stat pp-stat--pend"><div class="pp-stat__top"><span class="pp-stat__label">Pending from Partner</span></div><div class="pp-stat__value" data-pp-kpi="pending_from_partner">0</div></div>
           </div>
+          <!-- States in words what the tiles above are counting. Without it an
+               applied filter and a plain refresh look identical, which is how
+               the old button got away with discarding the selection. -->
+          <p class="pg-dash__scope" id="ppKpiScope" role="status">Showing all applications.</p>
 
-          <!-- VFI Assistant DISABLED: there is no assistant endpoint in the
-               backend, so the box only toasted. The "100 messages left" quota
-               was equally invented. Hidden until the feature is real. -->
-          <div class="pp-assistant pp-anim" hidden>
+          <!-- VFI Assistant — DISCLOSED PREVIEW, not a working feature.
+               There is no assistant endpoint anywhere in backend/routes, so
+               sendAsk() raised a toast and made zero network requests. Beside it
+               the panel advertised "100 messages left", "100 free assistant
+               messages per month" and "Recruit 6 more students to unlock an
+               extra 100 messages per month" — a quota and an upsell with no
+               plan, no counter and no ledger behind any of the three numbers.
+               Every one of those figures is gone; none of them was true.
+
+               It is disclosed rather than hidden because this is a feature the
+               client is selling, and the same console already handles that
+               honestly: partner-wallet.html carries .pp-soonbar + a disabled
+               control, partner-allied.html says "Front-end demo". Same pattern
+               here, so the panel can go live by being enabled rather than
+               rebuilt. -->
+          <div class="pp-assistant pp-anim">
             <div class="pp-assistant__bar">
               <span class="pp-assistant__id"><svg class="ic ic--sm"><use href="#pi-spark"/></svg> VFI Assistant</span>
-              <span class="pp-assistant__badge">100 messages left</span>
+              <span class="pp-soon__tag">Coming soon</span>
             </div>
             <div class="pp-assistant__row">
-              <input class="pp-input" id="ppAsk" placeholder="Ask me about overseas education…" aria-label="Ask the assistant">
-              <button class="pp-assistant__send" id="ppAskSend" aria-label="Send"><svg class="ic ic--sm"><use href="#pi-send"/></svg></button>
+              <span class="pp-soon" data-soon="The assistant is not connected yet. Nothing typed here is sent anywhere." style="flex:1 1 auto">
+                <input class="pp-input" id="ppAsk" placeholder="Ask me about overseas education…" aria-label="Ask the assistant (not available yet)" disabled aria-disabled="true" style="width:100%">
+              </span>
+              <button type="button" class="pp-assistant__send" id="ppAskSend" aria-label="Send" disabled aria-disabled="true"><svg class="ic ic--sm"><use href="#pi-send"/></svg></button>
             </div>
-            <div class="pp-assistant__note">Currently you get <strong>100 free assistant messages per month.</strong><br>Recruit 6 more students to unlock an extra 100 messages per month.</div>
+            <div class="pp-assistant__note"><strong>The assistant is coming in an upgrade.</strong> It is not connected yet, so nothing typed above is sent or answered. Any message allowance will be published with your plan when it launches — your regional manager below is the live route in the meantime.</div>
           </div>
 
           <!-- quick links -->
@@ -128,7 +211,7 @@
             <a class="pp-feature" href="partner-search.html">
               <span class="pp-feature__ic"><svg class="ic"><use href="#pi-search"/></svg></span>
               <span class="pp-feature__title">Search Programs</span>
-              <span class="pp-feature__text">Explore 100,000+ program options. Filter, shortlist and compare universities, then apply to multiple institutions with a single application.</span>
+              <span class="pp-feature__text">Search the programme catalogue. Filter, shortlist and compare universities, then apply to multiple institutions with a single application.</span>
             </a>
             <div class="pp-feature">
               <span class="pp-feature__ic"><svg class="ic"><use href="#pi-cap"/></svg></span>
@@ -151,35 +234,37 @@
 
         <!-- ================= right rail ================= -->
         <aside class="pp-rail">
-          <!-- Benefits/tier panel DISABLED: every figure in it was hardcoded
-               (tier, 16% progress bar, "0 unique", 100/100, 20/20) and the
-               roadmap link pointed back at this page. Nothing behind it exists
-               yet, so it is hidden rather than shown as a real entitlement. -->
+          <!-- Benefits/tier panel — STRUCTURE KEPT, INVENTED FIGURES REMOVED.
+               Every number in it was hardcoded: the tier, a 16% progress bar,
+               "0 unique Visa Received students", "100 assistant messages per
+               month", "20 student autofills per year", 100/100, 20/20, and
+               "Recruit 6 more students to unlock Growth". Nothing computes any
+               of them and no table stores a tier or an allowance, so each one
+               was a commitment the product had not made.
+
+               It stays `hidden` — there is no entitlement to show yet — but the
+               figures are gone from the markup rather than merely out of sight,
+               because a panel that is one CSS change away from publishing a
+               fabricated quota is still carrying it. The layout and the
+               data-ppr hooks survive, so turning this on is a matter of
+               filling it from a real endpoint. -->
           <div class="pp-card pp-anim" hidden>
             <div class="pp-benefits__top">
               <div>
                 <div class="pp-eyebrow">Your benefits level</div>
-                <div class="pp-benefits__level" data-ppr="tierName">STARTER</div>
+                <div class="pp-benefits__level" data-ppr="tierName">&mdash;</div>
               </div>
               <span class="pp-benefits__medal"><svg class="ic"><use href="#pi-medal"/></svg></span>
             </div>
             <div class="pp-benefits__track">
-              <span class="pp-benefits__fill" style="width:16%"></span>
-              <span class="pp-benefits__dots"><span class="pp-benefits__dot is-on"></span><span class="pp-benefits__dot"></span><span class="pp-benefits__dot"></span><span class="pp-benefits__dot"></span></span>
+              <!-- width:0 until something measures it: a part-filled bar is a
+                   claim about progress towards a tier that does not exist -->
+              <span class="pp-benefits__fill" style="width:0"></span>
+              <span class="pp-benefits__dots"><span class="pp-benefits__dot"></span><span class="pp-benefits__dot"></span><span class="pp-benefits__dot"></span><span class="pp-benefits__dot"></span></span>
             </div>
-            <p class="pp-benefits__note">0 unique <b>“Visa Received”</b> students in the last year.</p>
-            <p class="pp-benefits__note" style="margin-top:12px;font-weight:600;color:var(--pp-ink)">Current benefits include:</p>
-            <ul class="pp-benefits__list" data-ppr="benefits">
-              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> 100 assistant messages per month</li>
-              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Up to 2 counsellors</li>
-              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> 20 student autofills per year</li>
-              <li><svg class="ic ic--sm"><use href="#pi-check"/></svg> Priority support from your regional manager</li>
-            </ul>
-            <div class="pp-benefits__cta">Recruit 6 more students to unlock <b>Growth</b> &middot; <a href="partner-dashboard.html">View roadmap</a></div>
-            <div class="pp-benefits__split">
-              <div class="pp-benefits__stat"><small>Assistant Messages Left</small><b>100/100</b></div>
-              <div class="pp-benefits__stat"><small>Student Autofills Left</small><b>20/20</b></div>
-            </div>
+            <p class="pp-benefits__note">Partner tiers and their benefits are not published yet.</p>
+            <ul class="pp-benefits__list" data-ppr="benefits"></ul>
+            <div class="pp-benefits__cta">Your regional manager can confirm what your agency is entitled to today.</div>
           </div>
 
           <!-- upcoming deadlines -->
@@ -246,7 +331,7 @@
   <script src="js/store.js?v=643c4a7a"></script>
   <script src="js/portal.js?v=e13f6d9a"></script>
   <script src="js/portal-render.js?v=27b4b87c"></script>
-  <script src="js/portal-data.js?v=90b33389"></script>
+  <script src="js/portal-data.js?v=88ee0de8"></script>
   <script>
     /* tiny dashboard-only wiring: tab panels, copy link, apply/ask feedback */
     (function () {
@@ -285,37 +370,85 @@
         else window.VFIToast("Registration link: " + refUrl);
       });
 
-      /* ---- the 8 KPI cards + deadline buckets, computed SERVER-side ---- */
+      /* ---- the 8 KPI cards, refetched FOR THE CHOSEN FILTER ----
+         The unfiltered first paint — and the deadline panels, which take no
+         parameters — belong to the dashboard() block in js/portal-data.js and
+         already run on load. This used to duplicate both: a second identical
+         /kpis request racing the first, plus a /deadlines request written into
+         [data-pp-deadline] elements that exist nowhere in this page. Both are
+         gone. What is left is the one thing portal-data.js cannot do, because
+         the controls live here: apply the filter. */
+      var FILTERS = ["year", "intake", "from", "to"];      // exactly what kpis() accepts
+
+      function describe(picked) {
+        /* Reading the filter back in plain words is the whole point: "Apply"
+           previously looked identical to a refresh, which is how discarding the
+           selection went unnoticed. */
+        if (!picked.intake && !picked.year && !picked.from && !picked.to) return "Showing all applications.";
+        var bits = [];
+        if (picked.intake || picked.year) {
+          /* The taxonomy LABEL is "Fall (September–December)", which reads badly
+             mid-sentence; the slug it stores is "fall". Capitalise the slug. */
+          var season = picked.intake ? picked.intake.charAt(0).toUpperCase() + picked.intake.slice(1) : "";
+          bits.push([season, picked.year].filter(Boolean).join(" ") + " intake");
+        }
+        if (picked.from && picked.to) bits.push("filed " + picked.from + " to " + picked.to);
+        else if (picked.from) bits.push("filed on or after " + picked.from);
+        else if (picked.to) bits.push("filed on or before " + picked.to);
+        return "Showing " + bits.join(", ") + ".";
+      }
+
       function loadKpis() {
         if (!window.VFIApi) return;
-        var qs = [];
-        ["year", "intake", "from", "to"].forEach(function (k) {
+        var qs = [], picked = {};
+        FILTERS.forEach(function (k) {
           var el = document.querySelector('[data-pp-filter="' + k + '"]');
-          if (el && el.value) qs.push(k + "=" + encodeURIComponent(el.value));
+          if (!el || !el.value) return;
+          picked[k] = el.value;
+          qs.push(k + "=" + encodeURIComponent(el.value));
         });
+        var scope = $("#ppKpiScope");
         window.VFIApi.get("/api/partner/dashboard/kpis" + (qs.length ? "?" + qs.join("&") : ""), { noRedirect: true })
           .then(function (data) {
+            var counts = (data && data.counts) || {};
             $$("[data-pp-kpi]").forEach(function (el) {
               var key = el.getAttribute("data-pp-kpi");
-              if (data.counts && typeof data.counts[key] === "number") el.textContent = String(data.counts[key]);
+              /* "All Applications" is data.total, not a status in counts — the
+                 old code only ever read counts[key], so that one tile could
+                 never move however the rest of the dashboard changed. */
+              var n = key === "total" ? data.total : counts[key];
+              if (typeof n === "number") el.textContent = String(n);
             });
-          })["catch"](function () {});
-        window.VFIApi.get("/api/partner/dashboard/deadlines", { noRedirect: true }).then(function (d) {
-          $$("[data-pp-deadline]").forEach(function (el) {
-            var key = el.getAttribute("data-pp-deadline");
-            if (typeof d[key] === "number") el.textContent = String(d[key]);
+            if (scope) scope.textContent = describe(picked);
+          })["catch"](function () {
+            if (scope) scope.textContent = "Could not refresh the totals — they are still showing the previous filter.";
           });
-        })["catch"](function () {});
       }
-      loadKpis();
-      document.addEventListener("vfi:student-created", loadKpis);
 
       var apply = $("#ppApplyFilters");
       if (apply) apply.addEventListener("click", loadKpis);
-      var ask = $("#ppAskSend"), askIn = $("#ppAsk");
-      function sendAsk() { if (askIn && askIn.value.trim()) { window.VFIToast("Thanks! The assistant would reply here."); askIn.value = ""; } }
-      if (ask) ask.addEventListener("click", sendAsk);
-      if (askIn) askIn.addEventListener("keydown", function (e) { if (e.key === "Enter") sendAsk(); });
+
+      var reset = $("#ppResetFilters");
+      function clearDates() {
+        var f = $("#ppKpiFrom"), t = $("#ppKpiTo");
+        if (f) f.value = ""; if (t) t.value = "";
+      }
+      if (reset) reset.addEventListener("click", function () {
+        var i = $("#ppKpiIntake"), y = $("#ppKpiYear");
+        if (i) i.value = ""; if (y) y.value = "";
+        clearDates();
+        loadKpis();
+      });
+      /* The X on the date pill cleared nothing before — it hid the pill, which
+         left the dates still applied and no way to see or change them. */
+      var datesX = $("#ppKpiDatesClear");
+      if (datesX) datesX.addEventListener("click", function () { clearDates(); loadKpis(); });
+
+      /* The assistant input and send button are disabled in the markup and
+         there is no endpoint behind them, so there is nothing to wire. The old
+         sendAsk() toasted "the assistant would reply here" and made no request
+         at all; see the comment on the panel. */
+
       /* Chip highlighting is handled by js/portal-render.js, which also
          filters the list. A second toggler here just fought it. */
     })();

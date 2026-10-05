@@ -493,8 +493,26 @@
       '<p class="pp-datalist__meta">You currently have no active applications for any students. ' +
       'Go to <a href="partner-students.html">Manage Students</a> to create a student and their application.</p>';
 
+    /* Fill the status filter from LABEL, the map this block already keeps for
+       rendering the badge. Writing the options into the HTML instead would have
+       been a sixth hardcoded copy of a vocabulary that lives in an enum, and
+       the one most likely to rot: a status added to ApplicationStatus would
+       simply never appear in the filter. */
+    (function fillStatusFilter() {
+      var sel = $("#ppAppStatus");
+      if (!sel) return;
+      Object.keys(LABEL).forEach(function (k) {
+        var o = document.createElement("option");
+        o.value = k; o.textContent = LABEL[k];
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function () { paint(); });
+    })();
+
     function paint() {
-      window.VFIApi.get("/api/partner/applications", {}).then(function (res) {
+      var sel = $("#ppAppStatus");
+      var qs = sel && sel.value ? "?status=" + encodeURIComponent(sel.value) : "";
+      window.VFIApi.get("/api/partner/applications" + qs, {}).then(function (res) {
         var rows = res.data || [];
         // the static "you have no applications" panel must not stay on screen
         // above a table that is listing them

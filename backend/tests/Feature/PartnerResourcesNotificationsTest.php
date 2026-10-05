@@ -67,6 +67,105 @@ class PartnerResourcesNotificationsTest extends TestCase
             ->assertJsonCount(3, 'data')->assertJsonPath('countries', ['Canada', 'UK']);
     }
 
+    /**
+     * A row that names a document nobody has uploaded says so.
+     *
+     * Every row on live is one of four written by the 2026_09_19 seed
+     * migration, and all four carry `url` = `partner-resources.html` — the page
+     * the partner is already on. The console rendered each as a "Download"
+     * button beside the word "PDF", so a partner clicked four times, got the
+     * same page back four times, and concluded the console was broken. It is
+     * not broken; the documents do not exist yet. The API has to say which of
+     * those two it is, and it must not invent a file to avoid saying it.
+     */
+    public function test_a_seeded_row_is_flagged_as_a_placeholder_and_offers_no_link(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        // the seed migration's own shape, legacy_id included
+        PpDoc::create(['legacy_id' => 'seed_pp_docs_1', 'position' => 0, 'country' => 'All',
+            'category' => 'Agreements', 'title' => 'Partner agreement (template)', 'size' => 'PDF',
+            'date' => 'Current', 'url' => 'partner-resources.html']);
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/resources')
+            ->assertStatus(200)
+            ->assertJsonPath('data.0.placeholder', true)
+            // null, not the stored value: a link that reopens the page you are
+            // on is worse than no link, because it reads as a failed download
+            ->assertJsonPath('data.0.url', null)
+            // the row itself is still listed — it is a real, editable entry
+            ->assertJsonPath('data.0.title', 'Partner agreement (template)');
+    }
+
+    /** A real document is untouched: flag false, url intact. */
+    public function test_a_real_document_is_not_flagged(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        PpDoc::create(['legacy_id' => 'd1', 'position' => 0, 'country' => 'UK', 'category' => 'Visa',
+            'title' => 'UK visa guide', 'url' => 'https://x.test/a.pdf']);
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/resources')
+            ->assertStatus(200)
+            ->assertJsonPath('data.0.placeholder', false)
+            ->assertJsonPath('data.0.url', 'https://x.test/a.pdf');
+    }
+
+    /**
+     * The two signals, each covering what the other gets wrong.
+     *
+     * An admin-added row pointing at a page of this site is as undownloadable
+     * as a seeded one, and an absolute https link to someone's guidance page is
+     * a genuine resource even though it is HTML — calling that one a
+     * placeholder would be the opposite lie.
+     */
+    public function test_placeholder_detection_reads_the_url_not_only_the_seed_marker(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        foreach ([
+            ['own-page', 'partner-enquiries.html', true],          // relative page of this site
+            ['root-page', '/partner-resources.html?x=1', true],    // root-relative, query trimmed
+            ['no-url', '', true],                                  // nothing to open at all
+            ['external-page', 'https://gov.test/student-visa.html', false],
+            ['own-file', '/storage/media/guide.pdf', false],       // a real file on this site
+        ] as $i => [$id, $url, $expected]) {
+            PpDoc::create(['legacy_id' => $id, 'position' => $i, 'title' => $id, 'url' => $url]);
+        }
+
+        $rows = collect($this->asPartner($user, $agency->id)->getJson('/api/partner/resources')
+            ->assertStatus(200)->json('data'))->keyBy('title');
+
+        $this->assertTrue($rows['own-page']['placeholder']);
+        $this->assertTrue($rows['root-page']['placeholder']);
+        $this->assertTrue($rows['no-url']['placeholder']);
+        $this->assertFalse($rows['external-page']['placeholder']);
+        $this->assertFalse($rows['own-file']['placeholder']);
+        $this->assertSame('/storage/media/guide.pdf', $rows['own-file']['url']);
+    }
+
+    /**
+     * The label clears itself, which is the reason the flag is derived from the
+     * url rather than from the seed migration's `legacy_id` marker.
+     *
+     * legacy_id is immutable — ContentItem mints it once — so a marker-based
+     * flag would go on calling one of those four rows a sample for ever after
+     * the desk had uploaded the real PDF to it. Here the desk's only action is
+     * editing the url, and nobody has to remember a second step.
+     */
+    public function test_editing_a_seeded_row_to_point_at_a_real_file_clears_the_flag(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        $doc = PpDoc::create(['legacy_id' => 'seed_pp_docs_2', 'position' => 0, 'title' => 'Checklist',
+            'url' => 'partner-resources.html']);
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/resources')
+            ->assertJsonPath('data.0.placeholder', true);
+
+        $doc->forceFill(['url' => 'https://x.test/checklist.pdf'])->save();
+
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/resources')
+            ->assertJsonPath('data.0.placeholder', false)
+            ->assertJsonPath('data.0.url', 'https://x.test/checklist.pdf');
+    }
+
     public function test_notifications_are_tenant_scoped_with_read_state(): void
     {
         [$agencyA, $userA] = $this->agencyOwner('A');

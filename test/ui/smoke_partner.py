@@ -57,7 +57,7 @@ PAGES = [
     {"file": "partner-students.html", "heading": "Students"},
     {"file": "partner-applications.html", "heading": "Applications"},
     # the search screen leads with a marketing hero, not the standard page head
-    {"file": "partner-search.html", "heading": "Explore over 100,000+ Programs",
+    {"file": "partner-search.html", "heading": "Explore the Programme Catalogue",
      "heading_sel": ".pg-search__hero h1"},
     {"file": "partner-enquiries.html", "heading": "Enquiries"},
     {"file": "partner-resources.html", "heading": "Learning Resources"},

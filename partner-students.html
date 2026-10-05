@@ -12,6 +12,21 @@
   <link rel="stylesheet" href="css/partner-portal.css?v=0f2e7337" />
   <script>document.documentElement.className += " js";</script>
   <link rel="icon" type="image/png" href="assets/img/vfi-emblem.png?v=6d9b6c48" />
+  <style>
+    /* page-scoped — every selector prefixed .pg-stu, or scoped to this page */
+    /* two real date inputs inside the existing teal pill, so the filter row
+       keeps the shape it had when the range was a dead <span> */
+    .pg-stu__date {
+      border: 0; background: transparent; color: inherit;
+      font: inherit; font-weight: 600; padding: 0; min-width: 0; width: 8.6em;
+    }
+    .pg-stu__date:focus { outline: 2px solid var(--pp-teal); outline-offset: 2px; border-radius: 4px; }
+    .pg-stu__sep { opacity: .7; }
+    /* .pp-soon greys out buttons; a disabled <select> needs the same treatment */
+    .pp-soon > .pp-select { opacity: .55; cursor: not-allowed; filter: grayscale(35%); }
+    .pg-stu__hint { margin: 10px 2px 0; font-size: 13px; color: var(--pp-muted); font-weight: 600; }
+    .pg-stu__hint a { color: var(--pp-teal-dark); }
+  </style>
 </head>
 <body class="pp" data-pp-page="students">
   <a class="pp-skip" href="#pp-main">Skip to content</a>
@@ -34,9 +49,20 @@
 
       <!-- filters -->
       <div class="pp-filters pp-anim">
-        <div class="pp-daterange" id="ppStuDateRange" style="flex:1 1 220px">
+        <!--
+          This was a static <span> reading "01 Jan 2025 – 08 Aug 2026" with no
+          inputs behind it: a range nobody chose, that nothing sent, and whose X
+          only hid the pill — leaving the dates apparently still applied with no
+          way to see or change them. PartnerStudentController::index() has
+          supported ?from= and ?to= (whereDate on created_at) all along, so
+          these are two real date inputs and the script at the foot of the page
+          sends them with the list request.
+        -->
+        <div class="pp-daterange" id="ppStuDateRange" style="flex:1 1 300px">
           <svg class="ic ic--sm"><use href="#pi-calendar"/></svg>
-          <span>01 Jan 2025 – 08 Aug 2026</span>
+          <input class="pg-stu__date" type="date" id="ppStuFrom" aria-label="Registered from">
+          <span class="pg-stu__sep" aria-hidden="true">–</span>
+          <input class="pg-stu__date" type="date" id="ppStuTo" aria-label="Registered up to">
           <button type="button" class="pp-daterange__x" id="ppStuDates" aria-label="Clear dates"><svg class="ic ic--sm"><use href="#pi-x"/></svg></button>
         </div>
         <!--
@@ -59,10 +85,26 @@
         <div class="pp-field"><select class="pp-select" id="ppStuYear" data-pp-years aria-label="Intake year">
           <option value="" selected>Any year</option>
         </select></div>
-        <div class="pp-field"><select class="pp-select" aria-label="Status">
-          <option value="" disabled selected>Status</option>
-          <option>Application Started</option><option>Submitted</option><option>Offer Received</option><option>Visa Received</option>
-        </select></div>
+        <!--
+          Status had four plausible options, no id and no handler — and could
+          never have had one: `students` carries no status column, and
+          PartnerStudentController::present() returns no status field, because a
+          status belongs to an APPLICATION and a student may have none or
+          several. Status filtering is real one page over
+          (GET /api/partner/applications?status=), so the control is disabled
+          and the hint under this row sends the counsellor to the page that can
+          actually answer the question.
+        -->
+        <div class="pp-field">
+          <span class="pp-soon" data-soon="A status belongs to an application, not to a student. Filter by status on the Applications page.">
+            <select class="pp-select" aria-label="Application status — not available on this page" disabled aria-disabled="true">
+              <option>Status</option>
+            </select>
+          </span>
+          <!-- visible, not only a hover tooltip: a disabled select takes no
+               keyboard focus, so the tooltip alone would reach nobody -->
+          <span class="pp-soon__tag" style="align-self:flex-start">On Applications</span>
+        </div>
         <div class="pp-field pp-field--wide">
           <div class="pp-search-wrap" style="position:relative">
             <span class="pp-search-wrap__ic"><svg class="ic ic--sm"><use href="#pi-search"/></svg></span>
@@ -71,6 +113,7 @@
         </div>
         <button type="button" class="pp-btn pp-btn--primary" id="ppStuSearch">Search</button>
       </div>
+      <p class="pg-stu__hint">Looking for students at a particular stage? Application status lives on the <a href="partner-applications.html">Applications</a> page, where it can be filtered.</p>
 
       <!-- empty state -->
       <div class="pp-card pp-anim" style="margin-top:22px">
@@ -88,7 +131,12 @@
             <path d="M150 128l17 17" stroke="#0a6a62" stroke-width="7" stroke-linecap="round"/>
           </svg>
           <h2 class="pp-empty__title">No Student Found</h2>
-          <p class="pp-empty__text">You haven't registered any students yet. Register your first student to build their profile, then track every application from one place.</p>
+          <!-- js/portal-data.js shows this panel whenever the list comes back
+               empty — including when a filter or the archived view is what
+               emptied it. "You haven't registered any students yet" was then
+               flatly wrong for an agency with students on file, and read as a
+               broken page rather than a narrow search. -->
+          <p class="pp-empty__text" id="ppStuEmptyText">No students match this view. Clear the filters to see everyone, or register your first student to build their profile and track every application from one place.</p>
           <button type="button" class="pp-btn pp-btn--primary" data-pp-open="register-student"><svg class="ic ic--sm"><use href="#pi-plus"/></svg> Register New Student</button>
         </div>
       </div>
@@ -101,19 +149,164 @@
   <script src="js/store.js?v=643c4a7a"></script>
   <script src="js/portal.js?v=e13f6d9a"></script>
   <script src="js/portal-render.js?v=27b4b87c"></script>
-  <script src="js/portal-data.js?v=90b33389"></script>
+  <script src="js/portal-data.js?v=88ee0de8"></script>
   <script>
-    /* Search and Archived are handled by js/portal-data.js, which really queries
-       /api/partner/students. Placeholder toasts used to live here from before
-       that existed; both handlers fired, so a working search still announced
-       "No students match your filters yet" and looked broken. */
+    /* Search, the three taxonomy selects and the Archived toggle are handled by
+       js/portal-data.js, which really queries /api/partner/students. This file
+       adds the two things that live in THIS page's markup and have no hook over
+       there: the date range, and the archive/restore write control. ES5 to
+       match js/. */
     (function () {
       var $ = function (s, c) { return (c || document).querySelector(s); };
+      var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+      function toast(m, k) { if (window.VFIToast) window.VFIToast(m, k); }
+
+      var searchBtn = $("#ppStuSearch"), archBtn = $("#ppArchived"), kwIn = $("#ppStuKeyword");
+
+      /* ==============================================================
+         DATE RANGE -> ?from= & ?to=
+         index() has supported both since it was written. js/portal-data.js
+         builds the query string for this page but reads only the three
+         selects, and it is not this page's file to change — so rather than
+         leave two date inputs on screen that nothing sends (the exact failure
+         being fixed here), the values are appended to the one request that
+         wants them.
+
+         Narrow on purpose: matched on the EXACT list path, so the
+         /students/{id}/documents and /students/{id}/shortlist calls that share
+         the prefix are never touched; and skipped when the query already
+         carries from=/to=, so this stays correct if portal-data.js grows its
+         own date wiring later rather than sending each value twice.
+         ============================================================== */
+      var LIST_PATH = "/api/partner/students";
+
+      function withDates(url) {
+        var s = String(url || "");
+        var cut = s.indexOf("?");
+        var path = cut < 0 ? s : s.slice(0, cut);
+        if (path !== LIST_PATH) return s;
+        var qs = cut < 0 ? "" : s.slice(cut + 1);
+        var add = [];
+        [["#ppStuFrom", "from"], ["#ppStuTo", "to"]].forEach(function (pair) {
+          var el = $(pair[0]);
+          if (!el || !el.value) return;
+          if (new RegExp("(^|&)" + pair[1] + "=").test(qs)) return;   // already sent
+          add.push(pair[1] + "=" + encodeURIComponent(el.value));
+        });
+        if (!add.length) return s;
+        return path + "?" + (qs ? qs + "&" : "") + add.join("&");
+      }
+
+      if (window.VFIApi && !window.VFIApi.__ppStuDates) {
+        var origGet = window.VFIApi.get;
+        window.VFIApi.get = function (p, o) { return origGet(withDates(p), o); };
+        window.VFIApi.__ppStuDates = true;      // never wrap twice
+      }
+
+      /* The X used to hide the pill and toast "Date filter cleared." — which
+         cleared nothing, hid the only evidence of what was applied, and left no
+         way to set a range again. It now empties both inputs and re-runs the
+         search that uses them. */
       var clear = $("#ppStuDates");
       if (clear) clear.addEventListener("click", function () {
-        var pill = $("#ppStuDateRange");
-        if (pill) pill.style.display = "none";
-        window.VFIToast("Date filter cleared.");
+        var f = $("#ppStuFrom"), t = $("#ppStuTo");
+        var had = (f && f.value) || (t && t.value);
+        if (f) f.value = ""; if (t) t.value = "";
+        if (searchBtn) searchBtn.click();                 // portal-data.js reloads the list
+        toast(had ? "Date filter cleared." : "No dates were set.");
+      });
+
+      /* ==============================================================
+         ARCHIVE / RESTORE
+         "Archived Students" already worked as a READ view — portal-data.js
+         sends ?archived=1 and index() honours it — but nothing in the console
+         could put a student there, so it was permanently and inexplicably
+         empty. These are the write controls: POST /students/{id}/archive and
+         /unarchive.
+
+         The rows are built in js/portal-data.js, which this page does not own,
+         so the button is appended after each repaint instead. A row that
+         already carries an archive control is left alone, so if that file
+         grows its own the two cannot double up.
+         ============================================================== */
+      var host = $(".pp-datalist");   // portal-data.js inserts this synchronously
+      if (!host || !window.VFIApi) return;
+
+      /* Which list is on screen. portal-data.js keeps this in a closure we
+         cannot read, so it is mirrored from the same three events in the same
+         order — our listeners are registered after its, so they see the same
+         clicks and settle on the same value. */
+      var showingArchived = false;
+      if (searchBtn) searchBtn.addEventListener("click", function () { showingArchived = false; syncArchBtn(); });
+      if (kwIn) kwIn.addEventListener("keydown", function (e) { if (e.key === "Enter") { showingArchived = false; syncArchBtn(); } });
+      if (archBtn) archBtn.addEventListener("click", function () { showingArchived = !showingArchived; syncArchBtn(); });
+      document.addEventListener("vfi:student-created", function () { showingArchived = false; syncArchBtn(); });
+
+      /* The toggle gave no sign of which list you were looking at, so an empty
+         archive and an empty agency looked identical. */
+      function syncArchBtn() {
+        if (!archBtn) return;
+        var label = archBtn.lastChild;
+        if (label && label.nodeType === 3) label.nodeValue = showingArchived ? " Active Students" : " Archived Students";
+        archBtn.setAttribute("aria-pressed", showingArchived ? "true" : "false");
+        var empty = $("#ppStuEmptyText");
+        if (empty) empty.textContent = showingArchived
+          ? "No archived students. Archiving a student from the list above moves them here; nothing is deleted."
+          : "No students match this view. Clear the filters to see everyone, or register your first student to build their profile and track every application from one place.";
+      }
+      syncArchBtn();
+
+      function decorate() {
+        $$("tbody tr", host).forEach(function (tr) {
+          if (tr.getAttribute("data-pp-arch")) return;              // already done
+          var sl = tr.querySelector("[data-shortlist]");
+          if (!sl) return;                                          // not a student row
+          tr.setAttribute("data-pp-arch", "1");
+          if (tr.querySelector("[data-stu-archive],[data-stu-unarchive]")) return;   // portal-data.js got there first
+
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "pp-btn pp-btn--ghost pp-btn--sm";
+          btn.setAttribute(showingArchived ? "data-stu-unarchive" : "data-stu-archive", sl.getAttribute("data-shortlist"));
+          btn.setAttribute("data-name", sl.getAttribute("data-name") || "This student");
+          btn.textContent = showingArchived ? "Restore" : "Archive";
+          sl.parentNode.appendChild(document.createTextNode(" "));
+          sl.parentNode.appendChild(btn);
+        });
+      }
+      decorate();
+      /* Every repaint is a fresh innerHTML from portal-data.js, so the controls
+         have to be re-added. The data-pp-arch guard makes the observer's own
+         mutations a no-op, which is what stops this looping. */
+      if (window.MutationObserver) {
+        new window.MutationObserver(decorate).observe(host, { childList: true, subtree: true });
+      }
+
+      host.addEventListener("click", function (e) {
+        var b = e.target && e.target.closest ? e.target.closest("[data-stu-archive],[data-stu-unarchive]") : null;
+        if (!b || b.disabled) return;
+        var un = b.hasAttribute("data-stu-unarchive");
+        var id = b.getAttribute(un ? "data-stu-unarchive" : "data-stu-archive");
+        var name = b.getAttribute("data-name") || "This student";
+        if (!window.confirm((un ? "Restore " : "Archive ") + name + "?" +
+            (un ? "" : " They stay on file and keep every application — archiving only moves them out of this list."))) return;
+
+        b.disabled = true;
+        window.VFIApi.post("/api/partner/students/" + encodeURIComponent(id) + "/" + (un ? "unarchive" : "archive"), {}, {})
+          .then(function () {
+            var tr = b.closest ? b.closest("tr") : null;
+            if (tr && tr.parentNode) tr.parentNode.removeChild(tr);
+            toast(name + (un ? " restored." : " archived."));
+          })["catch"](function (err) {
+            b.disabled = false;
+            /* The server's own words first. archive() refuses with 409 and an
+               explanation when the student still has a case in the pipeline
+               ("Ask the VFI desk to close it before archiving") — a reason the
+               counsellor can act on, which a generic "could not archive" would
+               throw away. Only fall back when there is nothing to quote. */
+            var msg = err && err.body && err.body.message;
+            toast(msg || "Could not " + (un ? "restore" : "archive") + " that student. Nothing was changed.", "bad");
+          });
       });
     })();
   </script>

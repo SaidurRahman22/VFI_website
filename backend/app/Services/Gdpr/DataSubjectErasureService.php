@@ -483,7 +483,29 @@ class DataSubjectErasureService
     {
         $digest = hash_hmac('sha1', self::SUBJECT_STUDENT.':'.$subjectId, (string) config('app.key'));
 
-        return 'erased+'.substr($digest, 0, 16).'@erased.invalid';
+        return 'erased+'.substr($digest, 0, 16).self::ALIAS_DOMAIN;
+    }
+
+    /** The domain every pseudonymised student's address ends in. */
+    private const ALIAS_DOMAIN = '@erased.invalid';
+
+    /**
+     * Has this student been pseudonymised by an erasure?
+     *
+     * Lives here, beside the alias that creates the marker, so a caller that
+     * needs to know cannot drift from the thing that decides it.
+     *
+     * The caller that needs it is the partner console's unarchive: erasure sets
+     * archived_at to drop the subject out of the console lists, and a partner
+     * handed an unconditional "Restore" could put an erased person back in
+     * front of staff as a workable lead. The erasure is not reversible and the
+     * archiving is part of it, so that one control has to know the difference
+     * between a lead a partner filed away and a person who asked to be
+     * forgotten.
+     */
+    public static function isErased(Student $student): bool
+    {
+        return str_ends_with((string) $student->email, self::ALIAS_DOMAIN);
     }
 
     /**

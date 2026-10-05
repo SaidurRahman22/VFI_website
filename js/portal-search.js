@@ -52,7 +52,7 @@
     return null;
   }
 
-  var state = { page: 1, compare: {} };
+  var state = { page: 1, compare: {}, rows: {} };
 
   var BADGE = {
     stem: "STEM", scholarship: "Scholarship", coop: "Co-op", waive_english: "English waiver",
@@ -101,6 +101,42 @@
     return cap(String(value).replace(/_/g, " "));   // unknown token, still readable
   }
 
+  /* The ONE taxonomy kind this page deliberately does NOT route through lbl():
+     `intake`. Its served labels are form labels — "Fall / Autumn (September)" —
+     written to disambiguate inside a dropdown, where that is exactly right.
+     Inside a sentence they read wrong: "Fall / Autumn (September) 2026". So a
+     RENDERED intake stays cap(season) + " " + year, and only the #pgIntake
+     <option> carries the full served label.
+
+     Every other kind — level, study_area, discipline_area, duration_band — goes
+     through lbl() at EVERY print site. That is the point of the three helpers
+     below: the detail panel and the compare grid were formatting the same four
+     fields in two places and had already drifted apart, so Compare printed
+     "DURATION 4yr_plus" and "STUDY AREA —" on live while the detail panel beside
+     it printed "4+ years" and a folded Subject row. One helper each, no second
+     copy to forget. */
+  function levelText(p, empty) { return lbl("level", p.level) || empty; }
+  function durationText(p, empty) { return lbl("duration_band", p.duration_band) || empty; }
+
+  /* Subject = study_area AND/OR discipline_area, folded into one value.
+     Many feeds populate only one of the two — DAAD gives a discipline and no
+     study area, so `study_area` is null on every German row — and printing an
+     em dash beside a populated sibling reads as missing data rather than as a
+     field this source does not carry.
+
+     discipline_area goes through lbl() even though the column currently holds
+     human text rather than taxonomy tokens ("Agricultural Science", not
+     `agriculture`): lbl() returns an unmatched value essentially unchanged, so
+     this is a no-op on today's data and becomes correct for free on the day the
+     column is normalised to the served vocabulary. See buildQuery() for why
+     that distinction is load-bearing for the Discipline filter. */
+  function subjectText(p, empty) {
+    var parts = [lbl("study_area", p.study_area), lbl("discipline_area", p.discipline_area)];
+    var out = [], i;
+    for (i = 0; i < parts.length; i++) { if (parts[i]) out.push(parts[i]); }
+    return out.join(" · ") || empty;
+  }
+
   function loadTaxonomy() {
     return VFIApi.get("/api/taxonomy").then(function (res) {
       var vocab = (res && res.vocabularies) || {};
@@ -113,7 +149,11 @@
         var kind = box.getAttribute("data-tax-checks");
         if (vocab[kind]) fillChecks(box, vocab[kind]);
       });
-      var nat = $("#pgNationality"); if (nat) nat.value = "Bangladesh";
+      /* There is no `nat.value = "Bangladesh"` here any more, and no
+         #pgNationality to set it on. The control sat in the top search row
+         pre-selected to Bangladesh, which reads as an applied constraint, and
+         nothing ever sent it. See the comment where it was removed in
+         partner-search.html. */
     });
   }
 
@@ -146,6 +186,27 @@
     add("year", val("#pgYear"));
     add("country", val("#pgCountry"));
     add("study_area", val("#pgStudyArea"));
+    /* #pgDiscipline was filled from the taxonomy with 18 real options and then
+       never read: picking "Cybersecurity" changed the query by nothing at all.
+       It now sends the taxonomy TOKEN (`cybersecurity`), the same contract as
+       country / study_area / duration_band / levels above, because /api/taxonomy
+       is the one vocabulary both ends are meant to share.
+
+       Measured against live before writing this, because it decides whether the
+       control works: `programs.discipline_area` does NOT hold those tokens. It
+       holds free text, and three ingests disagree about its shape —
+       "Agricultural Science" (DAAD subject), "Data Science" (seed titles),
+       "Business Administration, Management And Operations." (Scorecard CIP
+       titles, trailing period included). A 300-row sample across Germany, the
+       US, the UK and Canada held 148 distinct values and ZERO equal to any of
+       the 18 taxonomy tokens. So a server-side `where('discipline_area', $token)`
+       matches nothing, for every option, and this control would go from
+       decorative to actively worse: an empty catalogue presented as a result.
+       The token→stored-value mapping belongs on the ingest/indexer side and is
+       flagged to the backend engineer adding this filter; it cannot be papered
+       over here. Until it exists the empty-result line below at least names
+       Discipline as the filter that emptied the page. */
+    add("discipline_area", val("#pgDiscipline"));
     add("duration_band", val("#pgDuration"));
     add("sort", val("#pgSort"));
     var levels = collectLevels(), i;
@@ -199,20 +260,35 @@
   }
   function intakeText(x) { return x ? (cap(x.season) + " " + x.year) : "—"; }
 
+  /* The CURRENT shape: one card per programme carrying an `intakes` ARRAY.
+     `r.intake` — one row per programme-intake, the shape before the collapse —
+     is kept only so a response a browser cached from before that change still
+     renders something truthful rather than an empty dash. */
+  function intakeList(r) { return r.intakes || (r.intake ? [r.intake] : []); }
+
+  /* "Rolling" is this page's existing word for an intake with no published
+     deadline, and most of the DAAD catalogue has none. */
+  function deadlineOf(x, r) {
+    var d = x ? x.deadline : (r ? r.deadline : null);
+    return d || "Rolling";
+  }
+
   /* Every intake this programme offers that matched the search, on ONE card.
      The API used to return one row per programme-intake and this rendered one
      card each, so a Master's at Kiel with three intakes filled the screen three
      times over with identical text. The intake is a property of the programme,
      not a different programme, so it belongs inside the card — and it is the
      thing a counsellor picks, so it is a control rather than a sentence. */
-  function intakesHtml(r) {
-    var list = r.intakes || (r.intake ? [r.intake] : []);
+  function intakesHtml(r, list) {
     if (!list.length) return "<span>—</span>";
     var out = "", i, x;
     for (i = 0; i < list.length; i++) {
       x = list[i];
+      // data-deadline rides along so changing the picker can move the card's
+      // Deadline line without another request; see the change handler in init().
       out += '<option value="' + esc(String(x.row_id == null ? i : x.row_id)) + '"'
-        + ' data-season="' + esc(x.season || "") + '" data-year="' + esc(String(x.year || "")) + '">'
+        + ' data-season="' + esc(x.season || "") + '" data-year="' + esc(String(x.year || "")) + '"'
+        + ' data-deadline="' + esc(deadlineOf(x, null)) + '">'
         + esc(intakeText(x)) + (x.is_stale ? " (passed)" : "") + "</option>";
     }
     if (list.length === 1) return "<span>" + esc(intakeText(list[0])) + "</span>";
@@ -222,6 +298,15 @@
 
   function cardHtml(r) {
     var checked = state.compare[r.program_id] ? " checked" : "";
+    var list = intakeList(r);
+    /* The deadline printed here belongs to the intake CHOSEN on this card, not
+       to the programme. r.deadline is the soonest deadline across every matching
+       intake — the server's sort key — and printing that beside a picker reading
+       "Spring 2027" showed the Fall 2026 date under a Spring selection, which is
+       the one number on this card a counsellor repeats to a student. The first
+       option is the one selected at paint, so the line starts on it and the
+       change handler keeps the two together from then on. */
+    var dl = deadlineOf(list.length ? list[0] : null, r);
     return '<div class="pg-card" data-id="' + r.program_id + '">'
       + '<div class="pg-card__top">'
       + '<input type="checkbox" class="pg-card__cmp" data-cmp="' + r.program_id + '"' + checked + ' aria-label="Select to compare">'
@@ -229,16 +314,58 @@
       + '<div class="pg-card__uni">' + esc(r.university) + " · " + esc(r.country) + "</div></div>"
       + "</div>"
       + '<div class="pg-card__meta">'
-      + "<span><b>" + esc(cap(r.level)) + "</b></span>"
-      + "<span>" + intakesHtml(r) + "</span>"
+      // lbl(), not cap(): cap("mba") is "Mba", cap("bachelor_honours") is
+      // "Bachelor honours", and the taxonomy already serves "MBA" and
+      // "Bachelor's (Honours)" for exactly this.
+      + "<span><b>" + esc(levelText(r, "—")) + "</b></span>"
+      + "<span>" + intakesHtml(r, list) + "</span>"
       + "<span>" + tuitionLabel(r.tuition) + " <b>" + money(r.tuition) + "</b></span>"
-      + "<span>Deadline <b>" + esc(r.deadline || "Rolling") + "</b></span>"
+      + '<span>Deadline <b data-deadline-for="' + esc(String(r.program_id)) + '">' + esc(dl) + "</b></span>"
       + "</div>"
       + badgesHtml(r)
       + '<div class="pg-card__foot">'
       + '<button class="pp-btn pp-btn--ghost pp-btn--sm" data-detail="' + r.program_id + '" type="button">Details</button>'
       + "</div></div>";
   }
+  /* A zero-result screen must never be mute about its own filters.
+     Eleven controls on this page narrow the query and four of them sit in a
+     panel that can be collapsed, so "No programs match these filters" could
+     easily be the work of a Discipline or a Requirement the counsellor set
+     minutes ago and can no longer see. Every label below is read back off the
+     control itself, so this can only ever describe a filter the query actually
+     carried — it cannot drift from buildQuery() the way a second hand-written
+     list would. */
+  function selLabel(sel) {
+    var el = $(sel);
+    if (!el || !String(el.value || "").trim()) return "";
+    var o = el.options[el.selectedIndex];
+    return o ? o.textContent.replace(/\s+/g, " ").trim() : "";
+  }
+  function checkedLabels(scope) {
+    return $$(scope + " input[type=checkbox]:checked").map(function (c) {
+      // the <label class="pp-check"> wrapping the box carries the visible text
+      var p = c.parentNode;
+      return p && p.textContent ? p.textContent.replace(/\s+/g, " ").trim() : "";
+    }).filter(function (t) { return t; });
+  }
+  function appliedFilters() {
+    var out = [];
+    function push(name, text) { if (text) out.push(name + ": " + text); }
+    push("Keyword", val("#pgSearchInput"));
+    push("Intake", selLabel("#pgIntake"));
+    push("Year", selLabel("#pgYear"));
+    push("Country", selLabel("#pgCountry"));
+    push("Study area", selLabel("#pgStudyArea"));
+    push("Discipline", selLabel("#pgDiscipline"));
+    push("Duration", selLabel("#pgDuration"));
+    push("Program level", checkedLabels("#pgLevels").join(", "));
+    push("Requirements", checkedLabels("#pgReqs").join(", "));
+    push("Quick filters", $$(".pg-search__chips .pp-chip.is-on").map(function (ch) {
+      return ch.textContent.replace(/\s+/g, " ").trim();
+    }).join(", "));
+    return out;
+  }
+
   function renderResults(data) {
     var rows = (data && data.data) || [], meta = (data && data.meta) || {};
     var res = $("#pgResults");
@@ -253,11 +380,23 @@
       : progs + " program" + (progs === 1 ? "" : "s") + " found";
     show("#pgResHead", true);
     if (!rows.length) {
-      res.innerHTML = '<div class="pg-search__msg">No programs match these filters. Try widening them.</div>';
+      var applied = appliedFilters();
+      res.innerHTML = '<div class="pg-search__msg">No programs match these filters.'
+        + (applied.length ? "<small>Filtering on — " + esc(applied.join(" · ")) + "</small>" : "")
+        + "<small>Clear one of them, or use Clear All.</small></div>";
       show("#pgPager", false); return;
     }
     var html = "", i;
-    for (i = 0; i < rows.length; i++) html += cardHtml(rows[i]);
+    /* The rows this page is currently showing, by program_id. The compare grid
+       reads `source` back out of here when a card is ticked, because the compare
+       endpoint does not return it — see comparedSource(). Reset per render on
+       purpose: a card can only be ticked while it is on screen, so this never
+       needs to outlive the page it rendered. */
+    state.rows = {};
+    for (i = 0; i < rows.length; i++) {
+      state.rows[String(rows[i].program_id)] = rows[i];
+      html += cardHtml(rows[i]);
+    }
     res.innerHTML = html;
     $("#pgPageInfo").textContent = "Page " + meta.page + " of " + meta.last_page;
     show("#pgPager", meta.last_page > 1);
@@ -270,7 +409,21 @@
     res.innerHTML = '<div class="pg-search__msg">Searching…</div>';
     VFIApi.get("/api/partner/programs/search?" + buildQuery(state.page))
       .then(renderResults)
-      .catch(function () { res.innerHTML = '<div class="pg-search__msg">Could not load results.</div>'; });
+      .catch(function (err) {
+        /* A 422 here means this form sent the API a filter it does not accept —
+           which is precisely what happens for one deploy if a control is wired
+           on one side and not the other. "Could not load results." costs an
+           afternoon of guessing for that, so the validation message is shown as
+           it came. js/api.js puts it on err.message and handles 401 itself by
+           redirecting, so neither case reaches this line. */
+        var why = (err && err.status === 422 && err.message) ? err.message : "";
+        res.innerHTML = '<div class="pg-search__msg">Could not load results.'
+          + (why ? "<small>" + esc(why) + "</small>" : "") + "</div>";
+        // The old count is now a lie sitting above an error, but the Sort
+        // control lives in the same bar, so blank the number and keep the bar.
+        var rc = $("#pgResCount"); if (rc) rc.textContent = "Results";
+        show("#pgPager", false);
+      });
   }
 
   /* --------------------------------------------------------------- detail */
@@ -314,19 +467,11 @@
     return sampleWarning
       + '<dl class="pg-dl">'
       + drow("University", esc(inst.name || "") + " · " + esc(inst.country || "") + (inst.city ? " · " + esc(inst.city) : ""))
-      + drow("Level", esc(lbl("level", p.level) || cap(p.level)))
-      /* Subject. Many feeds populate only one of these two — DAAD gives a
-         discipline and no study area — and printing an em-dash beside a
-         populated sibling reads as missing data rather than a field this
-         source does not carry. One row, whichever is known, both when both
-         are. */
-      + drow("Subject", esc(
-          [lbl("study_area", p.study_area), p.discipline_area]
-            .filter(function (v) { return v; }).join(" · ") || "Not published by this source"
-        ))
-      /* Through the taxonomy, so this reads "4 years or more" and not
-         `4yr_plus`. */
-      + drow("Duration", esc(lbl("duration_band", p.duration_band) || "Not published"))
+      // All three through the shared helpers, so this panel and the compare
+      // grid cannot say different things about the same programme again.
+      + drow("Level", esc(levelText(p, "Not published")))
+      + drow("Subject", esc(subjectText(p, "Not published by this source")))
+      + drow("Duration", esc(durationText(p, "Not published")))
       + drow(tuitionLabel(p.tuition), money(p.tuition) + basisNote(p.tuition))
       + drow("Application fee", p.application_fee ? money(p.application_fee) : "Not published")
       + drow("Intakes", esc(intakes))
@@ -420,12 +565,30 @@
     var el = $("#pgCmpCount");
     if (el) el.textContent = ids.length + " selected" + (ids.length > 4 ? " (first 4 compared)" : "");
   }
+  /* The compare endpoint does not return `source`, so the grid had NO
+     sample-data marking at all while the card and the detail panel both carry
+     one: a counsellor could tick a seed row, open Compare, and read a fabricated
+     tuition in the column beside two real ones with nothing saying which was
+     which — the single worst thing this screen can do. This reads the value off
+     the search row the counsellor actually ticked, which is real data from the
+     response that drew the card, not a guess. A programme ticked and then
+     compared after a re-render returns null and simply gets no badge; it can
+     never claim a seed row is real. */
+  function comparedSource(id) {
+    var c = state.compare[String(id)];
+    return c && c.source ? c.source : null;
+  }
+
   function compareHtml(rows) {
     var keys = [
       ["University", function (p) { return esc((p.university || "") + " · " + (p.country || "")); }],
-      ["Level", function (p) { return esc(cap(p.level)); }],
-      ["Study area", function (p) { return esc(p.study_area || "—"); }],
-      ["Duration", function (p) { return esc(p.duration_band || "—"); }],
+      // These four were the drift: Level printed cap() ("Mba"), and Study area
+      // and Duration printed the raw database token, so Compare read
+      // "DURATION 4yr_plus" / "STUDY AREA —" against the detail panel's
+      // "4+ years" and a populated Subject. Same helpers as detailHtml now.
+      ["Level", function (p) { return esc(levelText(p, "—")); }],
+      ["Subject", function (p) { return esc(subjectText(p, "—")); }],
+      ["Duration", function (p) { return esc(durationText(p, "—")); }],
       /* The compare grid puts a real course fee and an institution average in
          adjacent columns, so the qualifier travels with the value — the row
          label is shared by every column and cannot say it. */
@@ -434,12 +597,17 @@
       ["STEM", function (p) { return p.is_stem ? "Yes" : "—"; }],
       ["Scholarship", function (p) { return p.scholarship_available ? "Yes" : "—"; }],
       ["MOI ok", function (p) { return p.moi_acceptable ? "Yes" : "—"; }],
-      ["Interview", function (p) { return p.interview_required ? "Required" : "No"; }],
+      // null means the compare row had no institution to ask, and "No" would be
+      // asserting that no interview is needed. detailHtml already tests
+      // `=== false` for the same reason.
+      ["Interview", function (p) { return p.interview_required == null ? "—" : (p.interview_required ? "Required" : "No"); }],
       ["Intakes", function (p) { return esc((p.intakes || []).map(function (i) { return cap(i.season) + " " + i.year; }).join(", ") || "—"); }]
     ];
-    var html = '<div class="pg-cmpgrid">', c, k;
+    var html = '<div class="pg-cmpgrid">', c, k, badge;
     for (c = 0; c < rows.length; c++) {
-      html += '<div class="pg-cmpgrid__col"><div class="pg-card__title">' + esc(rows[c].title) + "</div>";
+      badge = sourceBadge(comparedSource(rows[c].id));
+      html += '<div class="pg-cmpgrid__col"><div class="pg-card__title">' + esc(rows[c].title) + "</div>"
+        + (badge ? '<div class="pg-card__badges">' + badge + "</div>" : "");
       for (k = 0; k < keys.length; k++) {
         html += '<div class="pg-cmpgrid__row"><div class="pg-cmpgrid__k">' + esc(keys[k][0]) + "</div>" + keys[k][1](rows[c]) + "</div>";
       }
@@ -511,10 +679,30 @@
     });
     res.addEventListener("change", function (e) {
       var c = e.target;
-      if (c.getAttribute && c.getAttribute("data-cmp") != null) {
+      if (!c || !c.getAttribute) return;
+
+      if (c.getAttribute("data-cmp") != null) {
         var id = c.getAttribute("data-cmp");
-        if (c.checked) state.compare[id] = true; else delete state.compare[id];
+        if (c.checked) {
+          // An object, never `true`: comparedSource() reads .source back out of
+          // it, and every truthiness test on state.compare still works.
+          var row = state.rows[String(id)];
+          state.compare[id] = { source: row ? row.source : null };
+        } else {
+          delete state.compare[id];
+        }
         updateCmpBar();
+        return;
+      }
+
+      // The per-card intake picker. Moving the Deadline line with it keeps the
+      // card internally consistent without a second request — every intake's
+      // deadline already arrived on this card. See cardHtml().
+      if (c.getAttribute("data-intake-for") != null) {
+        var card = closestAttr(c, "data-id");
+        var out = card ? card.querySelector("[data-deadline-for]") : null;
+        var opt = c.options ? c.options[c.selectedIndex] : null;
+        if (out && opt) out.textContent = opt.getAttribute("data-deadline") || "Rolling";
       }
     });
 

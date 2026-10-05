@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex" />
-  <meta name="description" content="VFI Partner console — practise visa and admission interviews with instant AI feedback." />
+  <meta name="description" content="VFI Partner console — a preview of the AI mock interview practice tool, coming in an upgrade." />
   <title>AI Mock Interview | VFI Partner</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -50,11 +50,28 @@
       <div class="pp-head pp-anim">
         <div>
           <h1 class="pp-head__title">AI Mock Interview</h1>
-          <p class="pp-head__sub">Practise visa &amp; admission interviews with instant AI feedback.</p>
+          <p class="pp-head__sub">Practise visa &amp; admission interviews with instant AI feedback — coming in an upgrade.</p>
         </div>
         <div class="pp-head__actions">
-          <span class="pp-badge pp-badge--teal"><svg class="ic ic--sm"><use href="#pi-interview"/></svg> 10 / 10 interviews left</span>
+          <!-- "10 / 10 interviews left" was hardcoded markup, not a counter:
+               no allowance exists, nothing decrements, and no endpoint knows
+               what an interview is. A quota stated as fact is a false claim
+               even on a page that calls itself a demo, so it is replaced by
+               what is actually true about this page. -->
+          <span class="pp-soon__tag">Coming soon</span>
         </div>
+      </div>
+
+      <!-- One plain sentence for the whole page, matching partner-wallet.html.
+           The page already said "no camera or microphone is accessed", which
+           was good and true — but it sat next to a hardcoded quota, three
+           selects nothing reads, and a Start button that fired no request, so
+           the disclosure was the smallest text on screen and the claims were
+           the largest. This states the position once, at the top, before any
+           of it. -->
+      <div class="pp-soonbar" role="status">
+        <svg class="ic ic--sm"><use href="#pi-interview"/></svg>
+        <span><b>The AI mock interview is coming in an upgrade.</b> This page is a preview of how it will work: the interviewer is not connected, nothing you choose below is saved or sent, and no camera or microphone is accessed.</span>
       </div>
 
       <!-- setup card -->
@@ -68,14 +85,15 @@
             <div class="pg-int__form pp-form-grid">
               <div class="pp-field">
                 <label class="pp-field__label" for="pgIntCountry">Destination country</label>
-                <select class="pp-select" id="pgIntCountry">
-                  <option>USA</option>
-                  <option>Canada</option>
-                  <option>UK</option>
-                  <option>Australia</option>
-                  <option>Ireland</option>
-                  <option>New Zealand</option>
-                  <option>Germany</option>
+                <!-- This was the last copy of the hardcoded "USA / Canada / UK"
+                     list in the console. Every other page now fills its country
+                     select from GET /api/taxonomy, which is the vocabulary the
+                     programme catalogue is ingested against — it stores "United
+                     States", so "USA" could never have matched a programme, a
+                     student or a filter. js/portal.js fills any [data-pp-tax]
+                     select, keeping the first option as the placeholder. -->
+                <select class="pp-select" id="pgIntCountry" data-pp-tax="country">
+                  <option value="" selected>Any destination</option>
                 </select>
               </div>
               <div class="pp-field">
@@ -98,10 +116,18 @@
             </div>
 
             <div class="pg-int__actions">
-              <button type="button" class="pp-btn pp-btn--primary pp-btn--lg" id="pgIntStart">
-                <svg class="ic ic--sm"><use href="#pi-spark"/></svg> Start Mock Interview
-              </button>
-              <span class="pg-int__demo">Front-end demo — no camera or microphone is accessed.</span>
+              <!-- Start fired no request of any kind; it toasted "Your AI
+                   interviewer would start now." Disabled with the reason
+                   attached, in the console's established pattern (.pp-soon +
+                   .pp-soon__tag, as on partner-wallet.html) — so the day the
+                   endpoint exists this becomes a wiring job, not a rebuild. -->
+              <span class="pp-soon" data-soon="There is no interviewer behind this button yet, so it would not start anything.">
+                <button type="button" class="pp-btn pp-btn--primary pp-btn--lg" id="pgIntStart" disabled aria-disabled="true">
+                  <svg class="ic ic--sm"><use href="#pi-spark"/></svg> Start Mock Interview
+                </button>
+              </span>
+              <span class="pp-soon__tag">Coming soon</span>
+              <span class="pg-int__demo">No camera or microphone is accessed.</span>
             </div>
           </div>
 
@@ -127,7 +153,7 @@
       </div>
 
       <!-- how it works -->
-      <h2 class="pp-section-title">How it works</h2>
+      <h2 class="pp-section-title">How it will work</h2>
       <div class="pp-features pg-int__features pp-anim">
         <div class="pp-feature">
           <span class="pg-int__step">1</span>
@@ -169,7 +195,9 @@
             <path d="M150 80v10l6 6" fill="none" stroke="#0d9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <div class="pp-empty__title">No interviews yet</div>
-          <p class="pp-empty__text">Start your first above — once you do, every session and its score will appear here so you can review your progress.</p>
+          <!-- "Start your first above" pointed at a button that cannot start
+               anything, and promised a history this console has no table for. -->
+          <p class="pp-empty__text">There is nothing to show yet. When the AI interviewer launches, every session and its score will appear here so you can review your progress.</p>
         </div>
       </div>
 
@@ -181,15 +209,11 @@
   <script src="js/store.js?v=643c4a7a"></script>
   <script src="js/portal.js?v=e13f6d9a"></script>
   <script src="js/portal-render.js?v=27b4b87c"></script>
-  <script src="js/portal-data.js?v=90b33389"></script>
-  <script>
-    /* page-only wiring — ES5 to match js/ */
-    (function () {
-      var start = document.getElementById("pgIntStart");
-      if (start) start.addEventListener("click", function () {
-        window.VFIToast("Your AI interviewer would start now.");
-      });
-    })();
-  </script>
+  <script src="js/portal-data.js?v=88ee0de8"></script>
+  <!-- No page-only wiring left. The Start button is disabled in the markup
+       because no endpoint exists behind it; the handler that used to live here
+       raised a toast and made no request, which is the one thing this console
+       is being cleaned of. js/portal.js fills the destination select from
+       /api/taxonomy. -->
 </body>
 </html>

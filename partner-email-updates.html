@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex" />
-  <meta name="description" content="VFI Partner console — email updates on intakes, deadlines, scholarships and visa news across study destinations." />
+  <meta name="description" content="VFI Partner console — the list of update emails VFI sends you, and how often each one goes out." />
   <title>Email Updates | VFI Partner</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -21,6 +21,21 @@
     .pg-mail .pp-table th.pg-mail__c-action,
     .pg-mail .pp-table td.pg-mail__c-action { text-align: center; }
     .pg-mail .pp-table th .ic { cursor: pointer; }
+    /* the "nothing published yet" / "loading" row, and the per-row note that
+       replaces a View button which has no message body to open */
+    .pg-mail__note { color: var(--pp-muted); font-size: 13.5px; padding: 18px 14px; }
+    /* header sort controls — a button, not a bare icon, so they are reachable
+       by keyboard and announce themselves */
+    .pg-mail__sort {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: none; border: 0; padding: 0; cursor: pointer;
+      font: inherit; color: inherit; text-align: left;
+    }
+    .pg-mail__sort .ic { transition: transform .16s var(--pp-ease); color: var(--pp-muted); }
+    .pg-mail__sort:hover .ic { color: var(--pp-teal); }
+    .pg-mail__sort:focus-visible { outline: 2px solid var(--pp-teal); outline-offset: 3px; border-radius: 4px; }
+    [aria-sort="ascending"] .pg-mail__sort .ic { transform: rotate(180deg); color: var(--pp-teal); }
+    [aria-sort="descending"] .pg-mail__sort .ic { color: var(--pp-teal); }
   </style>
 </head>
 <body class="pp" data-pp-page="resources">
@@ -44,72 +59,53 @@
         </div>
       </div>
 
+      <!-- What this page actually is, stated once.
+           It DOES have a server source: the rows come from the `pp_emails`
+           table through GET /api/content/bootstrap.js, which js/store.js reads
+           and js/portal-render.js paints into the tbody below — so what the
+           office publishes in the admin content panel does reach a partner
+           here. What the office cannot publish is the message itself: the
+           PpEmail model carries `subject` and `date` and nothing else, no body
+           and no link. The View button therefore had nothing to open and only
+           ever raised a toast. Rather than leave a button that pretends, the
+           column says where the message really is and the button is disabled
+           until there is something behind it. -->
+      <div class="pp-soonbar" role="status">
+        <svg class="ic ic--sm"><use href="#pi-mail"/></svg>
+        <span><b>This is the list of updates VFI emails you, not an archive of them.</b> The console does not store the message text yet, so each update has to be read in the inbox it was sent to. Your VFI account manager publishes and changes this list.</span>
+      </div>
+
       <div class="pg-mail">
         <div class="pp-card pp-card--flush pp-anim">
           <div class="pp-tablewrap">
-            <table class="pp-table">
+            <!-- The three carets in the header looked like sort controls and
+                 styled themselves cursor:pointer, but nothing in js/ sorted
+                 anything. The table is fully client-rendered, so they are now
+                 real buttons that sort the rows in place (see the foot of the
+                 page) rather than three more things that only look live. -->
+            <table class="pp-table" id="pgMailTable">
               <thead>
                 <tr>
-                  <th scope="col">Sr.No <svg class="ic ic--sm"><use href="#pi-chev-down"/></svg></th>
-                  <th scope="col">Subject <svg class="ic ic--sm"><use href="#pi-chev-down"/></svg></th>
-                  <th scope="col">Email Date <svg class="ic ic--sm"><use href="#pi-chev-down"/></svg></th>
+                  <th scope="col" aria-sort="ascending"><button type="button" class="pg-mail__sort" data-sort="num" aria-label="Sort by number">Sr.No <svg class="ic ic--sm"><use href="#pi-chev-down"/></svg></button></th>
+                  <th scope="col" aria-sort="none"><button type="button" class="pg-mail__sort" data-sort="subj" aria-label="Sort by subject">Subject <svg class="ic ic--sm"><use href="#pi-chev-down"/></svg></button></th>
+                  <!-- not "Email Date": the published values are cadences
+                       ("Monthly", "As they change") as often as they are dates -->
+                  <th scope="col" aria-sort="none"><button type="button" class="pg-mail__sort" data-sort="when" aria-label="Sort by when it is sent">Sent / frequency <svg class="ic ic--sm"><use href="#pi-chev-down"/></svg></button></th>
                   <th scope="col" class="pg-mail__c-action">Action</th>
                 </tr>
               </thead>
               <tbody data-ppr="emails">
-                <tr>
-                  <td class="pp-table__num">1</td>
-                  <td class="pp-table__subj">Undergraduate application fee waiver announced for the September 2026 intake — Australia</td>
-                  <td class="pp-table__date">05-08-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
-                </tr>
-                <tr>
-                  <td class="pp-table__num">2</td>
-                  <td class="pp-table__subj">Upcoming application deadlines for the Fall 2026 intake — United Kingdom</td>
-                  <td class="pp-table__date">05-08-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
-                </tr>
-                <tr>
-                  <td class="pp-table__num">3</td>
-                  <td class="pp-table__subj">Important update: IELTS exam format changes effective September 2026</td>
-                  <td class="pp-table__date">01-08-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
-                </tr>
-                <tr>
-                  <td class="pp-table__num">4</td>
-                  <td class="pp-table__subj">Applications now open for the January 2027 intake — Ireland</td>
-                  <td class="pp-table__date">01-08-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
-                </tr>
-                <tr>
-                  <td class="pp-table__num">5</td>
-                  <td class="pp-table__subj">New scholarship rounds announced for the Spring 2027 intake — Canada</td>
-                  <td class="pp-table__date">31-07-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
-                </tr>
-                <tr>
-                  <td class="pp-table__num">6</td>
-                  <td class="pp-table__subj">Revised post-study work rights guidance for the 2027 intake — New Zealand</td>
-                  <td class="pp-table__date">31-07-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
-                </tr>
-                <tr>
-                  <td class="pp-table__num">7</td>
-                  <td class="pp-table__subj">Interview preparation webinar for prospective students — register now</td>
-                  <td class="pp-table__date">31-07-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
-                </tr>
-                <tr>
-                  <td class="pp-table__num">8</td>
-                  <td class="pp-table__subj">New foundation pathway options for the February 2027 intake — Germany</td>
-                  <td class="pp-table__date">30-07-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
-                </tr>
-                <tr>
-                  <td class="pp-table__num">9</td>
-                  <td class="pp-table__subj">Student visa processing timelines updated ahead of the January 2027 intake — Singapore</td>
-                  <td class="pp-table__date">30-07-2026</td>
-                  <td class="pg-mail__c-action"><button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-mail-view>View</button></td>
+                <!-- The nine rows that used to sit here were invented: real
+                     looking subjects with real looking dates, shown to anyone
+                     before the server answered and left standing for good if
+                     the office had published nothing. js/portal-render.js
+                     replaces this tbody only when pp_emails has rows, so an
+                     empty catalogue used to read as nine live bulletins. One
+                     placeholder row instead, which the script at the foot of
+                     the page rewords once it knows the list is genuinely
+                     empty rather than still loading. -->
+                <tr id="pgMailPlaceholder">
+                  <td colspan="4" class="pg-mail__note">Loading your updates…</td>
                 </tr>
               </tbody>
             </table>
@@ -125,16 +121,101 @@
   <script src="js/store.js?v=643c4a7a"></script>
   <script src="js/portal.js?v=e13f6d9a"></script>
   <script src="js/portal-render.js?v=27b4b87c"></script>
-  <script src="js/portal-data.js?v=90b33389"></script>
+  <script src="js/portal-data.js?v=88ee0de8"></script>
   <script>
-    /* page-only wiring: each View button raises a demo toast. ES5 to match js/. */
+    /* page-only wiring. ES5 to match js/.
+
+       Runs AFTER js/portal-render.js, which paints this tbody synchronously
+       from the pp_emails rows in window.VFI_BOOTSTRAP — so by the time this
+       executes the real rows are already in the DOM and can be corrected in
+       place. Nothing on this page repaints asynchronously, so one pass is
+       enough. */
     (function () {
-      var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-mail-view]"));
-      buttons.forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          if (window.VFIToast) window.VFIToast("Opening the update…");
-        });
+      var $ = function (s, c) { return (c || document).querySelector(s); };
+      var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+      var tbody = $('[data-ppr="emails"]');
+      if (!tbody) return;
+
+      /* ---- the placeholder row ----
+         portal-render.js leaves this tbody alone when pp_emails is empty, so a
+         surviving placeholder means nothing has been published — not that the
+         page is still loading. Say which. */
+      var ph = $("#pgMailPlaceholder");
+      if (ph) {
+        ph.firstElementChild.textContent =
+          "No email updates have been published yet. Your VFI account manager adds them here.";
+      }
+
+      /* ---- View ----
+         PpEmail stores a subject and a date and nothing else: there is no body
+         column and no link, so there is no document for this button to open.
+         It used to toast "Opening the update…", which is the specific thing
+         this console is being cleaned of. Disabled, with the reason attached,
+         so the column survives for the day a body exists. */
+      $$("[data-mail-view]").forEach(function (btn) {
+        btn.disabled = true;
+        btn.setAttribute("aria-disabled", "true");
+        var wrap = document.createElement("span");
+        wrap.className = "pp-soon";
+        wrap.setAttribute("data-soon", "The console does not store the message text yet — this update is in the inbox we emailed it to.");
+        btn.parentNode.insertBefore(wrap, btn);
+        wrap.appendChild(btn);
       });
+
+      /* ---- sorting ----
+         Real, in place, over whatever rows are present. "Sent / frequency"
+         holds free text from the admin panel ("05-08-2026" on one row,
+         "Monthly" on the next), so it is compared as text rather than parsed
+         as a date — guessing a date out of "As they change" would reorder the
+         table on a value that is not there. Sr.No is renumbered after every
+         sort, because it is a position in the list and not an identifier. */
+      var table = $("#pgMailTable");
+      if (!table || ph) return;                       // nothing published: nothing to sort
+
+      var COL = { num: 0, subj: 1, when: 2 };
+      var state = { key: "num", dir: 1 };
+
+      function cellText(tr, key) {
+        var td = tr.cells[COL[key]];
+        return td ? td.textContent.replace(/^\s+|\s+$/g, "") : "";
+      }
+
+      function renumber() {
+        $$("tr", tbody).forEach(function (tr, i) {
+          var td = tr.cells[COL.num];
+          if (td) td.textContent = String(i + 1);
+        });
+      }
+
+      function sortBy(key) {
+        state.dir = state.key === key ? -state.dir : 1;
+        state.key = key;
+
+        var rows = $$("tr", tbody);
+        /* Decorate with the original index so equal values keep the order the
+           office published them in — Array.prototype.sort is not guaranteed
+           stable in the older engines this ES5 file still has to run on. */
+        rows.map(function (tr, i) { return { tr: tr, i: i }; })
+          .sort(function (a, b) {
+            var av = cellText(a.tr, key), bv = cellText(b.tr, key);
+            if (key === "num") { av = parseInt(av, 10) || 0; bv = parseInt(bv, 10) || 0; }
+            var c = key === "num" ? (av - bv) : av.localeCompare(bv, undefined, { sensitivity: "base" });
+            return c ? c * state.dir : (a.i - b.i);
+          })
+          .forEach(function (o) { tbody.appendChild(o.tr); });
+
+        renumber();
+        $$("th", table).forEach(function (th) {
+          var btn = th.querySelector("[data-sort]");
+          th.setAttribute("aria-sort", btn && btn.getAttribute("data-sort") === key
+            ? (state.dir === 1 ? "ascending" : "descending") : "none");
+        });
+      }
+
+      $$("[data-sort]", table).forEach(function (btn) {
+        btn.addEventListener("click", function () { sortBy(btn.getAttribute("data-sort")); });
+      });
+      renumber();   /* portal-render.js numbers from its own array; keep them honest */
     })();
   </script>
 </body>

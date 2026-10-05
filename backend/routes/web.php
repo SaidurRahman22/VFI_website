@@ -242,6 +242,23 @@ Route::prefix('api')->group(function () {
         Route::get('partner/students', [$students, 'index']);
         Route::post('partner/students', [$students, 'store']);
 
+        /*
+         * A student could be created and then never removed. `archived_at` was
+         * READ by index() — the console's "Archived Students" view — and
+         * written only by the GDPR erasure service, so the console offered a
+         * view nothing could fill and a partner who mistyped an email was stuck
+         * with that row for ever.
+         *
+         * POST, not DELETE, because neither of these deletes anything: the row
+         * stays, applications and uploaded documents keep pointing at it, and
+         * the office keeps whatever it may need. Archive is a filing decision
+         * the partner owns; erasure is a GDPR request that is not theirs to
+         * make. The handlers are tenant-fenced themselves — the id here is
+         * client-controlled and a foreign one 404s.
+         */
+        Route::post('partner/students/{student}/archive', [$students, 'archive'])->whereNumber('student');
+        Route::post('partner/students/{student}/unarchive', [$students, 'unarchive'])->whereNumber('student');
+
         $apps = PartnerApplicationController::class;
         Route::get('partner/applications', [$apps, 'index']);
         Route::post('partner/applications', [$apps, 'store']);

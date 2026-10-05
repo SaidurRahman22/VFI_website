@@ -2,15 +2,19 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ActorType;
+use App\Enums\ApplicationStatus;
 use App\Enums\MemberStatus;
 use App\Enums\Role;
 use App\Enums\SeatRole;
 use App\Enums\StudentSource;
+use App\Models\ContentAuditLog;
 use App\Models\Partner\PartnerAgency;
 use App\Models\Partner\PartnerAgencyMember;
 use App\Models\Student\Student;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Services\PipelineService;
 use App\Support\TenantContext;
 use App\Support\TenantScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -197,5 +201,200 @@ class PartnerStudentTest extends TestCase
             ->assertStatus(200)->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.email', 'live@x.test');
         $this->asPartner($user, $agency->id)->getJson('/api/partner/students?archived=1')
             ->assertStatus(200)->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.email', 'old@x.test');
+    }
+
+    /*
+     * ------------------------------------------------------------------
+     * Archive / unarchive.
+     *
+     * `archived_at` was READ by index() — the console's "Archived Students"
+     * view — and written only by the GDPR erasure service, so the console
+     * offered a view nothing could fill and a partner who mistyped an email
+     * carried that row for ever. These cover the two endpoints that close it,
+     * and the one case they refuse.
+     * ------------------------------------------------------------------
+     */
+
+    public function test_archive_moves_a_student_into_the_archived_view_and_back(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        $s = Student::create(['agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'typo@x.test', 'first_name' => 'Typo', 'student_ref' => 'RT']);
+
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/archive")
+            ->assertStatus(200)->assertJsonPath('student.archived', true);
+
+        $this->assertNotNull($s->fresh()->archived_at);
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/students')
+            ->assertStatus(200)->assertJsonPath('meta.total', 0);
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/students?archived=1')
+            ->assertStatus(200)->assertJsonPath('meta.total', 1);
+
+        // and back again — an archive a partner cannot undo is a delete with
+        // extra steps
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/unarchive")
+            ->assertStatus(200)->assertJsonPath('student.archived', false);
+
+        $this->assertNull($s->fresh()->archived_at);
+        $this->asPartner($user, $agency->id)->getJson('/api/partner/students')
+            ->assertStatus(200)->assertJsonPath('meta.total', 1);
+    }
+
+    /** The row survives. ARCHIVE, never DELETE — applications point at it. */
+    public function test_archive_does_not_remove_the_row(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        $s = Student::create(['agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'keep@x.test', 'first_name' => 'Keep', 'student_ref' => 'RK']);
+
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/archive")->assertStatus(200);
+
+        $this->assertDatabaseHas('students', ['id' => $s->id, 'email' => 'keep@x.test']);
+    }
+
+    /**
+     * A student with a live application is REFUSED, with the count so the
+     * console can give a reason rather than a dead button.
+     *
+     * Archiving would not hide the case — it stays in the pipeline and the
+     * KPIs — it would strand it: document uploads are reached through
+     * /api/partner/students/{id}/documents and the only route to that id is the
+     * student list, which archiving removes them from. Staff would go on asking
+     * for paperwork the partner can no longer see how to send.
+     */
+    public function test_a_student_with_a_live_application_cannot_be_archived(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        app(TenantContext::class)->setAgencyId($agency->id);
+        $s = Student::create(['agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'live@x.test', 'first_name' => 'Live', 'student_ref' => 'RLV']);
+        app(PipelineService::class)->create($s, [], $user->id);   // lands at `submitted`
+
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/archive")
+            ->assertStatus(409)
+            ->assertJsonPath('open_applications', 1);
+
+        $this->assertNull($s->fresh()->archived_at);
+    }
+
+    /** A finished case does not hold the student open for ever. */
+    public function test_a_student_whose_applications_are_all_closed_can_be_archived(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        app(TenantContext::class)->setAgencyId($agency->id);
+        $s = Student::create(['agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'done@x.test', 'first_name' => 'Done', 'student_ref' => 'RD']);
+        $pipeline = app(PipelineService::class);
+        $app = $pipeline->create($s, [], $user->id);
+
+        // The write is to an RLS FORCE table, so the tenant has to be really
+        // bound rather than bypassed — runAs is how production performs it.
+        TenantScope::runAs((int) $agency->id, fn () => $pipeline->transition(
+            $app, ApplicationStatus::NonEnrolment, ActorType::Staff, $user->id, 'Withdrew'
+        ));
+
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/archive")
+            ->assertStatus(200)->assertJsonPath('student.archived', true);
+    }
+
+    /** Both are idempotent: a double-click is not an error and writes no second audit row. */
+    public function test_archiving_twice_is_a_no_op(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        $s = Student::create(['agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'twice@x.test', 'first_name' => 'Twice', 'student_ref' => 'RW']);
+
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/archive")->assertStatus(200);
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/archive")
+            ->assertStatus(200)->assertJsonPath('student.archived', true);
+
+        $this->assertSame(1, ContentAuditLog::where('action', 'partner_student_archive')
+            ->where('entity_id', (string) $s->id)->count());
+
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/unarchive")->assertStatus(200);
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/unarchive")
+            ->assertStatus(200)->assertJsonPath('student.archived', false);
+
+        $this->assertSame(1, ContentAuditLog::where('action', 'partner_student_unarchive')
+            ->where('entity_id', (string) $s->id)->count());
+    }
+
+    /** Somebody other than the data subject changed their record — it is on the record. */
+    public function test_archiving_is_audited_with_the_agency(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        $s = Student::create(['agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'audit@x.test', 'first_name' => 'Audit', 'student_ref' => 'RAU']);
+
+        $this->asPartner($user, $agency->id)->postJson("/api/partner/students/{$s->id}/archive")->assertStatus(200);
+
+        $row = ContentAuditLog::where('action', 'partner_student_archive')->firstOrFail();
+        $this->assertSame('student', $row->entity);
+        $this->assertSame((string) $s->id, $row->entity_id);
+        $this->assertSame($user->id, $row->actor_user_id);
+        $this->assertSame($agency->id, $row->after['agency_id']);
+        $this->assertNotNull($row->after['archived_at']);
+    }
+
+    /**
+     * Another agency's id is a 404, never a 403 — a 403 would confirm to one
+     * agency that another agency's row exists.
+     */
+    /**
+     * The Restore button must not undo half of a GDPR erasure.
+     *
+     * archived_at is not the partner's field alone: DataSubjectErasureService
+     * sets it when it pseudonymises a subject, on purpose, so an erased person
+     * stops surfacing in the console as a workable lead. An unconditional
+     * unarchive hands the partner a button that puts them straight back.
+     */
+    public function test_an_erased_student_cannot_be_restored_from_the_archive(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        $student = Student::create([
+            'agency_id' => $agency->id, 'source' => 'partner_modal', 'student_ref' => 'RGDPR',
+            // exactly what pseudonymise() leaves behind
+            'first_name' => 'Erased', 'email' => 'erased+0123456789abcdef@erased.invalid',
+            'archived_at' => now(),
+        ]);
+
+        $this->asPartner($user, $agency->id)
+            ->postJson("/api/partner/students/{$student->id}/unarchive")
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'This record was erased at the request of the person it belonged to and cannot be restored.');
+
+        $this->assertNotNull($student->fresh()?->archived_at, 'an erased subject must stay out of the lists');
+    }
+
+    /** And an ordinary archived student still restores, or the guard is an outage. */
+    public function test_an_ordinary_archived_student_still_restores(): void
+    {
+        [$agency, $user] = $this->agencyOwner('A');
+        $student = Student::create([
+            'agency_id' => $agency->id, 'source' => 'partner_modal', 'student_ref' => 'ROK',
+            'first_name' => 'Ordinary', 'email' => 'ordinary@x.test', 'archived_at' => now(),
+        ]);
+
+        $this->asPartner($user, $agency->id)
+            ->postJson("/api/partner/students/{$student->id}/unarchive")
+            ->assertStatus(200);
+
+        $this->assertNull($student->fresh()?->archived_at);
+    }
+
+    public function test_one_agency_cannot_archive_anothers_student(): void
+    {
+        [$agencyA] = $this->agencyOwner('A');
+        [$agencyB, $userB] = $this->agencyOwner('B');
+        $aStudent = Student::create(['agency_id' => $agencyA->id, 'source' => 'partner_modal', 'email' => 'theirs@x.test', 'first_name' => 'Theirs', 'student_ref' => 'RTH']);
+
+        $this->asPartner($userB, $agencyB->id)->postJson("/api/partner/students/{$aStudent->id}/archive")
+            ->assertStatus(404);
+        $this->asPartner($userB, $agencyB->id)->postJson("/api/partner/students/{$aStudent->id}/unarchive")
+            ->assertStatus(404);
+
+        $this->assertNull($aStudent->fresh()->archived_at);
+    }
+
+    public function test_archive_requires_a_partner_session(): void
+    {
+        [$agency] = $this->agencyOwner('A');
+        $s = Student::create(['agency_id' => $agency->id, 'source' => 'partner_modal', 'email' => 'anon@x.test', 'first_name' => 'Anon', 'student_ref' => 'RAN']);
+
+        $this->postJson("/api/partner/students/{$s->id}/archive")->assertStatus(401);
     }
 }

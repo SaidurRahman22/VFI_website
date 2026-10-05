@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex" />
-  <meta name="description" content="VFI Partner console — search and shortlist from over 100,000 overseas study programs, then compare universities and apply." />
+  <meta name="description" content="VFI Partner console — search and shortlist overseas study programmes, then compare universities and apply." />
   <title>Search Programs | VFI Partner</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -88,6 +88,10 @@
     .pg-search__sort .pp-select { width: auto; }
     .pg-search__results { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
     .pg-search__msg { grid-column: 1 / -1; text-align: center; color: var(--pp-muted); padding: 34px 10px; font-size: 15px; }
+    /* The empty state now names the filters that emptied it, which can run to a
+       couple of lines; capped and centred so a long list stays readable rather
+       than stretching across the full grid width. */
+    .pg-search__msg small { display: block; max-width: 620px; margin: 7px auto 0; font-size: 13px; line-height: 1.55; }
 
     .pg-card { border: 1px solid var(--pp-line); border-radius: 14px; background: #fff; padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--pp-shadow-sm); transition: box-shadow .16s var(--pp-ease), transform .16s var(--pp-ease); }
     .pg-card:hover { box-shadow: var(--pp-shadow); transform: translateY(-2px); }
@@ -150,7 +154,7 @@
 
       <!-- hero -->
       <div class="pg-search__hero pp-anim">
-        <h1>Explore over 100,000+ Programs</h1>
+        <h1>Explore the Programme Catalogue</h1>
         <p>Use VFI course search to shortlist and compare.</p>
       </div>
 
@@ -176,19 +180,35 @@
               <option value="">Any Year</option>
             </select>
           </div>
-          <div class="pp-field">
-            <label class="pp-field__label">Student's Nationality</label>
-            <select class="pp-select" id="pgNationality" data-tax="nationality" aria-label="Student's Nationality"></select>
-          </div>
-          <div class="pp-field">
-            <label class="pp-field__label">Student's State</label>
-            <select class="pp-select" id="pgState" aria-label="Student's State">
-              <option value="" disabled selected>Student's State</option>
-              <option>Dhaka</option><option>Chattogram</option><option>Khulna</option>
-              <option>Rajshahi</option><option>Sylhet</option><option>Barishal</option>
-              <option>Rangpur</option><option>Mymensingh</option>
-            </select>
-          </div>
+          <!-- REMOVED: "Student's Nationality" (#pgNationality) and "Student's
+               State" (#pgState).
+
+               Both were decoration. Neither was ever added to the query by
+               buildQuery(), and GET /api/partner/programs/search accepts no
+               parameter for either — there is no nationality or home-state
+               column on program_search to filter against, and no eligibility
+               model anywhere in the backend that one could be built from today.
+               Nationality was additionally pre-set to "Bangladesh" in JS, so it
+               read as an applied constraint rather than an untouched control.
+
+               Removed rather than labelled "preview", which was the other
+               option. This is the top row of the page and the most authoritative
+               strip on it: the three controls beside these two — Search, Intake,
+               Year — all genuinely filter, so a dead control here borrows their
+               credibility, and a counsellor pays the cost of re-reading the
+               disclaimer on every single search. A badge would have made the lie
+               smaller without making the row honest.
+
+               State was worth nothing besides: eight hardcoded Bangladeshi
+               divisions (not from /api/taxonomy, unlike every other select
+               here), and a student's home division cannot narrow a catalogue of
+               foreign universities under any filter we would ever build.
+
+               Nationality can come back the day an eligibility filter exists.
+               Nothing was deleted to make that hard: the `nationality`
+               vocabulary is still served by /api/taxonomy with its 12 terms, so
+               restoring this is one <select data-tax="nationality"> plus one
+               add() line in buildQuery(). -->
           <div class="pp-field pg-search__field--btn">
             <button class="pp-btn pp-btn--primary" id="pgSearchBtn"><svg class="ic ic--sm"><use href="#pi-search"/></svg> Search</button>
           </div>
@@ -337,7 +357,7 @@
   <script src="js/store.js?v=643c4a7a"></script>
   <script src="js/portal.js?v=e13f6d9a"></script>
   <script src="js/portal-render.js?v=27b4b87c"></script>
-  <script src="js/portal-data.js?v=90b33389"></script>
-  <script src="js/portal-search.js?v=62e03946"></script>
+  <script src="js/portal-data.js?v=88ee0de8"></script>
+  <script src="js/portal-search.js?v=d3675e6f"></script>
 </body>
 </html>

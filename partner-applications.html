@@ -80,6 +80,25 @@
         </div>
       </div>
 
+      <!--
+        Status filter. The API has supported ?status= since it was written
+        (PartnerApplicationController index()), and nothing had ever sent it —
+        so the Students page was changed to point counsellors here for status
+        filtering, at a page that did not have one. The signpost was right about
+        the capability and wrong about the screen; this is the screen.
+
+        Options are filled by js/portal-data.js from the status labels it
+        already owns, rather than written out here, so a status added to the
+        enum cannot leave this list behind.
+      -->
+      <div class="pp-filters pp-anim" style="margin-bottom:18px">
+        <div class="pp-field">
+          <select class="pp-select" id="ppAppStatus" aria-label="Filter by application status">
+            <option value="" selected>Any status</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Empty notice. Hidden by js/portal-data.js as soon as the applications
            table has rows — it used to sit permanently above a populated table,
            telling the partner they had no applications while listing them. -->
@@ -121,6 +140,6 @@
   <script src="js/store.js?v=643c4a7a"></script>
   <script src="js/portal.js?v=e13f6d9a"></script>
   <script src="js/portal-render.js?v=27b4b87c"></script>
-  <script src="js/portal-data.js?v=90b33389"></script>
+  <script src="js/portal-data.js?v=88ee0de8"></script>
 </body>
 </html>

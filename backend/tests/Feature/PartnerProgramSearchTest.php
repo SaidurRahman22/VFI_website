@@ -243,4 +243,130 @@ class PartnerProgramSearchTest extends TestCase
         $this->assertSame(30, $res->json('meta.total'), 'the row count must never be reported as results again');
         $this->assertSame(30, $res->json('meta.programs'));
     }
+
+    /*
+     * ------------------------------------------------------------------
+     * The discipline filter.
+     *
+     * partner-search.html has offered a Discipline select, filled from the
+     * `discipline_area` taxonomy, since Phase 8 — and search() did not accept
+     * the parameter at all, so picking an option changed nothing. These pin
+     * both halves of making it real: the parameter is accepted, AND it matches
+     * what the catalogue actually stores, which is not the taxonomy's slug.
+     *
+     * With the test config (2 unis x 3 programmes x 5 countries) the seed emits
+     * exactly three disciplines, ten programmes each: Finance, Mechanical
+     * Engineering, Software Engineering. Anything else must come back empty.
+     * ------------------------------------------------------------------
+     */
+
+    /**
+     * A TAXONOMY SLUG filters, even though no row contains that slug.
+     *
+     * This is the whole point of the feature. The ingest never allow-lists
+     * discipline_area, so the column holds the feed's own wording — the seed
+     * writes "Finance", Scorecard writes "Finance And Financial Management
+     * Services." — while the dropdown posts `finance`. A plain equality match
+     * would return nothing for all 18 options and the control would still be
+     * decorative, just with a backend behind it.
+     */
+    public function test_a_taxonomy_discipline_slug_matches_the_catalogue_wording(): void
+    {
+        $res = $this->partner()->getJson('/api/partner/programs/search?discipline_area=finance&per_page=50')
+            ->assertStatus(200);
+
+        $this->assertSame(10, $res->json('meta.total'));
+        foreach ($res->json('data') as $row) {
+            $this->assertSame('Finance', $row['discipline_area']);
+        }
+    }
+
+    /**
+     * The taxonomy LABEL works as well as the value.
+     *
+     * /api/taxonomy serves both halves of every term and a <select> can
+     * reasonably post either; from this side they are indistinguishable
+     * strings. Accepting only one of them would leave the filter alive or dead
+     * depending on a line of JavaScript nobody would think to check.
+     */
+    public function test_the_taxonomy_label_filters_as_well_as_the_value(): void
+    {
+        $this->partner()->getJson('/api/partner/programs/search?discipline_area='.rawurlencode('Finance & Accounting').'&per_page=50')
+            ->assertStatus(200)->assertJsonPath('meta.total', 10);
+
+        // case-folded, because a label is prose and nobody should have to
+        // reproduce its capitalisation
+        $this->partner()->getJson('/api/partner/programs/search?discipline_area='.rawurlencode('finance & accounting').'&per_page=50')
+            ->assertStatus(200)->assertJsonPath('meta.total', 10);
+    }
+
+    /** The extra terms earn their place: `software` reaches "Software Engineering". */
+    public function test_each_seeded_discipline_is_reachable_from_its_slug(): void
+    {
+        foreach (['mechanical' => 'Mechanical Engineering', 'software' => 'Software Engineering'] as $slug => $wording) {
+            $res = $this->partner()->getJson('/api/partner/programs/search?discipline_area='.$slug.'&per_page=50')
+                ->assertStatus(200);
+
+            $this->assertSame(10, $res->json('meta.total'), "slug {$slug} must reach {$wording}");
+            $this->assertSame($wording, $res->json('data.0.discipline_area'));
+        }
+    }
+
+    /**
+     * The filter is APPLIED, not quietly dropped.
+     *
+     * A valid taxonomy slug with nothing behind it must return an empty page.
+     * If this ever came back with 30 programmes it would mean the parameter had
+     * been accepted by validate() and then ignored — which is exactly the
+     * failure this feature exists to fix, dressed up as a working filter.
+     */
+    public function test_a_discipline_with_no_programmes_returns_an_empty_page(): void
+    {
+        $this->partner()->getJson('/api/partner/programs/search?discipline_area=nursing&per_page=50')
+            ->assertStatus(200)
+            ->assertJsonPath('meta.total', 0)
+            ->assertJsonCount(0, 'data');
+    }
+
+    /**
+     * A value that is NOT in the taxonomy is matched exactly, case-folded.
+     *
+     * That is what a caller echoing a card's own `discipline_area` back at us
+     * means, and it must not be widened into a substring search — "Engineering"
+     * is a substring of two of the three seeded disciplines and is still not a
+     * request for either of them.
+     */
+    public function test_a_literal_catalogue_value_matches_exactly_and_ignores_case(): void
+    {
+        $this->partner()->getJson('/api/partner/programs/search?discipline_area='.rawurlencode('mechanical engineering').'&per_page=50')
+            ->assertStatus(200)->assertJsonPath('meta.total', 10);
+
+        $this->partner()->getJson('/api/partner/programs/search?discipline_area='.rawurlencode('Engineering').'&per_page=50')
+            ->assertStatus(200)->assertJsonPath('meta.total', 0);
+
+        $this->partner()->getJson('/api/partner/programs/search?discipline_area='.rawurlencode('Basket Weaving').'&per_page=50')
+            ->assertStatus(200)->assertJsonPath('meta.total', 0);
+    }
+
+    /** It narrows alongside the other filters rather than replacing them. */
+    public function test_discipline_combines_with_the_other_filters(): void
+    {
+        // UK: 2 unis x 1 finance programme each
+        $this->partner()->getJson('/api/partner/programs/search?country=United+Kingdom&discipline_area=finance&per_page=50')
+            ->assertStatus(200)->assertJsonPath('meta.total', 2);
+
+        // and a combination with nothing in it is empty, not the union
+        $this->partner()->getJson('/api/partner/programs/search?country=United+Kingdom&discipline_area=nursing&per_page=50')
+            ->assertStatus(200)->assertJsonPath('meta.total', 0);
+    }
+
+    /**
+     * Longer than the column it filters is a bad request, not a slow way of
+     * finding nothing. 90 is program_search.discipline_area's own width.
+     */
+    public function test_an_over_long_discipline_is_rejected(): void
+    {
+        $this->partner()->getJson('/api/partner/programs/search?discipline_area='.str_repeat('a', 91))
+            ->assertStatus(422)->assertJsonValidationErrors('discipline_area');
+    }
 }
