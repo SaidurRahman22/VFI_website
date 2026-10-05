@@ -71,6 +71,41 @@ class PartnerSignInTest extends TestCase
             ->assertStatus(401)->assertJsonPath('message', 'Invalid credentials.');
     }
 
+    /**
+     * An admin or a student signing in on the wrong one of three login pages.
+     *
+     * This used to answer with the review-gate copy, which is wrong twice over.
+     * It told the owner of the site that his superadmin account was "pending
+     * review" by his own partner team — an approval that was never coming, for
+     * an application that did not exist — and it did so only AFTER Hash::check
+     * had passed, so it confirmed a correct admin password on a public,
+     * separately-throttled endpoint. The admin endpoint deliberately refuses to
+     * do that for a valid non-admin; this one was the odd one out.
+     */
+    public function test_a_valid_non_partner_is_refused_without_confirming_the_password(): void
+    {
+        foreach ([Role::SuperAdmin, Role::Student] as $role) {
+            $user = User::factory()->create(['password' => self::PW, 'email' => 'wrongdoor'.$role->value.'@vfi.test']);
+            UserRole::create(['user_id' => $user->id, 'role' => $role, 'granted_at' => now()]);
+
+            $this->postJson('/api/partner/signin', ['email' => $user->email, 'password' => self::PW])
+                ->assertStatus(401)
+                ->assertJsonPath('message', 'Invalid credentials.');
+
+            $this->assertGuest();
+        }
+    }
+
+    /** And the person who really is waiting on a review still gets told so. */
+    public function test_a_real_applicant_still_gets_the_review_message(): void
+    {
+        [, $user] = $this->owner(AgencyStatus::PendingReview);
+
+        $this->postJson('/api/partner/signin', ['email' => $user->email, 'password' => self::PW])
+            ->assertStatus(403)
+            ->assertJsonPath('message', "This account isn't active yet. Our partner team reviews every application before an account goes live.");
+    }
+
     public function test_logout_ends_the_session(): void
     {
         [, $user] = $this->owner(AgencyStatus::Approved);

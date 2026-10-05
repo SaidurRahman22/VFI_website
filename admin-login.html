@@ -124,7 +124,45 @@
                leaving the button spinning on a silent success. */
             else { say("Signed in, but this page did not understand the response. Open /admin-panel/ directly.", "err"); }
           })
-          .catch(function (err) { say(err.status === 423 ? "Account temporarily locked. Try again later." : "Invalid credentials."); })
+          /* Say what actually happened.
+
+             This read `err.status === 423 ? locked : "Invalid credentials."`,
+             so EVERY other failure was reported as a wrong password — including
+             the two that are not about the password at all:
+
+               429  five attempts a minute, per IP and per email
+                    (AppServiceProvider, 'admin-login'). Someone locked out of
+                    the wrong one of three login pages hits this quickly, is
+                    told their password is wrong, retries, and extends their own
+                    throttle. That is how this was found.
+               419  the CSRF token with the page. Leave the tab open long enough
+                    and the session cookie behind it expires; the fix is to
+                    reload, which nobody does when the screen blames the
+                    password.
+
+             The partner and student pages already print err.body.message, which
+             is why they told the truth and this one did not. Known statuses get
+             wording an operator can act on; anything else falls back to the
+             server's own message before the generic. */
+          .catch(function (err) {
+            var status = err && err.status;
+            var says = err && err.body && err.body.message;
+            if (status === 429) {
+              say("Too many sign-in attempts. Wait a minute, then try once more — this is a rate limit, not a wrong password.");
+            } else if (status === 419) {
+              say("This page has been open too long. Reload it and sign in again.");
+            } else if (status === 423) {
+              say("Account temporarily locked. Try again in 15 minutes.");
+            } else if (status === 403) {
+              say(says || "This account is not active.");
+            } else if (status === 401) {
+              say("Invalid credentials.");
+            } else if (!status) {
+              say("Could not reach the server. Check your connection and try again.");
+            } else {
+              say(says || ("Sign-in failed (" + status + ")."));
+            }
+          })
           .finally(function () { busy($("#stepPassword"), false); });
       });
 

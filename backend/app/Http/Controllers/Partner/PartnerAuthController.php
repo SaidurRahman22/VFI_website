@@ -114,9 +114,15 @@ class PartnerAuthController extends Controller
 
     /**
      * POST /api/partner/signin — resolve the agency + seat from an ACTIVE
-     * membership of an APPROVED agency, and bind them to the session. Wrong
-     * password is a generic 401; a correct login against a not-yet-active agency
-     * gets the review-gate message (post-auth, so no enumeration leak).
+     * membership of an APPROVED agency, and bind them to the session.
+     *
+     * Three outcomes, and the difference between the last two matters:
+     *   - wrong password, or no such user      → generic 401
+     *   - right password, but not a partner    → the SAME generic 401, because
+     *     an admin or a student signing in on the wrong page must not have
+     *     their password confirmed here
+     *   - right password, partner record not   → the review-gate message, which
+     *     yet live                               is true only for them
      */
     public function signin(Request $request): JsonResponse
     {
@@ -157,7 +163,50 @@ class PartnerAuthController extends Controller
             ->first(fn (PartnerAgencyMember $m) => PartnerAgency::find($m->agency_id)?->status->canOperate()));
 
         if (! $membership) {
-            // Correct credentials but no live tenant → review-gate copy.
+            /*
+             * Two very different people land here, and they must not get the
+             * same answer.
+             *
+             * Someone who APPLIED is waiting on a review, and the review-gate
+             * copy is the true and useful thing to tell them.
+             *
+             * Someone who never applied — an admin or a student typing their
+             * own password into the wrong one of three login pages — has no
+             * application, so "our partner team reviews every application"
+             * tells them something that is simply not true, and sends them off
+             * to wait for an approval that is never coming. That is exactly how
+             * this was found: the owner signed in with superadmin@ and was told
+             * his account was pending review.
+             *
+             * It also leaks. The message is only reachable AFTER Hash::check
+             * passes, so it confirms a correct password for an account with no
+             * business on this console — while the admin endpoint deliberately
+             * answers a valid non-admin with a flat "Invalid credentials"
+             * (AdminAuthController: "Valid non-admin credentials must not
+             * reveal they're valid here") and the student endpoint routes every
+             * rejection, wrong_scope included, through one generic reply. This
+             * was the odd one out, and it gave a second, separately-throttled
+             * oracle for confirming an admin password.
+             *
+             * So: a partner record of ANY status earns the review copy; no
+             * partner record at all gets the same generic rejection as every
+             * other wrong-scope sign-in on the site.
+             */
+            // Keyed on user_id, not the email: the registration flow lets an
+            // applicant correct the address they typed, so the email on the
+            // application is not reliably the one they sign in with. The
+            // membership read needs the scope stood down for the same reason
+            // the one above it does - no tenant is bound yet. The application
+            // table is deliberately not agency-scoped (staff read all of them),
+            // so it needs nothing.
+            $isPartnerAtAll = $this->withRlsBypass(fn () => PartnerAgencyMember::withoutGlobalScope(BelongsToAgencyScope::class)
+                ->where('user_id', $user->id)->exists()
+                || PartnerApplication::query()->where('user_id', $user->id)->exists());
+
+            if (! $isPartnerAtAll) {
+                return $reject('wrong_scope');
+            }
+
             AuthEvent::record('partner_signin_not_active', ['user_id' => $user->id, 'email' => $email, 'ip' => $request->ip()]);
 
             return response()->json([
