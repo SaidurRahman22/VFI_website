@@ -221,9 +221,14 @@ class PartnerProgramController extends Controller
         // reads as what it is.
         $ids = $page->getCollection()->pluck('program_id')->all();
 
+        // orderBy('id') is load-bearing, not tidiness. presentProgram() reads the
+        // descriptive fields off the FIRST row, and without an ORDER BY "first"
+        // is whatever the engine hands back — SQLite and Postgres disagreed, and
+        // a test that pins which programme leads the list failed on Postgres
+        // only. Identical rows still deserve a defined order.
         $rowsByProgram = $ids === []
             ? collect()
-            : (clone $query)->whereIn('program_id', $ids)->get()->groupBy('program_id');
+            : (clone $query)->whereIn('program_id', $ids)->orderBy('id')->get()->groupBy('program_id');
 
         return response()->json([
             'data' => collect($ids)->map(
@@ -389,6 +394,10 @@ class PartnerProgramController extends Controller
             return null;   // a programme whose rows vanished between the two reads
         }
 
+        // The first row of this programme that is NOT sample data, if there is
+        // one. See the `source` key below for why that is the question.
+        $realRow = $rows->first(fn (ProgramSearchRow $r) => $r->source !== 'seed');
+
         $intakes = $rows
             ->sortBy([['intake_year', 'asc'], ['intake_month', 'asc']])
             ->map(fn (ProgramSearchRow $r) => [
@@ -423,7 +432,18 @@ class PartnerProgramController extends Controller
             'deadline' => collect($intakes)->pluck('deadline')->filter()->sort()->first(),
             'offer_tat_days' => $first->offer_tat_days,
             'badges' => array_values(array_filter(explode(' ', trim((string) $first->flags)))),
-            'source' => $first->source,
+            /*
+             * The card is "Sample data" only if the whole programme is.
+             *
+             * This read $first->source, which is one arbitrary intake row. It
+             * has to agree with how the programme was RANKED — the ORDER BY
+             * uses min(case when source = 'seed' …), so a programme with one
+             * real row sorts with the real catalogue — or a card can lead the
+             * list on the strength of its real row and then label itself a
+             * placeholder, which is the badge saying the opposite of the
+             * position it earned.
+             */
+            'source' => $realRow instanceof ProgramSearchRow ? $realRow->source : $first->source,
             // True only when EVERY matching intake is stale; the per-intake flag
             // above is what a date picker reads.
             'is_stale' => $rows->every(fn (ProgramSearchRow $r) => (bool) $r->is_stale),
