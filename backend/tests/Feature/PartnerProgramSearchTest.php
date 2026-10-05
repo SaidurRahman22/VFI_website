@@ -55,25 +55,79 @@ class PartnerProgramSearchTest extends TestCase
         $this->getJson('/api/partner/programs/search')->assertStatus(401);
     }
 
-    public function test_default_search_hides_stale_intakes(): void
+    /**
+     * A stale intake disappears from its programme's card; the programme does
+     * not disappear from the list.
+     *
+     * The counts moved when the list collapsed to one card per programme, and
+     * the move is the point: 5 countries x 2 unis x 3 programs = 30 programmes,
+     * each with 3 intakes = 90 rows. The old assertion of 60 was counting
+     * fresh ROWS and calling them results. What a partner actually needs to
+     * know is that the programme is still offered and that the past date is no
+     * longer on it.
+     */
+    public function test_a_stale_intake_leaves_the_card_but_not_the_programme(): void
     {
-        // 5 countries × 2 unis × 3 programs × 3 intakes = 90; base_year Fall is past → 30 stale
-        $res = $this->partner()->getJson('/api/partner/programs/search')
+        $res = $this->partner()->getJson('/api/partner/programs/search?per_page=50')
             ->assertStatus(200)
-            ->assertJsonPath('meta.total', 60);
+            ->assertJsonPath('meta.total', 30);
         $this->assertStringContainsString('no-store', $res->headers->get('Cache-Control'));
 
-        $this->partner()->getJson('/api/partner/programs/search?include_stale=1')
-            ->assertStatus(200)->assertJsonPath('meta.total', 90);
+        // base_year Fall is past, so each programme shows its other two intakes
+        foreach ($res->json('data') as $row) {
+            $this->assertCount(2, $row['intakes'], 'the past intake must not be offered');
+            foreach ($row['intakes'] as $intake) {
+                $this->assertFalse($intake['is_stale']);
+            }
+        }
+
+        // asking for them back returns the third, flagged
+        $all = $this->partner()->getJson('/api/partner/programs/search?include_stale=1&per_page=50')
+            ->assertStatus(200)->assertJsonPath('meta.total', 30);
+        foreach ($all->json('data') as $row) {
+            $this->assertCount(3, $row['intakes']);
+            $this->assertSame(1, collect($row['intakes'])->where('is_stale', true)->count());
+        }
+    }
+
+    /** The same programme must never appear twice, whatever it is filtered by. */
+    public function test_a_programme_appears_exactly_once(): void
+    {
+        $data = $this->partner()->getJson('/api/partner/programs/search?include_stale=1&per_page=50')
+            ->assertStatus(200)->json('data');
+
+        $ids = array_column($data, 'program_id');
+        $this->assertSame(
+            count($ids),
+            count(array_unique($ids)),
+            'one programme with three intakes was rendering as three cards'
+        );
     }
 
     public function test_country_filter_narrows_results(): void
     {
-        // UK: 18 rows total, 6 stale → 12 fresh
+        // UK: 2 unis x 3 programs = 6 programmes (18 rows, of which 6 are stale)
         $res = $this->partner()->getJson('/api/partner/programs/search?country=United+Kingdom')->assertStatus(200);
-        $this->assertSame(12, $res->json('meta.total'));
+        $this->assertSame(6, $res->json('meta.total'));
         foreach ($res->json('data') as $row) {
             $this->assertSame('United Kingdom', $row['country']);
+        }
+    }
+
+    /**
+     * Filtering by intake must narrow what the CARD offers, not just which
+     * cards appear. A search for Spring that returns a card listing Fall and
+     * Summer as well has answered a question nobody asked.
+     */
+    public function test_an_intake_filter_narrows_the_intakes_on_the_card(): void
+    {
+        $data = $this->partner()->getJson('/api/partner/programs/search?intake=spring&per_page=50')
+            ->assertStatus(200)->json('data');
+
+        $this->assertNotEmpty($data);
+        foreach ($data as $row) {
+            $this->assertCount(1, $row['intakes']);
+            $this->assertSame('spring', $row['intakes'][0]['season']);
         }
     }
 
@@ -172,15 +226,21 @@ class PartnerProgramSearchTest extends TestCase
     }
 
     /**
-     * A row is one programme INTAKE. Reporting that count as "programmes" is
-     * what told the partner the catalogue held 123,621 when it holds 41,287.
+     * meta.total and meta.programs now agree, because a result IS a programme.
+     *
+     * They used to differ on purpose: a row was one programme INTAKE, and
+     * reporting that count as "programmes" is what told the partner the
+     * catalogue held 123,621 when it holds 41,287. That was a patch over the
+     * real defect - the list itself was exploded - and with the list collapsed
+     * the two numbers describe the same thing. meta.programs is kept so the
+     * page reading it does not break.
      */
-    public function test_meta_counts_programmes_apart_from_intake_rows(): void
+    public function test_meta_counts_programmes_not_intake_rows(): void
     {
         // 5 countries x 2 unis x 3 programs = 30 programmes, 3 intakes each = 90 rows
         $res = $this->partner()->getJson('/api/partner/programs/search?include_stale=1')->assertStatus(200);
 
-        $this->assertSame(90, $res->json('meta.total'));
+        $this->assertSame(30, $res->json('meta.total'), 'the row count must never be reported as results again');
         $this->assertSame(30, $res->json('meta.programs'));
     }
 }

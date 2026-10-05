@@ -84,9 +84,27 @@
       o.value = String(base + i); o.textContent = String(base + i); y.appendChild(o);
     }
   }
+  /* The vocabulary, kept after it is fetched so the SAME list that fills the
+     filters can also label a value on a card.
+     Without this the modal printed `4yr_plus` — a database token — straight at
+     a counsellor, under the heading "Duration". /api/taxonomy already serves
+     level, study_area and duration_band with human labels; this page was
+     fetching all of them and throwing away everything it did not put in a
+     dropdown. */
+  var LABELS = {};
+  function lbl(kind, value) {
+    if (value == null || value === "") return "";
+    var terms = LABELS[kind] || [], i;
+    for (i = 0; i < terms.length; i++) {
+      if (terms[i].value === value) return terms[i].label;
+    }
+    return cap(String(value).replace(/_/g, " "));   // unknown token, still readable
+  }
+
   function loadTaxonomy() {
     return VFIApi.get("/api/taxonomy").then(function (res) {
       var vocab = (res && res.vocabularies) || {};
+      LABELS = vocab;
       $$("[data-tax]").forEach(function (sel) {
         var kind = sel.getAttribute("data-tax");
         if (vocab[kind]) fillSelect(sel, vocab[kind]);
@@ -180,6 +198,28 @@
     return out ? '<div class="pg-card__badges">' + out + "</div>" : "";
   }
   function intakeText(x) { return x ? (cap(x.season) + " " + x.year) : "—"; }
+
+  /* Every intake this programme offers that matched the search, on ONE card.
+     The API used to return one row per programme-intake and this rendered one
+     card each, so a Master's at Kiel with three intakes filled the screen three
+     times over with identical text. The intake is a property of the programme,
+     not a different programme, so it belongs inside the card — and it is the
+     thing a counsellor picks, so it is a control rather than a sentence. */
+  function intakesHtml(r) {
+    var list = r.intakes || (r.intake ? [r.intake] : []);
+    if (!list.length) return "<span>—</span>";
+    var out = "", i, x;
+    for (i = 0; i < list.length; i++) {
+      x = list[i];
+      out += '<option value="' + esc(String(x.row_id == null ? i : x.row_id)) + '"'
+        + ' data-season="' + esc(x.season || "") + '" data-year="' + esc(String(x.year || "")) + '">'
+        + esc(intakeText(x)) + (x.is_stale ? " (passed)" : "") + "</option>";
+    }
+    if (list.length === 1) return "<span>" + esc(intakeText(list[0])) + "</span>";
+    return '<select class="pg-card__intake" data-intake-for="' + esc(String(r.program_id)) + '"'
+      + ' aria-label="Intake for ' + esc(r.title) + '">' + out + "</select>";
+  }
+
   function cardHtml(r) {
     var checked = state.compare[r.program_id] ? " checked" : "";
     return '<div class="pg-card" data-id="' + r.program_id + '">'
@@ -190,7 +230,7 @@
       + "</div>"
       + '<div class="pg-card__meta">'
       + "<span><b>" + esc(cap(r.level)) + "</b></span>"
-      + "<span>" + esc(intakeText(r.intake)) + "</span>"
+      + "<span>" + intakesHtml(r) + "</span>"
       + "<span>" + tuitionLabel(r.tuition) + " <b>" + money(r.tuition) + "</b></span>"
       + "<span>Deadline <b>" + esc(r.deadline || "Rolling") + "</b></span>"
       + "</div>"
@@ -202,10 +242,11 @@
   function renderResults(data) {
     var rows = (data && data.data) || [], meta = (data && data.meta) || {};
     var res = $("#pgResults");
-    /* meta.total counts INTAKE rows — a programme with three intakes owns three
-       of them — so reporting it as programmes claimed a catalogue of 123,621
-       against a real 41,287. meta.programs is the distinct count; fall back to
-       total only for a cached response from before the API returned it. */
+    /* Both numbers are now the programme count, because a result IS a
+       programme. They used to differ: a row was one programme-INTAKE, so
+       reporting meta.total as programmes claimed a catalogue of 123,621 against
+       a real 41,287. meta.programs is still read first so a cached response
+       from before the collapse still counts correctly. */
     var progs = meta.programs != null ? meta.programs : (meta.total || 0);
     $("#pgResCount").textContent = progs.toLocaleString
       ? progs.toLocaleString() + " program" + (progs === 1 ? "" : "s") + " found"
@@ -273,12 +314,21 @@
     return sampleWarning
       + '<dl class="pg-dl">'
       + drow("University", esc(inst.name || "") + " · " + esc(inst.country || "") + (inst.city ? " · " + esc(inst.city) : ""))
-      + drow("Level", esc(cap(p.level)))
-      + drow("Study area", esc(p.study_area || "—"))
-      + drow("Discipline", esc(p.discipline_area || "—"))
-      + drow("Duration", esc(p.duration_band || "—"))
+      + drow("Level", esc(lbl("level", p.level) || cap(p.level)))
+      /* Subject. Many feeds populate only one of these two — DAAD gives a
+         discipline and no study area — and printing an em-dash beside a
+         populated sibling reads as missing data rather than a field this
+         source does not carry. One row, whichever is known, both when both
+         are. */
+      + drow("Subject", esc(
+          [lbl("study_area", p.study_area), p.discipline_area]
+            .filter(function (v) { return v; }).join(" · ") || "Not published by this source"
+        ))
+      /* Through the taxonomy, so this reads "4 years or more" and not
+         `4yr_plus`. */
+      + drow("Duration", esc(lbl("duration_band", p.duration_band) || "Not published"))
       + drow(tuitionLabel(p.tuition), money(p.tuition) + basisNote(p.tuition))
-      + drow("Application fee", p.application_fee ? money(p.application_fee) : "—")
+      + drow("Application fee", p.application_fee ? money(p.application_fee) : "Not published")
       + drow("Intakes", esc(intakes))
       + drow("Requirements", reqs)
       + drow("Highlights", flagLabels(p))
@@ -286,22 +336,69 @@
       + '<div class="pg-shortlist">'
       + '<div class="pp-field"><label class="pp-field__label">Add to a student’s shortlist</label>'
       + '<select class="pp-select" id="pgSlStudent"><option value="">Select a student…</option></select></div>'
+      /* The intake is chosen HERE, against this programme.
+         It was not chosen anywhere: a shortlist row recorded a student and a
+         programme, the screen showed whichever intake came next, and Apply
+         created the application for that one. A counsellor who wanted Summer
+         had no way to say so. The student's own recorded intake is a
+         preference, not an instruction — these are different questions and the
+         answer below says which one is being answered. */
+      + '<div class="pp-field"><label class="pp-field__label">Intake for this programme</label>'
+      + '<select class="pp-select" id="pgSlIntake">' + ((p.intakes || []).map(function (i) {
+          return '<option value="' + esc(i.season || "") + '" data-year="' + esc(String(i.year || "")) + '">'
+            + esc(cap(i.season) + " " + i.year) + "</option>";
+        }).join("") || '<option value="">No published intake</option>') + "</select>"
+      + '<span class="pp-field__err" id="pgSlIntakeNote"></span></div>'
       + '<div class="pp-field"><label class="pp-field__label">Note (optional)</label><input class="pp-input" id="pgSlNote" maxlength="500"></div>'
       + '<button class="pp-btn pp-btn--primary pp-btn--sm" id="pgSlSave" type="button">Save</button>'
       + "</div>";
   }
   function bindShortlist(programId) {
     var sel = $("#pgSlStudent");
+    var intakeSel = $("#pgSlIntake");
+    var intakeNote = $("#pgSlIntakeNote");
+    var students = {};
+
+    /* The two intakes, side by side.
+       A student can be registered wanting Spring while this programme is being
+       shortlisted for Summer. Neither is wrong — one is what they told the
+       agency, the other is what is being applied for — but a counsellor should
+       see the difference at the moment they create it, not discover it on an
+       offer letter. This only ever says so; it never overrides the choice. */
+    function reconcile() {
+      if (!intakeNote) return;
+      var s = students[sel && sel.value];
+      var want = (s && s.intake) ? String(s.intake).trim() : "";
+      if (!want || !intakeSel || !intakeSel.value) { intakeNote.textContent = ""; return; }
+      var optEl = intakeSel.options[intakeSel.selectedIndex];
+      var chosen = optEl ? optEl.textContent.trim() : "";
+      intakeNote.textContent = (chosen && want.toLowerCase() !== chosen.toLowerCase())
+        ? "This student is registered for " + want + ". Saving will shortlist them for " + chosen + "."
+        : "";
+    }
+
     if (sel) VFIApi.get("/api/partner/students").then(function (d) {
       var list = (d && d.data) || [], html = "", i;
-      for (i = 0; i < list.length; i++) html += '<option value="' + list[i].id + '">' + esc(list[i].name || list[i].email) + "</option>";
+      for (i = 0; i < list.length; i++) {
+        students[String(list[i].id)] = list[i];
+        html += '<option value="' + list[i].id + '">' + esc(list[i].name || list[i].email) + "</option>";
+      }
       if (html) sel.insertAdjacentHTML("beforeend", html);
+      sel.addEventListener("change", reconcile);
+      if (intakeSel) intakeSel.addEventListener("change", reconcile);
     }).catch(function () {});
+
     var save = $("#pgSlSave");
     if (save) save.addEventListener("click", function () {
       var sid = sel ? sel.value : "";
       if (!sid) { toast("Pick a student first."); return; }
-      VFIApi.post("/api/partner/students/" + sid + "/shortlist", { program_id: Number(programId), note: val("#pgSlNote") })
+      var body = { program_id: Number(programId), note: val("#pgSlNote") };
+      if (intakeSel && intakeSel.value) {
+        var o = intakeSel.options[intakeSel.selectedIndex];
+        body.intake_month = intakeSel.value;
+        if (o && o.getAttribute("data-year")) body.intake_year = Number(o.getAttribute("data-year"));
+      }
+      VFIApi.post("/api/partner/students/" + sid + "/shortlist", body)
         .then(function () { toast("Saved to shortlist."); })
         .catch(function () { toast("Could not save to shortlist."); });
     });

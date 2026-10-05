@@ -7,6 +7,7 @@ use App\Models\Catalogue\Program;
 use App\Models\Catalogue\ProgramSearchRow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 /**
@@ -108,41 +109,107 @@ class PartnerProgramController extends Controller
             $query->where('flags', 'like', '% '.$token.' %');
         }
 
-        // Sample rows go behind the real catalogue, ALWAYS, whatever the sort.
-        // `seed` is fabricated data standing in for the destinations that have no
-        // licensed feed yet (UK/CA/AU/IE/NZ); the real feeds are US Scorecard and
-        // DAAD. There are only 240 seed rows against 41,000 real ones, but they
-        // carry the nearest deadlines, so the default deadline sort put every one
-        // of them ahead of the entire real catalogue — page one of Search was
-        // nothing but sample data. They stay searchable (dropping them would
-        // leave five destinations with no programmes at all) and the card keeps
-        // its "Sample data" badge; they simply must not lead. Written as a CASE
-        // so it sorts identically on Postgres and SQLite.
-        $query->orderByRaw("case when source = 'seed' then 1 else 0 end asc");
-
+        /*
+         * $query stays FILTERS ONLY from here down, and carries no ORDER BY.
+         *
+         * It used to end with three order clauses - the seed CASE, the sort
+         * column, then id - and the grouped query below is a clone of it. A
+         * clone carrying `order by case when source = 'seed' …` into a
+         * `group by program_id` orders on a column that is not grouped and not
+         * aggregated: SQLite shrugs and picks a row, Postgres refuses the
+         * statement outright. The suite would have stayed green and production
+         * would have 500'd on every search.
+         *
+         * Every one of those orderings now has an aggregate form on $grouped,
+         * where it belongs.
+         */
         [$col, $dir] = self::SORTS[$data['sort'] ?? 'deadline'];
+
+        /*
+         * ONE CARD PER PROGRAMME, not one per intake.
+         *
+         * program_search holds one row per program-intake (SearchIndexer fans
+         * out over $program->intakes and repeats every descriptive field), and
+         * this method used to paginate those rows. A Master's at Kiel with Fall
+         * 2026, Spring 2027 and Summer 2027 therefore arrived as three
+         * identical cards differing only in a date. An earlier pass noticed and
+         * fixed only the COUNT - returning meta.programs beside meta.total so
+         * the page would stop claiming 123,621 programmes for a catalogue of
+         * 41,287 - and left the list itself exploded.
+         *
+         * Two phases, because a GROUP BY cannot also carry the per-intake rows:
+         *
+         *   1. Group the FILTERED set by program_id to get one page of
+         *      programme ids in the right order. The sort keys live on the
+         *      intake row, so each becomes an aggregate: the soonest deadline,
+         *      the lowest tuition, the fastest offer. That is also the honest
+         *      reading - "sort by deadline" means the next one a student could
+         *      actually catch.
+         *   2. Re-read every row for those ids THROUGH THE SAME FILTERS, so a
+         *      search for Fall shows a card listing Fall only. Showing all of a
+         *      programme's intakes here would answer a question nobody asked.
+         *
+         * Both phases are plain aggregate SQL - min()/max() over a CASE - so
+         * Postgres 16 and the SQLite the suite runs on agree. This project has
+         * already shipped a query that passed on SQLite and silently refused
+         * every row under Postgres RLS; that is not a mistake worth repeating.
+         */
+        $grouped = (clone $query)
+            ->selectRaw('program_id')
+            ->selectRaw("min(case when source = 'seed' then 1 else 0 end) as seed_rank")
+            ->groupBy('program_id');
+
+        /*
+         * Sample rows go behind the real catalogue, ALWAYS, whatever the sort.
+         * `seed` is fabricated data standing in for the destinations with no
+         * licensed feed yet (UK/CA/AU/IE/NZ); the real feeds are US Scorecard
+         * and DAAD. There are only 240 seed rows against 41,000 real ones, but
+         * they carry the nearest deadlines, so a deadline sort put every one of
+         * them ahead of the whole real catalogue - page one of Search was
+         * nothing but sample data. They stay searchable (dropping them leaves
+         * five destinations with no programmes at all) and the card keeps its
+         * "Sample data" badge; they simply must not lead.
+         *
+         * min() over the CASE, not the bare column: a programme is real if ANY
+         * of its rows is, and min picks 0 over 1. Expressed as an aggregate so
+         * it is legal beside the GROUP BY on both drivers.
+         */
+        $grouped->orderBy('seed_rank', 'asc');
+
         if ($col !== 'id') {
-            // nulls-last (portable: the boolean sorts false<true), then value, then id
-            $query->orderByRaw($col.' is null')->orderBy($col, $dir);
+            // The aggregate matching the direction: soonest deadline, cheapest
+            // tuition, fastest offer for 'asc'; the largest for 'desc'. Aliased
+            // so the ORDER BY can name it on both drivers.
+            $agg = $dir === 'desc' ? 'max' : 'min';
+            $grouped->selectRaw("{$agg}({$col}) as sort_key")
+                ->orderByRaw('sort_key is null')
+                ->orderBy('sort_key', $dir);
         }
-        $query->orderBy('id', 'desc');
+        // 'newest' sorts on the row id; the newest row a programme owns is its
+        // newest intake, which is the same ordering the un-grouped query gave.
+        $grouped->selectRaw('max(id) as newest_row')->orderBy('newest_row', 'desc');
 
-        // Cloned BEFORE paginate(): paginate() puts its own limit/offset on the
-        // builder, and counting through that would report a page, not the set.
-        $distinctPrograms = (clone $query)->distinct()->count('program_id');
+        $page = $grouped->paginate($data['per_page'] ?? 24)->withQueryString();
 
-        $page = $query->paginate($data['per_page'] ?? 24)->withQueryString();
+        // getCollection() keeps the paginator's order; pluck would too, but this
+        // reads as what it is.
+        $ids = $page->getCollection()->pluck('program_id')->all();
+
+        $rowsByProgram = $ids === []
+            ? collect()
+            : (clone $query)->whereIn('program_id', $ids)->get()->groupBy('program_id');
 
         return response()->json([
-            'data' => collect($page->items())->map(fn (ProgramSearchRow $r) => $this->presentRow($r)),
+            'data' => collect($ids)->map(
+                fn ($id) => $this->presentProgram($rowsByProgram->get($id) ?? collect())
+            )->filter()->values(),
             'meta' => [
-                // A row is one programme INTAKE, not one programme — a programme
-                // with three intakes owns three rows. Reporting the row count as
-                // "programmes" told the partner there were 123,621 when the
-                // catalogue holds 41,287, so both numbers are returned and named
-                // for what they are.
+                // Both numbers now mean the same thing, because a row in `data`
+                // IS a programme. `programs` is kept so the page that reads it
+                // does not break, and because naming it is cheaper than making
+                // every caller remember which one it wanted.
                 'total' => $page->total(),
-                'programs' => $distinctPrograms,
+                'programs' => $page->total(),
                 'page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),
                 'per_page' => $page->perPage(),
@@ -190,7 +257,7 @@ class PartnerProgramController extends Controller
             'study_area' => $p->study_area,
             'discipline_area' => $p->discipline_area,
             'duration_band' => $p->duration_band,
-            // see presentRow(): the detail panel is what a counsellor reads
+            // see presentProgram(): the detail panel is what a counsellor reads
             // immediately before quoting a fee, so it needs the basis too
             'tuition' => $p->tuition_fee_minor !== null
                 ? ['minor' => $p->tuition_fee_minor, 'currency' => $p->tuition_currency, 'basis' => $p->tuition_basis]
@@ -272,34 +339,68 @@ class PartnerProgramController extends Controller
         ];
     }
 
-    private function presentRow(ProgramSearchRow $r): array
+    /**
+     * One programme, carrying every intake that matched the search.
+     *
+     * The descriptive fields are identical across a programme's rows by
+     * construction - SearchIndexer hoists them outside the per-intake loop - so
+     * the first row speaks for all of them. Only the intake, the deadline and
+     * the staleness differ, and those are the three this returns per intake
+     * rather than per card.
+     *
+     * `is_stale` is per INTAKE, deliberately. A programme with one expired and
+     * two live intakes is not stale, but the expired one must still say so, or
+     * a counsellor picks a date that has already gone. Collapsing it to one flag
+     * on the card is how the old "Deadline passed" badge would have quietly
+     * stopped appearing.
+     *
+     * @param  Collection<int, ProgramSearchRow>  $rows
+     */
+    private function presentProgram($rows): ?array
     {
+        $first = $rows->first();
+        if (! $first instanceof ProgramSearchRow) {
+            return null;   // a programme whose rows vanished between the two reads
+        }
+
+        $intakes = $rows
+            ->sortBy([['intake_year', 'asc'], ['intake_month', 'asc']])
+            ->map(fn (ProgramSearchRow $r) => [
+                // row_id, because the shortlist and the apply flow identify an
+                // intake, and program_id alone no longer does.
+                'row_id' => $r->id,
+                'month' => $r->intake_month,
+                'year' => $r->intake_year,
+                'season' => $r->season_label,
+                'deadline' => optional($r->application_deadline_at)->toDateString(),
+                'is_stale' => (bool) $r->is_stale,
+            ])->values()->all();
+
         return [
-            'id' => $r->id,
-            'program_id' => $r->program_id,
-            'title' => $r->title,
-            'university' => $r->university_name,
-            'country' => $r->country,
-            'province_state' => $r->province_state,
-            'level' => $r->level,
-            'study_area' => $r->study_area,
-            'discipline_area' => $r->discipline_area,
-            'duration_band' => $r->duration_band,
-            // `basis` qualifies the figure: 'programme' is this course's own fee,
-            // 'institution_average' is one annual number the feed publishes for
-            // the whole university (US Scorecard has no per-course price, so all
-            // ~40k of its programmes carry the same value). It rides along with
-            // the amount rather than sitting in a sibling key so no client can
-            // render the money and miss the qualifier.
-            'tuition' => $r->tuition_fee_minor !== null
-                ? ['minor' => $r->tuition_fee_minor, 'currency' => $r->tuition_currency, 'basis' => $r->tuition_basis]
+            'id' => $first->id,              // kept: the first matching row
+            'program_id' => $first->program_id,
+            'title' => $first->title,
+            'university' => $first->university_name,
+            'country' => $first->country,
+            'province_state' => $first->province_state,
+            'level' => $first->level,
+            'study_area' => $first->study_area,
+            'discipline_area' => $first->discipline_area,
+            'duration_band' => $first->duration_band,
+            'tuition' => $first->tuition_fee_minor !== null
+                ? ['minor' => $first->tuition_fee_minor, 'currency' => $first->tuition_currency, 'basis' => $first->tuition_basis]
                 : null,
-            'intake' => ['month' => $r->intake_month, 'year' => $r->intake_year, 'season' => $r->season_label],
-            'deadline' => optional($r->application_deadline_at)->toDateString(),
-            'offer_tat_days' => $r->offer_tat_days,
-            'badges' => array_values(array_filter(explode(' ', trim((string) $r->flags)))),
-            'source' => $r->source,
-            'is_stale' => $r->is_stale,
+            'intakes' => $intakes,
+            // The soonest deadline across the matching intakes - the one a
+            // student could still catch - so the card's single line agrees with
+            // the deadline sort above it.
+            'deadline' => collect($intakes)->pluck('deadline')->filter()->sort()->first(),
+            'offer_tat_days' => $first->offer_tat_days,
+            'badges' => array_values(array_filter(explode(' ', trim((string) $first->flags)))),
+            'source' => $first->source,
+            // True only when EVERY matching intake is stale; the per-intake flag
+            // above is what a date picker reads.
+            'is_stale' => $rows->every(fn (ProgramSearchRow $r) => (bool) $r->is_stale),
         ];
     }
 }

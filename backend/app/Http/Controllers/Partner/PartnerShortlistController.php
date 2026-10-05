@@ -41,6 +41,12 @@ class PartnerShortlistController extends Controller
 
         $data = $request->validate([
             'program_id' => ['required', 'integer', 'exists:programs,id'],
+            // The intake the counsellor chose on the card, which is not
+            // necessarily the programme's next one and not necessarily the
+            // student's own stated preference either. Recording it is the whole
+            // point: without it the Apply button guessed.
+            'intake_month' => ['nullable', 'string', 'max:20'],
+            'intake_year' => ['nullable', 'integer', 'min:2020', 'max:2100'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -48,7 +54,15 @@ class PartnerShortlistController extends Controller
             ->where('program_id', $data['program_id'])->first();
 
         if ($existing) {
-            $existing->update(['note' => $data['note'] ?? $existing->note]);
+            // Saving the same programme again is how a counsellor CHANGES the
+            // intake, so these must be written on the update path too — not
+            // only on create, which would make the second save look like it
+            // worked and silently keep the first choice.
+            $existing->update([
+                'note' => $data['note'] ?? $existing->note,
+                'intake_month' => $data['intake_month'] ?? $existing->intake_month,
+                'intake_year' => $data['intake_year'] ?? $existing->intake_year,
+            ]);
 
             return response()->json(['shortlist' => $this->present($existing->load(['program.institution', 'program.intakes']))], 200)
                 ->header('Cache-Control', 'no-store');
@@ -59,6 +73,8 @@ class PartnerShortlistController extends Controller
             'agency_id' => $agencyId,                 // from SESSION, never the form
             'student_id' => $student,
             'program_id' => $data['program_id'],
+            'intake_month' => $data['intake_month'] ?? null,
+            'intake_year' => $data['intake_year'] ?? null,
             'note' => $data['note'] ?? null,
             'created_by_user_id' => $request->user()->id,
         ])->save();
@@ -112,6 +128,18 @@ class PartnerShortlistController extends Controller
                 : null,
             'next_intake' => $nextIntake
                 ? ['month' => $nextIntake->intake_month, 'year' => $nextIntake->intake_year, 'season' => $nextIntake->season_label]
+                : null,
+            /*
+             * What the counsellor actually chose, when they chose one.
+             *
+             * Returned BESIDE next_intake rather than instead of it: a row
+             * saved before this existed has no choice recorded, and the screen
+             * still has to show it something. The console prefers this and
+             * falls back, so the Apply button stops guessing without any
+             * backfill of old rows.
+             */
+            'chosen_intake' => $s->intake_month || $s->intake_year
+                ? ['season' => $s->intake_month, 'year' => $s->intake_year]
                 : null,
         ];
     }

@@ -86,14 +86,23 @@
           body.innerHTML = '<table class="pp-table"><thead><tr><th>Program</th><th>University</th><th>Intake</th><th>Tuition</th><th>Note</th><th></th></tr></thead><tbody>' +
             rows.map(function (r) {
               var t = r.tuition ? (r.tuition.currency + " " + Math.round(r.tuition.minor / 100).toLocaleString()) : "—";
-              var intake = r.next_intake ? (r.next_intake.season + " " + r.next_intake.year) : "—";
+              /* The intake the counsellor CHOSE for this programme, falling
+                 back to the programme's next one for rows saved before that
+                 could be recorded. The fallback is why old shortlists keep
+                 working without a backfill. */
+              var pick = r.chosen_intake || r.next_intake;
+              var intake = pick ? (String(pick.season || "").replace(/^./, function (c) { return c.toUpperCase(); }) + " " + pick.year) : "—";
               return "<tr><td>" + esc(r.title || "—") + "</td><td>" + esc(r.university || "—") + "</td>" +
                 "<td>" + esc(intake) + "</td><td>" + esc(t) + "</td><td>" + esc(r.note || "—") + "</td>" +
                 '<td style="white-space:nowrap">' +
                   '<button type="button" class="pp-btn pp-btn--primary pp-btn--sm" data-apply-prog="' + r.program_id +
                     '" data-sid="' + studentId + '"' +
-                    ' data-season="' + esc((r.next_intake && r.next_intake.season) || "") + '"' +
-                    ' data-year="' + esc((r.next_intake && r.next_intake.year) || "") + '">Apply</button> ' +
+                    /* Apply for the intake that was CHOSEN, not whichever comes
+                       next. This used to read next_intake unconditionally, so a
+                       counsellor who picked Summer got an application for Fall
+                       and no indication it had happened. */
+                    ' data-season="' + esc((pick && pick.season) || "") + '"' +
+                    ' data-year="' + esc((pick && pick.year) || "") + '">Apply</button> ' +
                   '<button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" data-unsave="' + r.program_id +
                     '" data-sid="' + studentId + '">Remove</button>' +
                 "</td></tr>";

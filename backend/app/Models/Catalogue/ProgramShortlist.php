@@ -15,7 +15,7 @@ class ProgramShortlist extends Model
 {
     use BelongsToAgency;
 
-    protected $fillable = ['agency_id', 'student_id', 'program_id', 'note', 'created_by_user_id'];
+    protected $fillable = ['agency_id', 'student_id', 'program_id', 'intake_month', 'intake_year', 'note', 'created_by_user_id'];
 
     public function program(): BelongsTo
     {
