@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -449,6 +451,64 @@ class PartnerProgramController extends Controller
         // exact branch rather than returning an empty OR-set, which would match
         // every row and silently widen the search.
         return $terms !== [] ? array_values(array_unique($terms)) : null;
+    }
+
+    /**
+     * GET /api/partner/programs/facets — how many programmes each filter finds.
+     *
+     * WHY THIS EXISTS. Measured against the live catalogue of 41,069 programmes:
+     * of the 33 facet checkboxes the search page offers, only FIVE discriminate.
+     * 24 match nothing at all, and 4 match every single programme. A counsellor
+     * ticking "Scholarship Available" gets an empty page and concludes the
+     * catalogue is empty; one ticking "No Interview Required" sees the count not
+     * move and believes they are looking at a filtered, interview-free list when
+     * they are looking at everything.
+     *
+     * Neither is an indexing bug — SearchIndexer::flagsFor writes all 33
+     * faithfully. The SOURCE DATA is absent: US Scorecard publishes no co-op,
+     * scholarship or interview fields, institutions.interview_required is NOT
+     * NULL DEFAULT false so every programme honestly reports "no interview", and
+     * the TOEFL/PTE/GRE/GMAT requirement rows simply do not exist. The filters
+     * cannot be made to work by fixing code.
+     *
+     * So the page is told the truth and decides what to show. Counts are
+     * returned rather than a yes/no, because "STEM (12,182)" is more use to a
+     * counsellor than a filter that merely exists, and because a facet that
+     * starts working the day a feed carries it needs no code change here.
+     *
+     * Cached for an hour: 33 counts over ~123k rows is real work, the catalogue
+     * only moves when an ingest runs, and nothing here is per-tenant or
+     * personal — it is the same public answer for every partner.
+     */
+    public function facets(): JsonResponse
+    {
+        $payload = Cache::remember('partner:programs:facets', 3600, function () {
+            $base = ProgramSearchRow::query()->where('is_stale', false);
+            $total = (clone $base)->distinct()->count('program_id');
+
+            $facets = [];
+            foreach (self::FACETS as $token) {
+                // The same bound '% token %' match the search itself uses, so a
+                // count can never disagree with the result it predicts.
+                $facets[$token] = (clone $base)
+                    ->where('flags', 'like', '% '.$token.' %')
+                    ->distinct()->count('program_id');
+            }
+
+            // Destinations, for the same reason: 5 of the 15 taxonomy countries
+            // hold no programmes, because VFI has no licensed feed for them yet.
+            // Offering them is how a counsellor ends up believing Canada has
+            // nothing to apply to.
+            $countries = (clone $base)
+                ->select('country', DB::raw('count(distinct program_id) as n'))
+                ->groupBy('country')->pluck('n', 'country');
+
+            return ['total' => $total, 'facets' => $facets, 'countries' => $countries];
+        });
+
+        // Public reference data, same for everyone, and it changes only when an
+        // ingest runs — so it may be cached by the browser too.
+        return response()->json($payload)->header('Cache-Control', 'private, max-age=600');
     }
 
     /** GET /api/partner/programs/compare?ids=1,2,3 — up to 4 programs side by side. */

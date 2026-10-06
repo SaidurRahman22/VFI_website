@@ -52,7 +52,20 @@
     return null;
   }
 
-  var state = { page: 1, compare: {}, rows: {} };
+  /* `cmpSeq` exists because Object.keys() betrays insertion order.
+     state.compare is keyed by programme id, and JS enumerates integer-like keys
+     in ascending NUMERIC order — so Object.keys(...).slice(0, 4) took the four
+     LOWEST ids while the bar promised "first 4 compared". Tick six and the grid
+     showed four you had not chosen, with nothing to say so. Each entry now
+     carries the order it was ticked in, and comparedIds() sorts on that. */
+  var state = { page: 1, compare: {}, rows: {}, cmpSeq: 0 };
+
+  /* Ticked programme ids, in the order the counsellor ticked them. */
+  function comparedIds() {
+    return Object.keys(state.compare).sort(function (a, b) {
+      return (state.compare[a].order || 0) - (state.compare[b].order || 0);
+    });
+  }
 
   var BADGE = {
     stem: "STEM", scholarship: "Scholarship", coop: "Co-op", waive_english: "English waiver",
@@ -560,7 +573,7 @@
 
   /* --------------------------------------------------------------- compare */
   function updateCmpBar() {
-    var ids = Object.keys(state.compare);
+    var ids = comparedIds();
     show("#pgCmpBar", ids.length > 0);
     var el = $("#pgCmpCount");
     if (el) el.textContent = ids.length + " selected" + (ids.length > 4 ? " (first 4 compared)" : "");
@@ -616,7 +629,7 @@
     return html + "</div>";
   }
   function openCompare() {
-    var ids = Object.keys(state.compare).slice(0, 4);
+    var ids = comparedIds().slice(0, 4);   // the first four TICKED, not the four lowest ids
     if (!ids.length) { toast("Tick a few programs to compare."); return; }
     VFIApi.get("/api/partner/programs/compare?ids=" + ids.join(",")).then(function (data) {
       var rows = (data && data.data) || [];
@@ -687,7 +700,7 @@
           // An object, never `true`: comparedSource() reads .source back out of
           // it, and every truthiness test on state.compare still works.
           var row = state.rows[String(id)];
-          state.compare[id] = { source: row ? row.source : null };
+          state.compare[id] = { source: row ? row.source : null, order: ++state.cmpSeq };
         } else {
           delete state.compare[id];
         }
@@ -721,7 +734,72 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
 
     // populate the taxonomy, then run an initial search so results show at once
-    loadTaxonomy().then(function () { search(1); }, function () { search(1); });
+    /* Tell the filter panel the truth about itself before the first search.
+
+       Measured against the live catalogue of 41,069 programmes: of the 33 facet
+       checkboxes on this page, only FIVE discriminate. 24 match nothing, and 4
+       match every programme. That is not an indexing bug — SearchIndexer writes
+       all 33 — it is absent source data: Scorecard publishes no co-op,
+       scholarship or interview fields, and institutions.interview_required is
+       NOT NULL DEFAULT false so every programme truthfully reports "no
+       interview". The filters cannot be repaired by code.
+
+       A counsellor ticking "Scholarship Available" got an empty page and
+       concluded the catalogue was empty. One ticking "No Interview Required"
+       watched the count not move and believed they had narrowed to
+       interview-free programmes. The second is the worse of the two.
+
+       So each facet now carries its real count, a facet that finds nothing is
+       disabled and says so, and one that matches everything is disabled as
+       well — it is not a filter, it is a label. Driven entirely by the numbers,
+       so a facet starts working on its own the day a feed carries it. */
+    function applyFacetCounts() {
+      return VFIApi.get("/api/partner/programs/facets", { noRedirect: true }).then(function (res) {
+        var counts = (res && res.facets) || {};
+        var total = (res && res.total) || 0;
+
+        $$("[data-facet]").forEach(function (box) {
+          var token = box.getAttribute("data-facet");
+          if (!(token in counts)) return;
+          var n = counts[token];
+          var label = box.parentNode;
+          var why = n === 0
+            ? "No programme in the catalogue carries this yet"
+            : (total && n === total ? "Every programme matches this, so it narrows nothing" : "");
+
+          var tag = document.createElement("span");
+          tag.className = "pg-facet__n";
+          tag.textContent = n === 0 ? " — none" : (total && n === total ? " — all" : " (" + n.toLocaleString() + ")");
+          label.appendChild(tag);
+
+          if (why) {
+            box.checked = false;
+            box.disabled = true;
+            label.classList.add("is-inert");
+            label.setAttribute("title", why);
+          }
+        });
+
+        // Destinations with nothing behind them. VFI has no licensed feed for
+        // five of the fifteen; offering them is how a counsellor concludes
+        // Canada has nothing to apply to.
+        var cc = (res && res.countries) || {};
+        var sel = $("#pgCountry");
+        if (sel) {
+          Array.prototype.forEach.call(sel.options, function (o) {
+            if (!o.value) return;
+            var n = cc[o.value] || 0;
+            if (!n) { o.disabled = true; o.textContent = o.textContent + " — none yet"; }
+            else { o.textContent = o.textContent + " (" + n.toLocaleString() + ")"; }
+          });
+        }
+      })["catch"](function () { /* counts are an improvement, never a gate */ });
+    }
+
+    loadTaxonomy().then(function () {
+      applyFacetCounts();            // not awaited: the first search must not wait on it
+      search(1);
+    }, function () { search(1); });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

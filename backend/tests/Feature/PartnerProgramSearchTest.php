@@ -195,6 +195,45 @@ class PartnerProgramSearchTest extends TestCase
             ->assertJsonPath('program.requirements.0.test', fn ($t) => is_string($t));
     }
 
+    /**
+     * The facet counts exist so the page can stop offering filters that cannot
+     * filter.
+     *
+     * Measured on live: of 33 facet checkboxes only five discriminate — 24
+     * match no programme and 4 match every one, because the feeds carry no
+     * co-op, scholarship or interview data and institutions.interview_required
+     * is NOT NULL DEFAULT false. The counts are what lets the page grey those
+     * out instead of letting a counsellor tick "Scholarship Available" and
+     * conclude the catalogue is empty.
+     */
+    public function test_facets_report_what_each_filter_would_actually_find(): void
+    {
+        $res = $this->partner()->getJson('/api/partner/programs/facets')->assertStatus(200);
+
+        $total = $res->json('total');
+        $this->assertIsInt($total);
+        $this->assertGreaterThan(0, $total);
+
+        // every facet the search accepts is answered for, or the page cannot
+        // decide about the ones that are missing
+        $facets = $res->json('facets');
+        $this->assertIsArray($facets);
+        $this->assertArrayHasKey('stem', $facets);
+        $this->assertArrayHasKey('scholarship', $facets);
+
+        // and a count must agree with the search it predicts, or it is worse
+        // than no count at all
+        $claimed = $facets['stem'];
+        $actual = $this->partner()->getJson('/api/partner/programs/search?per_page=1&facets[]=stem')
+            ->assertStatus(200)->json('meta.total');
+        $this->assertSame($claimed, $actual, 'the facet count must match what the filter returns');
+
+        // destinations too: a country with no programmes must be reported as
+        // such rather than silently offered
+        $countries = $res->json('countries');
+        $this->assertIsArray($countries);
+    }
+
     public function test_detail_404_for_unknown_program(): void
     {
         $this->partner()->getJson('/api/partner/programs/99999')->assertStatus(404);

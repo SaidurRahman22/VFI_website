@@ -348,6 +348,17 @@ body.pp-collapsed .pp-nav__sub { display: none; }
 /* checkbox / radio */
 .pp-check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; color: var(--pp-slate); padding: 5px 0; }
 .pp-check input { width: 18px; height: 18px; accent-color: var(--pp-teal); margin-top: 1px; flex: none; }
+
+/* Facet counts, and the facets that cannot filter.
+   Measured on live: of 33 filter checkboxes only 5 discriminate — 24 match no
+   programme at all and 4 match every one. The data behind them is simply not
+   in the feeds, so they are shown greyed with the reason on hover rather than
+   removed: a counsellor who remembers "there was a Scholarship filter" should
+   find it and learn why it is off, not wonder where it went. --pp-muted is the
+   file's own secondary colour, 5.1:1 on white, so the count stays readable. */
+.pg-facet__n { color: var(--pp-muted); font-size: 12px; white-space: nowrap; }
+.pp-check.is-inert { opacity: .55; cursor: not-allowed; }
+.pp-check.is-inert input { cursor: not-allowed; }
 .pp-radio { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; font-size: 14.5px; color: var(--pp-slate); }
 .pp-radio input { width: 18px; height: 18px; accent-color: var(--pp-teal); }
 

@@ -284,6 +284,11 @@ Route::prefix('api')->group(function () {
         // (public reference data, but console-only + per-partner rate-limited).
         $programs = PartnerProgramController::class;
         Route::get('partner/programs/search', [$programs, 'search'])->middleware('throttle:program-search');
+        // Which filters can actually discriminate. Declared BEFORE the
+        // {program} route below, or `facets` would be read as a programme id —
+        // except whereNumber already prevents that, so this is only ordering
+        // for a reader's benefit.
+        Route::get('partner/programs/facets', [$programs, 'facets'])->middleware('throttle:program-search');
         Route::get('partner/programs/compare', [$programs, 'compare'])->middleware('throttle:program-search');
         Route::get('partner/programs/{program}', [$programs, 'show'])->whereNumber('program')->middleware('throttle:program-search');
 
