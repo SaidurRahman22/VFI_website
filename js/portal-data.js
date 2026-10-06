@@ -91,7 +91,15 @@
                  could be recorded. The fallback is why old shortlists keep
                  working without a backfill. */
               var pick = r.chosen_intake || r.next_intake;
-              var intake = pick ? (String(pick.season || "").replace(/^./, function (c) { return c.toUpperCase(); }) + " " + pick.year) : "—";
+              // `label` comes from the server (App\Support\IntakeLabel), which
+              // is the same helper the students and applications tables print
+              // through. This line used to capitalise the season with its own
+              // regex — a third copy of one rule, and the one most likely to
+              // drift. The fallback covers a response cached from before the
+              // field existed.
+              var intake = pick
+                ? (pick.label || (String(pick.season || "").replace(/^./, function (c) { return c.toUpperCase(); }) + " " + pick.year))
+                : "—";
               return "<tr><td>" + esc(r.title || "—") + "</td><td>" + esc(r.university || "—") + "</td>" +
                 "<td>" + esc(intake) + "</td><td>" + esc(t) + "</td><td>" + esc(r.note || "—") + "</td>" +
                 '<td style="white-space:nowrap">' +

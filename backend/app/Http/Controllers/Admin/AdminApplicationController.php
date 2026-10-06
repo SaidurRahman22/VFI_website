@@ -11,6 +11,7 @@ use App\Models\Partner\ApplicationNote;
 use App\Models\Partner\ApplicationStatusEvent;
 use App\Services\ApplicationReadiness;
 use App\Services\ApplicationReviewService;
+use App\Support\IntakeLabel;
 use App\Support\RlsBypass;
 use App\Support\StaffAbilities;
 use Illuminate\Http\JsonResponse;
@@ -379,7 +380,11 @@ class AdminApplicationController extends Controller
             'agency_name' => $a->agency?->legal_name,
             'status' => $a->status->value,
             'status_label' => $this->label($a->status),
-            'intake' => trim(($a->intake_month ?? '').' '.($a->intake_year ?? '')) ?: null,
+            // Through IntakeLabel, like the partner side. These two read the SAME
+            // row and printed different text: staff saw "fall 2026" while the
+            // partner saw "Fall 2026". The helper was written to end exactly that
+            // divergence and had been applied to only one of the two readers.
+            'intake' => IntakeLabel::for($a->intake_month, $a->intake_year) ?: null,
             'ack_no' => $a->ack_no,
             'deadline_at' => optional($a->deadline_at)->toDateString(),
             'submitted_at' => optional($a->submitted_at)->toIso8601String(),

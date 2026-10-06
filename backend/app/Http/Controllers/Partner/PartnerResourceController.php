@@ -118,13 +118,31 @@ class PartnerResourceController extends Controller
             return false;
         }
 
-        // Same-site path, relative or root-relative. `/docs/guide.pdf` is a
-        // real file; `partner-resources.html` and `/partner-resources.html` are
-        // pages. Query/fragment trimmed first so `…?x=1` is caught too.
+        /*
+         * SELF-REFERENCE ONLY, which is narrower than this used to be.
+         *
+         * It treated ANY same-site .html as a placeholder, and that was wrong
+         * in a way the docblock above does not argue for: the case being fixed
+         * is "a link that reopens the page you are on", not "a link to a page".
+         * A desk that writes a genuine guide page here — /guides/uk-visa.html —
+         * meant it, and had no way to say so: the row came back with its url,
+         * size and date stripped and a "Sample entry" badge, and no hint in the
+         * editor that it would. The sibling collection pp-quicklinks explicitly
+         * invites "a page on this site", so the content model already blesses
+         * what this was penalising.
+         *
+         * The browser's own goesNowhere() in partner-resources.html has always
+         * used the narrow rule; the two now agree, and the server is no longer
+         * the stricter of the pair.
+         */
         $path = mb_strtolower((string) preg_replace('/[?#].*$/', '', $url));
+        $path = ltrim($path, '/');
 
         // A bare `#` or `?x=1` has no path left at all — it reloads the current
         // page, which is the same dead "Download" by another spelling.
-        return $path === '' || str_ends_with($path, '.html') || str_ends_with($path, '.htm');
+        return $path === '' || $path === self::LISTING_PAGE;
     }
+
+    /** The page these rows are listed on; a row linking to it links nowhere. */
+    private const LISTING_PAGE = 'partner-resources.html';
 }

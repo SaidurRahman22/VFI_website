@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Catalogue\Program;
 use App\Models\Catalogue\ProgramShortlist;
 use App\Models\Student\Student;
+use App\Support\IntakeLabel;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -126,8 +127,21 @@ class PartnerShortlistController extends Controller
             'tuition' => $p?->tuition_fee_minor !== null
                 ? ['minor' => $p->tuition_fee_minor, 'currency' => $p->tuition_currency]
                 : null,
+            /*
+             * `label` rides with each of these so the browser stops building
+             * the display string itself. js/portal-data.js was capitalising the
+             * season with its own regex — a THIRD copy of what IntakeLabel
+             * exists to own, after the students list and the applications list.
+             * The parts stay, because the Apply button posts season and year
+             * back as data, not as text.
+             */
             'next_intake' => $nextIntake
-                ? ['month' => $nextIntake->intake_month, 'year' => $nextIntake->intake_year, 'season' => $nextIntake->season_label]
+                ? [
+                    'month' => $nextIntake->intake_month,
+                    'year' => $nextIntake->intake_year,
+                    'season' => $nextIntake->season_label,
+                    'label' => IntakeLabel::for($nextIntake->season_label, $nextIntake->intake_year),
+                ]
                 : null,
             /*
              * What the counsellor actually chose, when they chose one.
@@ -139,7 +153,11 @@ class PartnerShortlistController extends Controller
              * backfill of old rows.
              */
             'chosen_intake' => $s->intake_month || $s->intake_year
-                ? ['season' => $s->intake_month, 'year' => $s->intake_year]
+                ? [
+                    'season' => $s->intake_month,
+                    'year' => $s->intake_year,
+                    'label' => IntakeLabel::for($s->intake_month, $s->intake_year),
+                ]
                 : null,
         ];
     }

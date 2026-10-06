@@ -297,11 +297,36 @@ class AdminContentCollectionController extends Controller
                     'placeholder' => 'Australia'],
                 ['key' => 'category', 'label' => 'Category', 'type' => 'text', 'half' => true,
                     'placeholder' => 'Enquiry Form'],
+                /*
+                 * These three hints were false, and one of them was false in a
+                 * way that cost the editor their own work.
+                 *
+                 * "Shown on the card exactly as typed" stopped being true when
+                 * PartnerResourceController began withholding size and date on
+                 * a row with no file behind it — the card would otherwise read
+                 * "… · PDF", "Current", and then "Sample entry — no file
+                 * uploaded yet" one line below. And `date` was never printed on
+                 * the partner card at all (js/portal-data.js builds the meta
+                 * line from country · category · size), so that hint has been
+                 * wrong since before any of this.
+                 *
+                 * The url placeholder was `#`, which isPlaceholder() classifies
+                 * AS a placeholder — the editor's own worked example produced
+                 * the sample-entry badge. An editor who cannot see the
+                 * consequence of their own input is the same disease as a
+                 * control that does not work.
+                 */
                 ['key' => 'size', 'label' => 'File size', 'type' => 'text', 'half' => true,
-                    'placeholder' => '0.16 MB', 'hint' => 'Shown on the card exactly as typed.'],
+                    'placeholder' => '0.16 MB',
+                    'hint' => 'Shown on the card once a file is linked below. Hidden while the row has no file.'],
                 ['key' => 'date', 'label' => 'Date', 'type' => 'text', 'half' => true,
-                    'placeholder' => '12 Aug 2026', 'hint' => 'Printed on the card exactly as typed.'],
-                ['key' => 'url', 'label' => 'Download URL', 'type' => 'url', 'placeholder' => '#'],
+                    'placeholder' => '12 Aug 2026',
+                    'hint' => 'Kept with the row for your own reference. The partner card does not print it.'],
+                ['key' => 'url', 'label' => 'Download URL', 'type' => 'url',
+                    'placeholder' => 'docs/partner-agreement.pdf',
+                    'hint' => 'The file itself — a path on this site, or a full https:// address. A link back to '
+                        .'partner-resources.html counts as no file, and the partner sees “Sample entry — no file '
+                        .'uploaded yet” instead of a Download button that goes nowhere.'],
             ],
         ],
         'pp-emails' => [

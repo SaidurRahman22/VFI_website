@@ -19,6 +19,22 @@ set -e
 APP=/var/www/vfi
 LOG=/var/log/vfi-deploy.log
 cd "$APP"
+
+# Filament's published assets are TRACKED by git (41 files under
+# backend/public), and `composer install` below re-publishes them every single
+# deploy, because backend/composer.json runs `php artisan filament:upgrade` from
+# post-autoload-dump. While Filament's version is unchanged the republished
+# bytes are identical and git stays clean — but the first deploy after any
+# filament/* version moves leaves the working tree DIRTY, and the next
+# `git pull --ff-only` then refuses. With `set -e` above, that aborts the
+# deploy, and it keeps aborting: the site silently stops receiving updates and
+# nothing says why.
+#
+# Discarding them before the pull is safe in both directions. They are build
+# output, never edited on the server; the pull restores whatever the commit
+# holds, and composer install re-publishes them immediately afterwards.
+git checkout -- backend/public 2>/dev/null || true
+
 git fetch origin main --quiet
 LOCAL=$(git rev-parse HEAD); REMOTE=$(git rev-parse origin/main)
 [ "$LOCAL" = "$REMOTE" ] && exit 0

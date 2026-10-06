@@ -110,20 +110,31 @@ class PartnerResourcesNotificationsTest extends TestCase
     }
 
     /**
-     * The two signals, each covering what the other gets wrong.
+     * A row is a placeholder when its link goes NOWHERE, not when it goes to a
+     * page.
      *
-     * An admin-added row pointing at a page of this site is as undownloadable
-     * as a seeded one, and an absolute https link to someone's guidance page is
-     * a genuine resource even though it is HTML — calling that one a
-     * placeholder would be the opposite lie.
+     * This asserted the broader rule first: any same-site .html was a
+     * placeholder. That penalised the case the content model elsewhere
+     * explicitly invites — the sibling pp-quicklinks collection tells the desk
+     * "a page on this site, or a full https:// address" — so a genuine guide
+     * filed at /guides/uk-visa.html came back stripped of its url, size and
+     * date and badged "Sample entry", with nothing in the editor warning that
+     * it would. The desk meant that link.
+     *
+     * The rule is now self-reference only, which is what the controller's own
+     * docblock always argued ("a link that reopens the page you are on is
+     * worse than no link") and what the browser's goesNowhere() has always
+     * done. The server is no longer the stricter of the pair.
      */
     public function test_placeholder_detection_reads_the_url_not_only_the_seed_marker(): void
     {
         [$agency, $user] = $this->agencyOwner('A');
         foreach ([
-            ['own-page', 'partner-enquiries.html', true],          // relative page of this site
-            ['root-page', '/partner-resources.html?x=1', true],    // root-relative, query trimmed
+            ['self-link', 'partner-resources.html', true],         // reopens the page it is listed on
+            ['root-page', '/partner-resources.html?x=1', true],    // the same, root-relative, query trimmed
             ['no-url', '', true],                                  // nothing to open at all
+            ['bare-hash', '#', true],                              // no path left: the editor's old example
+            ['own-guide', '/guides/uk-visa.html', false],          // a real page the desk meant to link
             ['external-page', 'https://gov.test/student-visa.html', false],
             ['own-file', '/storage/media/guide.pdf', false],       // a real file on this site
         ] as $i => [$id, $url, $expected]) {
@@ -133,9 +144,11 @@ class PartnerResourcesNotificationsTest extends TestCase
         $rows = collect($this->asPartner($user, $agency->id)->getJson('/api/partner/resources')
             ->assertStatus(200)->json('data'))->keyBy('title');
 
-        $this->assertTrue($rows['own-page']['placeholder']);
+        $this->assertTrue($rows['self-link']['placeholder']);
         $this->assertTrue($rows['root-page']['placeholder']);
         $this->assertTrue($rows['no-url']['placeholder']);
+        $this->assertTrue($rows['bare-hash']['placeholder']);
+        $this->assertFalse($rows['own-guide']['placeholder'], 'a guide page on this site is a real resource');
         $this->assertFalse($rows['external-page']['placeholder']);
         $this->assertFalse($rows['own-file']['placeholder']);
         $this->assertSame('/storage/media/guide.pdf', $rows['own-file']['url']);
