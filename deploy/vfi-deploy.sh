@@ -33,7 +33,20 @@ cd "$APP"
 # Discarding them before the pull is safe in both directions. They are build
 # output, never edited on the server; the pull restores whatever the commit
 # holds, and composer install re-publishes them immediately afterwards.
+#
+# This was not hypothetical. On 2026-10-06, the Filament 4.12.6 -> 4.14.0
+# security update changed 24 of those files and the server's tree was found
+# dirty; the guard cleaned it to zero.
 git checkout -- backend/public 2>/dev/null || true
+
+# SERVER STATE THIS SCRIPT DEPENDS ON, recorded because it is not in the repo:
+#   git config core.fileMode false      (set on /var/www/vfi, 2026-10-06)
+# The `chmod -R 775 backend/bootstrap/cache` near the end of this script flips
+# the executable bit on .gitignore, which IS tracked — so with the default
+# core.fileMode=true git reported that file modified after every single deploy,
+# and a pull would refuse the day .gitignore itself changed upstream. Ignoring
+# the mode bit is the right call on a deploy target the script deliberately
+# chmods; nothing here relies on a committed mode.
 
 git fetch origin main --quiet
 LOCAL=$(git rev-parse HEAD); REMOTE=$(git rev-parse origin/main)
