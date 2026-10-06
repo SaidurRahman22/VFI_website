@@ -758,25 +758,34 @@
         var counts = (res && res.facets) || {};
         var total = (res && res.total) || 0;
 
+        /* The page writes facets in TWO shapes, and treating them as one is
+           how the first attempt at this merged a dozen chip labels into one
+           run-on blob: a checkbox sits INSIDE <label class="pp-check">, so its
+           parent is the thing to annotate, while a chip IS the control —
+           <button class="pp-chip" data-facet="…"> — and its parent is the
+           shared row holding all of them. Annotate the control's own box. */
         $$("[data-facet]").forEach(function (box) {
           var token = box.getAttribute("data-facet");
           if (!(token in counts)) return;
           var n = counts[token];
-          var label = box.parentNode;
+          var isInput = box.tagName === "INPUT";
+          var host = isInput ? box.parentNode : box;
           var why = n === 0
             ? "No programme in the catalogue carries this yet"
             : (total && n === total ? "Every programme matches this, so it narrows nothing" : "");
 
+          if (host.querySelector(".pg-facet__n")) return;   // never annotate twice
           var tag = document.createElement("span");
           tag.className = "pg-facet__n";
           tag.textContent = n === 0 ? " — none" : (total && n === total ? " — all" : " (" + n.toLocaleString() + ")");
-          label.appendChild(tag);
+          host.appendChild(tag);
 
           if (why) {
-            box.checked = false;
+            if (isInput) box.checked = false;
+            else box.classList.remove("is-on");   // a chip holds its state as a class
             box.disabled = true;
-            label.classList.add("is-inert");
-            label.setAttribute("title", why);
+            host.classList.add("is-inert");
+            host.setAttribute("title", why);
           }
         });
 

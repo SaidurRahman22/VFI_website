@@ -482,7 +482,7 @@ class PartnerProgramController extends Controller
      */
     public function facets(): JsonResponse
     {
-        $payload = Cache::remember('partner:programs:facets', 3600, function () {
+        $payload = Cache::remember('partner:programs:facets:v2', 3600, function () {
             $base = ProgramSearchRow::query()->where('is_stale', false);
             $total = (clone $base)->distinct()->count('program_id');
 
@@ -499,9 +499,15 @@ class PartnerProgramController extends Controller
             // hold no programmes, because VFI has no licensed feed for them yet.
             // Offering them is how a counsellor ends up believing Canada has
             // nothing to apply to.
+            // ->all(), not the Collection. Whatever this returns is SERIALISED
+            // into the cache store and read back, and a Collection came back as
+            // __PHP_Incomplete_Class_Name — so the JSON held
+            // {"__PHP_Incomplete_Class_Name":"Illuminate\Support\Collection"}
+            // and the page marked every destination empty, including the United
+            // States with 40,445 programmes. Cache plain arrays only.
             $countries = (clone $base)
                 ->select('country', DB::raw('count(distinct program_id) as n'))
-                ->groupBy('country')->pluck('n', 'country');
+                ->groupBy('country')->pluck('n', 'country')->all();
 
             return ['total' => $total, 'facets' => $facets, 'countries' => $countries];
         });
